@@ -1,0 +1,11 @@
+# .vercelignore
+src/
+# components/
+# lib/
+types/
+.git/
+.gitignore
+README.md
+*.md
+.eslintrc.json
+*.tsbuildinfo
