@@ -1,7 +1,6 @@
 'use client'
 
 import DashboardEmpleado from '@/app/dashboard/operaciones/empleado/caja/components/DashboardEmpleados';
-import DynamicMenu from '@/app/lib/dynamicMenu';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { ModalProvider } from '@/app/ui/ModalContext';
 
@@ -27,7 +26,6 @@ const Page = () => {
     return (
         <div className="min-h-screen bg-gray-100">
           <div className="flex">
-            <DynamicMenu />
             
             <main className="flex-1 p-4">
             <ModalProvider>

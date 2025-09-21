@@ -1,3 +1,4 @@
+// app/ui/Header.tsx
 'use client';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
@@ -15,35 +16,28 @@ const Header: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Decodificar token al montar el componente
     decodeTokenAndSetState();
-    const handleStorageChange = () => decodeTokenAndSetState();
-
-  
-    window.addEventListener('storage', handleStorageChange);
-  
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    window.addEventListener('storage', decodeTokenAndSetState);
+    return () => window.removeEventListener('storage', decodeTokenAndSetState);
   }, []);
 
   useEffect(() => {
-    // Obtener la fecha actual en formato legible
     const today = new Date();
-    const formattedDate = today.toLocaleDateString('es-AR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    setCurrentDate(formattedDate);
+    setCurrentDate(
+      today.toLocaleDateString('es-AR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    );
   }, []);
 
   const handleLogout = () => {
-    // Eliminar el token y redirigir al login
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    setIsLoggedIn(false); // Cambiar el estado de sesión
+    setIsLoggedIn(false);
+    window.dispatchEvent(new Event("storage"));
     router.push('/');
   };
 
@@ -54,8 +48,7 @@ const Header: React.FC = () => {
         const decodedToken: DecodedToken = jwtDecode(token);
         setUserName(decodedToken.username);
         setIsLoggedIn(true);
-      } catch (error) {
-        console.error('Error decoding token:', error);
+      } catch {
         setUserName(null);
         setIsLoggedIn(false);
       }
@@ -64,31 +57,20 @@ const Header: React.FC = () => {
       setIsLoggedIn(false);
     }
   };
-  
 
   return (
-    <header className="flex justify-between items-center bg-gray-800 text-white p-4 shadow-lg">
-      <div>
-      <div className="flex justify-between items-center bg-gray-800 text-white p-4 shadow-lg text-4xl font-extrabold">
-        Pizzería Pati
-      </div>
-      </div>
-      {/* Lado izquierdo: Nombre de usuario y fecha */}
+    <header className="h-16 bg-white border-b border-gray-200 px-6 flex justify-between items-center shadow-sm">
+      <div className="text-gray-600">{currentDate}</div>
       {isLoggedIn && (
-      <div>
-        <div>
-          <p className="text-lg font-semibold">{userName || 'Usuario Desconocido'}</p>
-          <p className="text-sm">{currentDate}</p>
-        </div>
-        
+        <div className="flex items-center gap-4">
+          <span className="font-semibold text-gray-800">{userName}</span>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded"
+            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm"
           >
             Cerrar Sesión
           </button>
-        
-      </div>
+        </div>
       )}
     </header>
   );
