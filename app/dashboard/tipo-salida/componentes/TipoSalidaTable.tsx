@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import {
   faEdit,
   faSort,
@@ -20,7 +21,7 @@ interface TipoSalida {
 interface ProductosTableProps {
   tipoSalida: TipoSalida[];
   onDelete: (id: number) => void;
-  onEdit: (id: number) => void;
+  onEdit: (id: number, cliente_id: BigInt) => void;
   //onView: (id: number) => void;
 }
 
@@ -145,14 +146,14 @@ export default function TipoSalidaTable({ tipoSalida, onDelete, onEdit }: Produc
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   
                   <button
-                    onClick={() => onEdit(tipoSalida.id)}
+                    onClick={() => onEdit(tipoSalida.id,getClienteId())}
                     className="text-blue-600 hover:text-blue-900"
                     title="Editar"
                   >
                     <FontAwesomeIcon icon={faEdit} />
                   </button>
                   <button
-                    onClick={() => onDelete(tipoSalida.id)}
+                    onClick={() => onDelete(tipoSalida.id,getClienteId())}
                     className="text-red-600 hover:text-red-900"
                     title="Eliminar"
                   >

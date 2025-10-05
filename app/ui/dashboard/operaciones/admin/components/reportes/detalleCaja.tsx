@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { getRegistroDiarioDetalle } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
 import { lusitana } from '@/app/ui/fonts';
@@ -54,7 +55,7 @@ export default function DetalleCajaPage() {
   const fetchDetalle = async () => {
     try {
       setLoading(true);
-      const data = await getRegistroDiarioDetalle(Number(id));
+      const data = await getRegistroDiarioDetalle(Number(id),getClienteId());
       console.log(data)
       setDetalle(data);
       setError(null);

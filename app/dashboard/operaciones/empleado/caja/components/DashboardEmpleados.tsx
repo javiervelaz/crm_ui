@@ -1,3 +1,4 @@
+import { getClienteId } from "@/app/lib/authService";
 import { checkAperturaCaja, getPedidosByRegistroId } from "@/app/lib/operaciones.api";
 import { jwtDecode } from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
@@ -24,8 +25,8 @@ const DashboardEmpleados = () => {
 useEffect(() => {
   const verificarCaja = async () => {
     try {
-      console.log(getCurrentDate());
-        const res = await checkAperturaCaja(getCurrentDate());
+        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
+        const res = await checkAperturaCaja(data);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
@@ -44,7 +45,7 @@ useEffect(() => {
   const fetchPedidos = useCallback(async () => {
     try {
       if (!registroDiario) return;
-      const response = await getPedidosByRegistroId(registroDiario);
+      const response = await getPedidosByRegistroId(registroDiario,getClienteId());
       setPedidos(response);
     } catch (error) {
       console.error('Error al cargar pedidos:', error);

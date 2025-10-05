@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { deleteUser, getUserList, getUserTypes } from '@/app/lib/usuario.api';
@@ -22,6 +23,7 @@ interface Usuario {
   user_type_id: number;
   user_type_codigo?: string;
   user_type_descripcion?: string;
+  cliente_id: BigInt;
 }
 
 interface UserType {
@@ -35,6 +37,7 @@ export default function UsuariosPage() {
   const [usuarios, setUsers] = useState<Usuario[]>([]);
   const [userTypes, setUserTypes] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cliente, setCliente] = useState<bigint | null>(null);
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('all');
@@ -48,13 +51,13 @@ export default function UsuariosPage() {
     }
   
     const fetchData = async () => {
+     
       try {
         const [usersData, typesData] = await Promise.all([
-          getUserList(),
+          getUserList(getClienteId()),
           getUserTypes()
         ]);
-       // console.log('Users data:', usersData);
-        //console.log('User types:', typesData);
+      
         // Enriquecer usuarios con información del tipo
       const enrichedUsers = usersData.map(user => {
         const userType = typesData.find(type => type.id === user.user_type_id);
@@ -88,10 +91,10 @@ export default function UsuariosPage() {
   const handleDelete = async (id: number) => {
     if (confirm('¿Estás seguro de eliminar este Usuario?')) {
       try {
-        await deleteUser(id);
+        await deleteUser(id,getClienteId());
         // Recargar la lista de usuarios
         const [usersData, typesData] = await Promise.all([
-          getUserList(),
+          getUserList(getClienteId()),
           getUserTypes()
         ]);
         

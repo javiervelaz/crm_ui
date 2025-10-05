@@ -1,3 +1,4 @@
+import { getClienteId } from "@/app/lib/authService";
 import { getProductoList } from '@/app/lib/producto.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,7 +33,7 @@ export default function ReporteVentasPage() {
     // Llamada a la API para obtener usuarios reales
     const fetchProductos = async () => {
       try {
-        const data = await getProductoList();
+        const data = await getProductoList(getClienteId());
         console.log("productos", data);
         setProductos(data);
       } catch (err) {
@@ -112,7 +113,8 @@ export default function ReporteVentasPage() {
     const payload = {
       fecha_desde: format(fechaDesde, 'yyyy-MM-dd'),
       fecha_hasta: format(fechaHasta, 'yyyy-MM-dd'),
-      productos: selectedProductos.length > 0 ? selectedProductos.map(p => p.id).join(',') : null
+      productos: selectedProductos.length > 0 ? selectedProductos.map(p => p.id).join(',') : null,
+      cliente_id: getClienteId(),
     };
     
     try {

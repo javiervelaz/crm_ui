@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { crearCategoriaSalida, getGastosCategoriaTipo } from '@/app/lib/gasto';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { useRouter } from 'next/navigation';
@@ -9,7 +10,8 @@ const CreateTipoSalidaPage = () => {
   useAuthCheck();
   const [productoDetails, setUserDetails] = useState({
     nombre: '',
-    categoria_tipo_id: null
+    categoria_tipo_id: null,
+    cliente_id: getClienteId(),
   });
   const router = useRouter();
   const [tipoProducto, setTipoProd] = useState([]); // Almacena los tipos de productos

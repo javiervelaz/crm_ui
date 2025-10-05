@@ -36,9 +36,9 @@ export const createProfile = async (profileDetails: any) => {
     return await response.json();
   };
 
-  export const getProfileUserById = async (userId: string) => {
+  export const getProfileUserById = async (userId: string, cliente: BigInt) => {
     try {
-      const response = await fetch(`${apiUrl}/profile/user/${userId}`, {
+      const response = await fetch(`${apiUrl}/profile/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

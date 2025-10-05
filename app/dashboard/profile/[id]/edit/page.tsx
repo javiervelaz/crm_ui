@@ -1,5 +1,6 @@
 'use client';
 
+import { getClienteId } from "@/app/lib/authService";
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
 import { createUserRol, deleteUserRol, getUserRolUserById, updateUserRol } from '@/app/lib/userRol.api';
@@ -19,10 +20,11 @@ const EditUserPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    const cliente =  getClienteId();
     if (id) {
       const fetchUsers = async () => {
         try {
-          const data = await getUserById(id); // Llamada a tu servicio que obtiene la lista de usuarios
+          const data = await getUserById(id,cliente); // Llamada a tu servicio que obtiene la lista de usuarios
           setUserDetails(data);
 
           // Obtener la descripción del tipo de usuario
@@ -33,11 +35,11 @@ const EditUserPage = () => {
 
           // Obtener los detalles del perfil del usuario
           if (data.id) {
-            const profile = await getProfileUserById(data.id);
+            const profile = await getProfileUserById(data.id,cliente);
             setProfileDetails(profile);
           }
           // Inicializar los roles seleccionados con los roles del usuario
-          const userRols = await getUserRol(data.id);
+          const userRols = await getUserRol(data.id,cliente);
           if (userRols) {
             // Mapeamos los roles obtenidos de la base de datos y los inicializamos en el estado
             const rolesFormatted = userRols.map((rol) => ({
@@ -117,9 +119,10 @@ const handleRoleCheckboxChange = (e, rol) => {
       roles: selectedRoles,
       profile: profileDetails,
     };
+    
   
     try {
-      const user = await getUserById(payload.id);
+      const user = await getUserById(payload.id,payload.cliente_id);
       if (user) {
         await updateUser(user.id, {
           nombre: payload.nombre,
@@ -129,7 +132,7 @@ const handleRoleCheckboxChange = (e, rol) => {
         });
       }
   
-      const profile = await getProfileUserById(payload.id);
+      const profile = await getProfileUserById(payload.id, payload.cliente_id);
       if (profile.length === 0) {
         await createProfile({
           id_user: payload.id,
@@ -138,12 +141,13 @@ const handleRoleCheckboxChange = (e, rol) => {
           password: payload.profile.password,
           legajo: payload.profile.legajo,
           fecha_ingreso: payload.profile.fecha_ingreso,
+          cliente_id: payload.cliente_id
         });
       } else {
         await updateProfile(profile.id, payload.profile);
       }
   
-      const existingUserRoles = await getUserRolUserById(payload.id);
+      const existingUserRoles = await getUserRolUserById(payload.id, payload.cliente_id);
   
       // Crear un Set de IDs de roles existentes
       const existingRoleIds = new Set(existingUserRoles.map((rol) => rol.id_rol));
@@ -159,7 +163,7 @@ const handleRoleCheckboxChange = (e, rol) => {
           existingRoleIds.delete(idRoleAsInteger); // Eliminar de la lista de roles existentes
         } else {
           // Si no existe, crea uno nuevo
-          await createUserRol({ id_rol: idRoleAsInteger, id_user: payload.id });
+          await createUserRol({ id_rol: idRoleAsInteger, id_user: payload.id , cliente_id: payload.cliente_id});
         }
       }
   

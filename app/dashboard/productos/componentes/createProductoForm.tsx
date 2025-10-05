@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { createProduct } from '@/app/lib/producto.api';
 import { getTipoProductoList } from "@/app/lib/tipoproducto.api";
 import useAuthCheck from '@/app/lib/useAuthCheck';
@@ -12,7 +13,8 @@ const CreateUserPage = () => {
     nombre: '',
     precio_unitario: null,
     tipo_producto_id: null,
-    permite_mitad: false // Nuevo campo agregado
+    permite_mitad: false,
+    cliente_id: getClienteId(),
   });
   const router = useRouter();
   const [tipoProducto, setTipoProd] = useState([]); // Almacena los tipos de productos
@@ -20,7 +22,7 @@ const CreateUserPage = () => {
   useEffect(() => {
       const fetchTipoProduto = async () => {
         try {
-          const data = await getTipoProductoList();
+          const data = await getTipoProductoList(getClienteId());
           setTipoProd(data); // Guarda la lista de tipos de productos
         } catch (err) {
           console.error(err);

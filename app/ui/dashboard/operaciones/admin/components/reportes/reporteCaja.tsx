@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { getRegistrosDiarios } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
 import { lusitana } from '@/app/ui/fonts';
@@ -40,8 +41,8 @@ export default function ReporteCajaPage() {
   const fetchRegistrosDiarios = async () => {
     try {
       setLoading(true);
-      const data = await getRegistrosDiarios(filtroFecha);
-      
+      const data = await getRegistrosDiarios(filtroFecha,getClienteId());
+      console.log(data)
       // Calcular total al cierre para cada registro
       const registrosConTotal = data.map(registro => ({
         ...registro,

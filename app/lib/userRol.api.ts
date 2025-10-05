@@ -51,9 +51,9 @@ export const createUserRol = async (userRolDetails: any) => {
     return await response.json();
   };
 
-  export const getUserRolUserById = async (userId: string) => {
+  export const getUserRolUserById = async (userId: string, cliente: BigInt )=> {
     try {
-      const response = await fetch(`${apiUrl}/userrol/user/${userId}`, {
+      const response = await fetch(`${apiUrl}/userrol/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

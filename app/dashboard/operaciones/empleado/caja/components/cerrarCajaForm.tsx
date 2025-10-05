@@ -1,4 +1,5 @@
 "use client"
+import { getClienteId } from '@/app/lib/authService';
 import { gatosMontoTotalDiario } from '@/app/lib/gasto';
 import { cerrarCaja, checkAperturaCaja, getCajaInicial, pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
 import { jwtDecode } from 'jwt-decode';
@@ -31,7 +32,8 @@ const CerrarCajaForm = () => {
     useEffect(() => {
         const verificarCaja = async () => {
           try {
-            const res = await checkAperturaCaja(getCurrentDate());
+            const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
+            const res = await checkAperturaCaja(data);
             console.log(res)
             if (res.caja_abierta) {
               setCajaAbierta(true);
@@ -52,7 +54,7 @@ const CerrarCajaForm = () => {
         if (registroDiario) {
             const obtenerMontoPedidos = async () => {
                 try {
-                    const montoPedidos = await pedidoMontoTotalDiario(registroDiario);
+                    const montoPedidos = await pedidoMontoTotalDiario(registroDiario,getClienteId());
                     setMontoFinal(montoPedidos.sum);
                 } catch (error) {
                     console.error("Error al obtener pedidos del día:", error);
@@ -63,7 +65,7 @@ const CerrarCajaForm = () => {
             const obtenerMontoGastoSueldos = async () => {
                 try { 
                     console.log("reg diario", registroDiario)
-                    const monto = await gatosMontoTotalDiario(registroDiario, "sueldos");
+                    const monto = await gatosMontoTotalDiario(registroDiario, "sueldos",getClienteId());
                     const montoNumerico = parseFloat(monto);
                     console.log("monto su", montoNumerico);
                     if (!isNaN(montoNumerico)) {
@@ -80,7 +82,7 @@ const CerrarCajaForm = () => {
 
             const obtenerMontoGastoFijo = async () => {
                 try { 
-                    const monto = await gatosMontoTotalDiario(registroDiario, "fijo");
+                    const monto = await gatosMontoTotalDiario(registroDiario, "fijo",getClienteId());
                     const montoNumerico = parseFloat(monto);
                     console.log("monto fijo", montoNumerico);
                     if (!isNaN(montoNumerico)) {
@@ -97,7 +99,7 @@ const CerrarCajaForm = () => {
 
             const obtenerMontoGastoVariable = async () => {
                 try { 
-                    const monto = await gatosMontoTotalDiario(registroDiario, "variable");
+                    const monto = await gatosMontoTotalDiario(registroDiario, "variable",getClienteId());
                     const montoNumerico = parseFloat(monto);
                     console.log("monto var", montoNumerico);
                     if (!isNaN(montoNumerico)) {
@@ -113,7 +115,7 @@ const CerrarCajaForm = () => {
             };
 
             const obtenerCajaInicial = async () => {
-                const monto = await getCajaInicial(registroDiario)
+                const monto = await getCajaInicial(registroDiario,getClienteId())
                 const montoNumerico = parseFloat(monto.sum) || 0;
                 console.log("monto inicial", montoNumerico);
                 if (!isNaN(montoNumerico)) {
@@ -224,6 +226,7 @@ useEffect(() => {
                     monto_final: parseFloat(calcularMontoFinal()),
                     usuario_cierre_id: decoded.userId,
                     sucursal_id: decoded.sucursal,
+                    cliente_id: getClienteId(),
                     detalles: {
                         gastos_administrativos: parseFloat(gastosAdministrativos.toFixed(2)),
                         otros_ingresos: parseFloat(otrosIngresos.toFixed(2)),

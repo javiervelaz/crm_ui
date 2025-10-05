@@ -19,7 +19,7 @@ export default function DynamicMenu() {
       </div>
     );
   }
-
+  console.log("user role", userRole);
   switch (userRole) {
     case 1: // Admin
       return <MenuAdmin />;

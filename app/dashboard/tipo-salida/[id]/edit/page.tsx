@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { getCategoriaSalidaById, getGastosCategoriaTipo, updateCategoriaSalida } from '@/app/lib/gasto';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -38,10 +39,11 @@ export default function FormTipoProducto() {
 
   const fetchTipoSalida = async () => {
     try {
-      const data = await getCategoriaSalidaById(Number(id));
+      const data = await getCategoriaSalidaById(Number(id),getClienteId());
       setFormData({ 
         nombre: data.nombre, 
-        categoria_tipo_id: data.categoria_tipo_id.toString()
+        categoria_tipo_id: data.categoria_tipo_id.toString(),
+        cliente_id: data.cliente_id,
       });
     } catch (error) {
       console.error('Error cargando tipo de salida:', error);

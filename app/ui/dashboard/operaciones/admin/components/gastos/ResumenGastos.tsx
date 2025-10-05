@@ -1,4 +1,5 @@
 "use client";
+import { getClienteId } from "@/app/lib/authService";
 import { gatosMontoTotalDiario } from '@/app/lib/gasto';
 import { pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
 import { useEffect, useState } from 'react';
@@ -47,7 +48,7 @@ export default function ResumenGastos({ data, gastosExistentes = [], registroDia
   useEffect(() => {
     const obtenerMontoPedidos = async () => {
             try {
-              const montoPedidos = await pedidoMontoTotalDiario(registroDiarioId);
+              const montoPedidos = await pedidoMontoTotalDiario(registroDiarioId,getClienteId());
               setMontoFinal(montoPedidos.sum);
             } catch (error) {
                 console.error("Error al obtener pedidos del día:", error);
@@ -56,7 +57,7 @@ export default function ResumenGastos({ data, gastosExistentes = [], registroDia
     };
     const obtenerMontoGastoSueldos = async () => {
       try { 
-        const monto = await gatosMontoTotalDiario(registroDiarioId,"sueldos");
+        const monto = await gatosMontoTotalDiario(registroDiarioId,"sueldos",getClienteId());
         // Usar parseFloat para manejar decimales
         const montoNumerico = parseFloat(monto);
         if (!isNaN(montoNumerico)) {
@@ -72,7 +73,7 @@ export default function ResumenGastos({ data, gastosExistentes = [], registroDia
     }
     const obtenerMontoGastoFijo = async () => {
       try { 
-        const monto = await gatosMontoTotalDiario(registroDiarioId,"fijo");
+        const monto = await gatosMontoTotalDiario(registroDiarioId,"fijo",getClienteId());
         const montoNumerico = parseFloat(monto);
         if (!isNaN(montoNumerico)) {
           setGastoFijo(Number(monto));
@@ -88,7 +89,7 @@ export default function ResumenGastos({ data, gastosExistentes = [], registroDia
     }
     const obtenerMontoGastoVariable = async () => {
       try { 
-        const monto = await gatosMontoTotalDiario(registroDiarioId,"variable");
+        const monto = await gatosMontoTotalDiario(registroDiarioId,"variable",getClienteId());
         const montoNumerico = parseFloat(monto);
         if (!isNaN(montoNumerico)) {
           setGastoVariable(Number(monto));

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { checkAperturaCaja } from '../lib/operaciones.api';
 import { getCurrentDate } from '../lib/utils';
+import { getClienteId } from './authService';
 
 const useCajaAbierta = () => {
   const [cajaAbierta, setCajaAbierta] = useState(false);
@@ -13,8 +14,8 @@ const useCajaAbierta = () => {
   useEffect(() => {
     const verificarCaja = async () => {
       try {
-        const fechaActual = getCurrentDate();
-        const res = await checkAperturaCaja(getCurrentDate());
+        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()};
+        const res = await checkAperturaCaja(data);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setRegistroDiarioId(res.registro_diario_id);

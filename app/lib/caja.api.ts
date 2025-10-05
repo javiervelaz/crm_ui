@@ -1,8 +1,8 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'dia') => {
+export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'dia',cliente:BigInt) => {
     
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${filtro}`, {
+    const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${filtro}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -20,9 +20,9 @@ export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'di
 
   };
   
-  export const getRegistroDiarioDetalle = async (id: number) => {
+  export const getRegistroDiarioDetalle = async (id: number,cliente: BigInt) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${id}/detalle`, {
+    const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${id}/detalle/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

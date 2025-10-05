@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { createTipoProducto, getTipoProductoById, updateTipoProducto } from '@/app/lib/tipoproducto.api';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { useParams, useRouter } from 'next/navigation';
@@ -10,7 +11,8 @@ export default function FormTipoProducto() {
   const { id } = useParams();
   const router = useRouter();
   const [formData, setFormData] = useState({
-    nombre: ''
+    nombre: '',
+    cliente_id: 0
   });
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,7 @@ export default function FormTipoProducto() {
   const fetchTipoProducto = async () => {
     try {
       const data = await getTipoProductoById(Number(id));
-      setFormData({ nombre: data.nombre });
+      setFormData({ nombre: data.nombre});
     } catch (error) {
       console.error('Error cargando tipo de producto:', error);
     }
@@ -37,6 +39,7 @@ export default function FormTipoProducto() {
       if (id) {
         await updateTipoProducto(Number(id), formData);
       } else {
+        formData.cliente_id = getClienteId();
         await createTipoProducto(formData);
       }
       router.push('/dashboard/tipo-producto');

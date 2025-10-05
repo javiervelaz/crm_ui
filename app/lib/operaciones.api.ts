@@ -67,9 +67,9 @@ export const abrirCaja = async (data: any) => {
   }
 
 
-  export const getPedidosByRegistroId = async (Id: number) => {
+  export const getPedidosByRegistroId = async (Id: number, cliente: BigInt) => {
     try {
-      const response = await fetch(`${apiUrl}/operaciones/listar-pedidos/${Id}`, {
+      const response = await fetch(`${apiUrl}/operaciones/listar-pedidos/${Id}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -94,16 +94,16 @@ export const abrirCaja = async (data: any) => {
     }
   };
 
-  export const terminarPedido =  async (id: number) => {
+  export const terminarPedido =  async (id: number, data: any) => {
     try {
-      console.log("id",id)
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/terminar-pedido/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-        }
+        },
+        body: JSON.stringify(data),
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
@@ -115,8 +115,8 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const deletePedido = async (id: number) => {
-    const response = await fetch(`${apiUrl}/operaciones/borrar-pedido/${id}`, {
+  export const deletePedido = async (id: number,cliente: BigInt) => {
+    const response = await fetch(`${apiUrl}/operaciones/borrar-pedido/${id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -128,10 +128,10 @@ export const abrirCaja = async (data: any) => {
     return await response.json();
   };
 
-  export const pedidoMontoTotalDiario =  async (id: number) => {
+  export const pedidoMontoTotalDiario =  async (id: number, cliente: BigInt) => {
     try {
       const token = localStorage.getItem('token');
-      const response =await fetch(`${apiUrl}/operaciones/pedido-monto-total/${id}`, {
+      const response =await fetch(`${apiUrl}/operaciones/pedido-monto-total/${id}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -190,10 +190,10 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const getCajaInicial =  async (id: number) => {
+  export const getCajaInicial =  async (id: number,cliente: BigInt) => {
     try {
       const token = localStorage.getItem('token');
-      const response =await fetch(`${apiUrl}/operaciones/caja-inicial/${id}`, {
+      const response =await fetch(`${apiUrl}/operaciones/caja-inicial/${id}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

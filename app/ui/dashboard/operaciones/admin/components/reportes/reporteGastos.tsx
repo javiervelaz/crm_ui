@@ -1,3 +1,4 @@
+import { getClienteId } from "@/app/lib/authService";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
@@ -62,7 +63,7 @@ export default function ReporteGastosPage() {
   const fetchCategoriasSalida = useCallback(async () => {
     try {
       // Cambiar por tu endpoint real
-      const response = await axios.get(`${apiUrl}/reportes/salida/categoria-salida`);
+      const response = await axios.get(`${apiUrl}/reportes/salida/categoria-salida/${getClienteId()}`);
       setCategoriasSalida(response.data);
     } catch (err) {
       console.error('Error fetching categorías salida:', err);
@@ -92,7 +93,8 @@ export default function ReporteGastosPage() {
             payload = {
               fecha_desde: format(fechaDesde, 'yyyy-MM-dd'),
               fecha_hasta: format(fechaHasta, 'yyyy-MM-dd'),
-              tipoId: parseInt(categoriaSeleccionada) // Convertir a número
+              tipoId: parseInt(categoriaSeleccionada),
+              cliente_id: getClienteId()
             };
             endpoint = `${apiUrl}/reportes/gastos/tipo-categoria-filter`
           } else {
@@ -100,7 +102,8 @@ export default function ReporteGastosPage() {
             payload = {
               fecha_desde: format(fechaDesde, 'yyyy-MM-dd'),
               fecha_hasta: format(fechaHasta, 'yyyy-MM-dd'),
-              salida_descripcion: categoriaSeleccionada // Mantener como string
+              salida_descripcion: categoriaSeleccionada,
+              cliente_id: getClienteId()
             };
             endpoint = `${apiUrl}/reportes/gastos/categoria-salida-filter`;
           }
@@ -108,6 +111,7 @@ export default function ReporteGastosPage() {
       
 
       const res = await axios.post(endpoint, payload);
+      console.log(res.data);
       setGastos(res.data);
     } catch (err) {
       console.error('Error fetching gastos:', err);

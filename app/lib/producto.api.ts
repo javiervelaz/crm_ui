@@ -1,8 +1,8 @@
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getProductoList = async () => {
+export const getProductoList = async (cliente: BigInt) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/producto/list`, {
+    const response = await fetch(`${apiUrl}/producto/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -38,8 +38,8 @@ export const getProductoList = async () => {
     return await response.json();
   };
 
-  export const getProductoById = async (Id: number | string | string[]) => {
-    const response = await fetch(`${apiUrl}/producto/${Id}`, {
+  export const getProductoById = async (Id: number | string | string[], cliente: BigInt) => {
+    const response = await fetch(`${apiUrl}/producto/${Id}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -71,8 +71,8 @@ export const getProductoList = async () => {
     return await response.json();
   };
 
-  export const deleteProducto = async (id: number | string | string[]) => {
-    const response = await fetch(`${apiUrl}/producto/${id}`, {
+  export const deleteProducto = async (id: number | string | string[],cliente: BigInt) => {
+    const response = await fetch(`${apiUrl}/producto/${id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

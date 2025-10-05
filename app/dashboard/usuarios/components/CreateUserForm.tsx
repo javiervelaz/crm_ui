@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from '@/app/lib/authService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { createUser } from '@/app/lib/usuario.api';
 import { useRouter } from 'next/navigation';
@@ -7,12 +8,14 @@ import { useState } from 'react';
 
 
 const CreateUserPage = () => {
+  const clienteId = getClienteId();
   useAuthCheck();
   const [userDetails, setUserDetails] = useState({
     nombre:'',
     apellido: '',
     email: '',
-    user_type_id: 0
+    user_type_id: 0,
+    cliente_id: clienteId
   });
   const router = useRouter();
 

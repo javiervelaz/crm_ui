@@ -1,3 +1,4 @@
+import { getClienteId } from "@/app/lib/authService";
 import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useCajaAbierta from '@/app/lib/useCajaAbierta';
@@ -19,7 +20,7 @@ const GastoWizard = ({ }) => {
   useEffect(() => {
 
     const fetchCategorias = async () => {
-      const data = await getGastoCategorias();
+      const data = await getGastoCategorias(getClienteId());
     
       // Agrupamiento correcto por tipo
       const tiposMap = new Map();
@@ -64,7 +65,7 @@ const GastoWizard = ({ }) => {
     };
 
     const fetchGastos = async () => {
-      const data = await getGastosPorRegistro(registroDiarioId);
+      const data = await getGastosPorRegistro(getClienteId());
       setGastosExistentes(data);
     };
 
@@ -121,7 +122,7 @@ const GastoWizard = ({ }) => {
       try {
         await crearGasto(payload);
         notifySuccess('Gastos registrados correctamente.');
-        const nuevos = await getGastosPorRegistro(registroDiarioId);
+        const nuevos = await getGastosPorRegistro(getClienteId());
         setGastosExistentes(nuevos);
         setGastosPorCategoria((prev) => ({
           ...prev,

@@ -1,5 +1,6 @@
 
 
+import { getClienteId } from "@/app/lib/authService";
 import { deleteProducto, getProductoList } from '@/app/lib/producto.api';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { lusitana } from '@/app/ui/fonts';
@@ -43,7 +44,7 @@ export default function ProductosPage() {
 
   const fetchProductos = async () => {
     try {
-      const data = await getProductoList();
+      const data = await getProductoList(getClienteId());
       // Asegurarse de que los productos tengan los campos necesarios
       const productosConDatos = data.map((producto: any) => ({
         ...producto,
@@ -74,7 +75,7 @@ export default function ProductosPage() {
   const handleDelete = async (id: number) => {
     if (confirm('¿Estás seguro de eliminar este producto?')) {
       try {
-        await deleteProducto(id);
+        await deleteProducto(id, getClienteId());
         setProductos(productos.filter(producto => producto.id !== id));
         notifySuccess('Producto eliminado correctamente');
       } catch (error) {

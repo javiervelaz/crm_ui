@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { deleteTipoProducto, getTipoProductoList } from '@/app/lib/tipoproducto.api';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { lusitana } from '@/app/ui/fonts';
@@ -28,7 +29,7 @@ export default function TipoProductoPage() {
 
   const fetchTipos = async () => {
     try {
-      const data = await getTipoProductoList();
+      const data = await getTipoProductoList(getClienteId());
       setTipos(data);
     } catch (err) {
       console.error('Error cargando tipos de producto:', err);

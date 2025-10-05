@@ -1,3 +1,4 @@
+import { getClienteId } from "@/app/lib/authService";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
@@ -116,7 +117,8 @@ export default function ReporteClientesPage() {
     const payload = {
       fecha_desde: format(fechaDesde, 'yyyy-MM-dd'),
       fecha_hasta: format(fechaHasta, 'yyyy-MM-dd'),
-      tipo_cliente: selectedTiposCliente.length > 0 ? selectedTiposCliente.map(t => t.id).join(',') : null
+      tipo_cliente: selectedTiposCliente.length > 0 ? selectedTiposCliente.map(t => t.id).join(',') : null,
+      cliente_id: getClienteId()
     };
     
     try {

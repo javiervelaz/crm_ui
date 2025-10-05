@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { getProductoById } from '@/app/lib/producto.api';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,7 +17,7 @@ export default function DetalleProductoPage() {
 
   const fetchProducto = async () => {
     try {
-      const data = await getProductoById(Number(id));
+      const data = await getProductoById(Number(id),getClienteId());
       setProducto(data);
     } catch (error) {
       console.error('Error cargando producto:', error);

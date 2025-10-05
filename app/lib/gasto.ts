@@ -1,8 +1,8 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getGastoCategorias = async () => {
+export const getGastoCategorias = async (cliente: BigInt) => {
     
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/categoria-salida/list`, {
+    const response = await fetch(`${apiUrl}/categoria-salida/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -19,9 +19,9 @@ export const getGastoCategorias = async () => {
       return await response.json();
   };
 
-  export const getGastosPorRegistro = async () => {
+  export const getGastosPorRegistro = async (id:number, cliente: BigInt) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/salida-caja/list`, {
+    const response = await fetch(`${apiUrl}/salida-caja/list/${id}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -92,10 +92,10 @@ export const getGastoCategorias = async () => {
   };
 
 
-  export const gatosMontoTotalDiario =  async (id: number, data: any) => {
+  export const gatosMontoTotalDiario =  async (id: number, data: any,cliente: BigInt) => {
     try {
       const token = localStorage.getItem('token');
-      const payload = { "salida_categoria_id": data}
+      const payload = { "salida_categoria_id": data, "cliente_id" : cliente}
       const response =await fetch(`${apiUrl}/salida-caja/monto-gastos/${id}`, {
         method: 'POST',
         headers: {
@@ -132,8 +132,8 @@ export const getGastoCategorias = async () => {
     return await response.json();
   };
 
-  export const getCategoriaSalidaById = async (Id: number | string | string[]) => {
-    const response = await fetch(`${apiUrl}/categoria-salida/${Id}`, {
+  export const getCategoriaSalidaById = async (Id: number | string | string[], cliente : BigInt) => {
+    const response = await fetch(`${apiUrl}/categoria-salida/${Id}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -149,8 +149,8 @@ export const getGastoCategorias = async () => {
     return await response.json();
   };
 
-  export const deleteCategoriaSalida = async (id: number | string | string[]) => {
-    const response = await fetch(`${apiUrl}/categoria-salida/${id}`, {
+  export const deleteCategoriaSalida = async (id: number | string | string[], cliente:BigInt) => {
+    const response = await fetch(`${apiUrl}/categoria-salida/${id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

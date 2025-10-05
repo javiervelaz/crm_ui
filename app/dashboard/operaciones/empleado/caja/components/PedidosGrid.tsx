@@ -1,3 +1,4 @@
+import { getClienteId } from "@/app/lib/authService";
 import { deletePedido, terminarPedido } from "@/app/lib/operaciones.api";
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -44,9 +45,9 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
               pedido.id === pedidoId ? { ...pedido, status: newStatus } : pedido
             )
           );
-
+          const data = {cliente_id: getClienteId()}
           // Llamada a la API para actualizar el estado del pedido en la base de datos
-          await terminarPedido(pedidoId);
+          await terminarPedido(pedidoId,data);
 
           // Refresca la lista de pedidos desde la base de datos
           await fetchPedidos();
@@ -58,7 +59,7 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
   const handleDelete = async (id: number) => {
     if (confirm('¿Estás seguro de cancelar el pedido?')) {
       try {
-        await deletePedido(id);
+        await deletePedido(id,getClienteId());
         await fetchPedidos();
       } catch (error) {
         console.error('Error eliminando pedido', error);

@@ -1,5 +1,6 @@
 
 
+import { getClienteId } from "@/app/lib/authService";
 import { deleteCategoriaSalida, getGastoCategorias } from '@/app/lib/gasto';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { lusitana } from '@/app/ui/fonts';
@@ -37,6 +38,7 @@ export default function TipoSalidaPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -51,7 +53,7 @@ export default function TipoSalidaPage() {
 
   const fetchTipoSalida = async () => {
     try {
-      const data = await getGastoCategorias();
+      const data = await getGastoCategorias(getClienteId());
       setTipoSalida(data);
     } catch (err) {
       setError('Error al cargar tipo salida');
@@ -70,10 +72,10 @@ export default function TipoSalidaPage() {
     router.push(`/dashboard/tipo-salida/${id}/edit`);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, cliente: BigInt) => {
     if (confirm('¿Estás seguro de eliminar esta categoria?')) {
       try {
-        await deleteCategoriaSalida(id);
+        await deleteCategoriaSalida(id,cliente);
         notifySuccess('Categoria de gasto eliminado correctamente');
         fetchTipoSalida(); // ← AQUÍ ESTÁ EL CAMBIO: Recargar la lista
       } catch (error) {

@@ -1,3 +1,4 @@
+import { getClienteId } from '@/app/lib/authService';
 import { getMedioPagoList } from '@/app/lib/mediopago.api';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { crearPedido } from '@/app/lib/operaciones.api';
@@ -35,9 +36,10 @@ interface PedidoState {
   usuario_id: number;
   sucursal_id: number;
   medio_pago_id: number | null;
-  cliente_id: number | null;
+  user_cliente_id: number | null;
   paga_efectivo: number; // Nuevo campo
   vuelto_pago_efectivo: number; // Nuevo campo
+  cliente_id: BigInt | null;
 }
 
 interface Producto {
@@ -122,10 +124,10 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
     usuario_id: usuario_id,
     sucursal_id: 1,
     medio_pago_id: null,
-    cliente_id: null,
+    user_cliente_id: null,
     paga_efectivo: 0, // Inicializado en 0
-    vuelto_pago_efectivo: 0 // Inicializado en 0
-
+    vuelto_pago_efectivo: 0, // Inicializado en 0
+    cliente_id: getClienteId(),
   });
 
   const [errors, setErrors] = useState<{
@@ -145,7 +147,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
   useEffect(() => {
     //console.log('Productos actuales:', pedido.productos);
     const fetchProductos = async () => {
-      const response = await getProductoList();
+      const response = await getProductoList(getClienteId());
       setProductos(response);
     };
     
@@ -155,7 +157,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
     };
 
     const fetchTipoProductos = async () => {
-      const data = await getTipoProductoList();
+      const data = await getTipoProductoList(getClienteId());
       setTipoProductos(data);
       if (data.length > 0) setActiveTipoProducto(data[0].id);
     };
@@ -406,7 +408,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
                   cliente_nombre: cliente.nombre || '',
                   cliente_casa_nro: cliente.casa_nro || '',
                   cliente_barrio: cliente.barrio || '',
-                  cliente_id :  cliente.id
+                  user_cliente_id :  cliente.id
                 }));
                 const clienteData = await getClienteEstadistica(cliente.id);
                 setClienteDataEstadistica( clienteData);
