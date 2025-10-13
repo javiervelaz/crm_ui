@@ -1,29 +1,44 @@
-'use client'
-import useAuthCheck from '@/app/lib/useAuthCheck';
+'use client';
+
+import { MODULE_PERMISSIONS } from '@/app/lib/modulePermissions';
+import { useAuthCheck } from '@/app/lib/useAuthCheck';
 import LoginForm from '@/app/ui/LoginForm';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 interface DecodedToken {
-  userId: string;
-  role: string;
+  modules: string[];
+  exp: number;
 }
 
 export default function Page() {
   const { loading } = useAuthCheck();
   const router = useRouter();
-  
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
-        
-        if (decodedToken.role === 'admin') {
-          router.push('/dashboard/operaciones/admin');
-        } else if (decodedToken.role === 'empleado') {
-          router.push('/dashboard/operaciones/empleado');
+        console.log("🚀 Token detectado:", decodedToken);
+        const currentTime = Date.now() / 1000;
+        if (decodedToken.exp < currentTime) {
+          console.warn('Token expirado');
+          localStorage.removeItem('token');
+          return;
+        }
+
+        const modules = decodedToken.modules || [];
+
+        if (modules.length > 0) {
+          // 🔹 Buscar el primer módulo válido definido en modulePermissions
+          const firstValidModule = modules.find((m) => MODULE_PERMISSIONS[m]);
+          const defaultRoute =
+            (firstValidModule && MODULE_PERMISSIONS[firstValidModule]?.menu.href) ||
+            '/dashboard';
+
+          router.push(defaultRoute);
         }
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -57,6 +72,7 @@ export default function Page() {
     );
   }
 
+  // 🔹 Mostrar login si no hay token válido
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-gray-100">
       <div className="flex flex-col gap-4 items-center">

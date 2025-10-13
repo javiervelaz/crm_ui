@@ -1,5 +1,7 @@
 // userService.ts
+import apiClient from "@/app/lib/apiClient";
 import { notifyError, notifySuccess } from './notificationService';
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export const createUser = async (userDetails: any) => {
@@ -69,20 +71,24 @@ export const createUser = async (userDetails: any) => {
   };
   
   export const getUserList = async (cliente :  BigInt) => {
-    const response = await fetch(`${apiUrl}/users/list/${cliente}`, {
+    const token = localStorage.getItem('token');
+    const response = await apiClient(`${apiUrl}/users/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
+    console.log(response);
      // Si la respuesta es un 404, retorna un array vacío
-     if (response.status === 404) {
+    if (response.status === 404) {
       return [];
     }
-    if (!response.ok) {
+   
+    if (!response.status === 200) {
       throw new Error('Failed to fetch user list');
     }
-    return await response.json();
+    return await response.data;
   };
 
   //User type

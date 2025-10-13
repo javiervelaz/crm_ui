@@ -57,7 +57,7 @@ export default function UsuariosPage() {
           getUserList(getClienteId()),
           getUserTypes()
         ]);
-      
+        
         // Enriquecer usuarios con información del tipo
       const enrichedUsers = usersData.map(user => {
         const userType = typesData.find(type => type.id === user.user_type_id);
@@ -67,11 +67,11 @@ export default function UsuariosPage() {
           user_type_descripcion: userType?.descripcion
         };
       });
+   
         setUsers(enrichedUsers);
         setUserTypes(typesData);
       } catch (err) {
         setError('Error al cargar datos');
-        console.error(err);
       } finally {
         setLoading(false);
       }
