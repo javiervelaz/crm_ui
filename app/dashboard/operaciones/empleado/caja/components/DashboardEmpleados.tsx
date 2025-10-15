@@ -27,6 +27,7 @@ useEffect(() => {
     try {
         const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
         const res = await checkAperturaCaja(data);
+        console.log("res:",res);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);

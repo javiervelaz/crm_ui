@@ -35,6 +35,7 @@ const MODULE_LABELS: Record<string, string> = {
   caja: 'Caja',
   gastos: 'Gastos',
   pedidos: 'Pedidos',
+  operaciones: 'Operaciones'
 };
 
 export default function DynamicMenu() {

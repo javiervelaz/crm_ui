@@ -1,9 +1,10 @@
 'use client';
 
 import { getClienteId } from "@/app/lib/authService";
+import { notifySuccess } from '@/app/lib/notificationService';
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
-import { createUserRol, deleteUserRol, getUserRolUserById, updateUserRol } from '@/app/lib/userRol.api';
+import { createUserRol, deleteUserRol, getUserRolUserById } from '@/app/lib/userRol.api';
 import { getUserById, getUserRol, getUserTypeById, updateUser } from '@/app/lib/usuario.api'; // Importar getUserTypeById
 import { useParams, useRouter } from 'next/navigation'; // Para manejar navegación
 import { useEffect, useState } from 'react';
@@ -57,7 +58,7 @@ const EditUserPage = () => {
 
       const fetchRols = async () => {
         try {
-          const data = await getRolList();
+          const data = await getRolList(getClienteId());
           setRolDetails(data);
         } catch (err) {
           console.error(err);
@@ -89,6 +90,7 @@ const EditUserPage = () => {
 
   // Manejar cambios en los roles seleccionados con casillas de verificación
 const handleRoleCheckboxChange = (e, rol) => {
+  //console.log(rol);
   if (e.target.checked) {
     // Añadir rol seleccionado
     setSelectedRoles((prevRoles) => [...prevRoles, { id: rol.id, descripcion: rol.descripcion }]);
@@ -119,10 +121,10 @@ const handleRoleCheckboxChange = (e, rol) => {
       roles: selectedRoles,
       profile: profileDetails,
     };
-    
   
     try {
-      const user = await getUserById(payload.id,payload.cliente_id);
+      // 🔹 Verificar si el usuario existe
+      const user = await getUserById(payload.id, payload.cliente_id);
       if (user) {
         await updateUser(user.id, {
           nombre: payload.nombre,
@@ -132,8 +134,9 @@ const handleRoleCheckboxChange = (e, rol) => {
         });
       }
   
+      // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
-      if (profile.length === 0) {
+      if (!profile || profile.length === 0) {
         await createProfile({
           id_user: payload.id,
           dni: payload.profile.dni,
@@ -141,46 +144,58 @@ const handleRoleCheckboxChange = (e, rol) => {
           password: payload.profile.password,
           legajo: payload.profile.legajo,
           fecha_ingreso: payload.profile.fecha_ingreso,
-          cliente_id: payload.cliente_id
+          cliente_id: payload.cliente_id,
         });
       } else {
         await updateProfile(profile.id, payload.profile);
       }
   
+      // ======================================================
+      // 🔹 SINCRONIZACIÓN DE ROLES (versión robusta)
+      // ======================================================
+  
       const existingUserRoles = await getUserRolUserById(payload.id, payload.cliente_id);
+      console.log("Roles actuales:", existingUserRoles);
   
-      // Crear un Set de IDs de roles existentes
-      const existingRoleIds = new Set(existingUserRoles.map((rol) => rol.id_rol));
+      // Normalizar los valores a números
+      const existingRoleIds = new Set(existingUserRoles.map(r => Number(r.id_rol)));
+      const selectedRoleIds = new Set(payload.roles.map(r => Number(r.id)));
   
-      // Iterar sobre roles seleccionados
-      for (const role of payload.roles) {
-        const idRoleAsInteger = parseInt(role.id, 10);
-        const existingRole = existingUserRoles.find((rol) => rol.id_rol === idRoleAsInteger);
+      // Calcular diferencias
+      const rolesToAdd = [...selectedRoleIds].filter(id => !existingRoleIds.has(id));
+      const rolesToDelete = [...existingRoleIds].filter(id => !selectedRoleIds.has(id));
   
-        if (existingRole) {
-          // Si el rol existe, actualiza con los valores actuales
-          await updateUserRol(existingRole.id, { id_rol: idRoleAsInteger, id_user: payload.id });
-          existingRoleIds.delete(idRoleAsInteger); // Eliminar de la lista de roles existentes
-        } else {
-          // Si no existe, crea uno nuevo
-          await createUserRol({ id_rol: idRoleAsInteger, id_user: payload.id , cliente_id: payload.cliente_id});
-        }
+      console.log("Roles a agregar:", rolesToAdd);
+      console.log("Roles a eliminar:", rolesToDelete);
+  
+      // 🔸 Crear roles nuevos
+      for (const id_rol of rolesToAdd) {
+        await createUserRol({
+          id_rol,
+          id_user: payload.id,
+          cliente_id: payload.cliente_id,
+        });
       }
   
-      // Eliminar los roles no seleccionados
-      for (const remainingRoleId of existingRoleIds) {
-        const roleToDelete = existingUserRoles.find((rol) => rol.id_rol === remainingRoleId);
+      // 🔸 Eliminar roles removidos
+      for (const id_rol of rolesToDelete) {
+        const roleToDelete = existingUserRoles.find(r => Number(r.id_rol) === id_rol);
         if (roleToDelete) {
-          await deleteUserRol(roleToDelete.id);
+          await deleteUserRol(roleToDelete.id,getClienteId());
         }
       }
   
-      // Redirigir al usuario después de guardar
+      // ======================================================
+  
+      notifySuccess('Usuario actualizado correctamente.');
       router.push('/dashboard/usuarios');
+  
     } catch (e) {
+      console.error('Error en handleSubmit:', e);
       setErrorMessage('Error: ' + e.message);
     }
   };
+  
   
 
   if (!userDetails) {

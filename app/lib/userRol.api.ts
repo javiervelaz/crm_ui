@@ -78,8 +78,8 @@ export const createUserRol = async (userRolDetails: any) => {
     }
   };
 
-  export const deleteUserRol = async (Id: string) => {
-    const response = await fetch(`${apiUrl}/userrol/${Id}`, {
+  export const deleteUserRol = async (Id: string, cliente: BigInt) => {
+    const response = await fetch(`${apiUrl}/userrol/${Id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

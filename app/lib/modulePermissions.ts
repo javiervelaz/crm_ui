@@ -22,7 +22,7 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
       '/dashboard/usuarios',
       '/dashboard/usuarios/create',
       /^\/dashboard\/usuarios\/\d+\/edit$/,
-      '/dashboard/profile'
+      
     ],
     menu: {
       href: '/dashboard/usuarios',
@@ -30,11 +30,22 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
       icon: Users,
     },
   },
-  pedidos: {
-    routes: ['/dashboard/pedidos', /^\/dashboard\/pedidos\/\d+\/detalle$/],
+ 
+  operaciones: {
+    routes: [  
+      '/dashboard/operaciones/admin/reportes',
+      '/dashboard/operaciones/caja',
+      '/dashboard/operaciones/admin/reportes/ventas',
+      '/dashboard/operaciones/admin/reportes/gastos',
+      '/dashboard/operaciones/admin/reportes/clientes',
+      '/dashboard/operaciones/admin/reportes/caja',
+      '/dashboard/operaciones/empleado',
+      '/dashboard/operaciones/empleado/caja',
+      /^\/dashboard\/operaciones\/admin\/reportes\/caja\/\d+\/detalle$/,
+    ],
     menu: {
-      href: '/dashboard/pedidos',
-      label: 'Pedidos',
+      href: '/dashboard/operaciones',
+      label: 'Operaciones',
       icon: ShoppingCart,
     },
   },
