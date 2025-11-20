@@ -351,7 +351,7 @@ const handleRoleCheckboxChange = (e, rol) => {
             </div>
           </div>
         </section>
-
+        
 
         {/* Botón de envío */}
         {errorMessage && <p className="text-red-500">{errorMessage}</p>}

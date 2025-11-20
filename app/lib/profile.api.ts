@@ -1,3 +1,4 @@
+import apiClient from './apiClient';
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export const createProfile = async (profileDetails: any) => {
@@ -38,7 +39,7 @@ export const createProfile = async (profileDetails: any) => {
 
   export const getProfileUserById = async (userId: string, cliente: BigInt) => {
     try {
-      const response = await fetch(`${apiUrl}/profile/user/${userId}/${cliente}`, {
+      const response = await apiClient(`${apiUrl}/profile/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +65,7 @@ export const createProfile = async (profileDetails: any) => {
   };
 
   export const updateProfile = async (id: string, updatedProfileDetails: any) => {
-    const response = await fetch(`${apiUrl}/profile/${id}`, {
+    const response = await apiClient(`${apiUrl}/profile/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

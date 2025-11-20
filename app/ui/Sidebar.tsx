@@ -1,6 +1,6 @@
 'use client';
 
-import DynamicMenu from '@/app/lib/DynamicMenu';
+import DynamicMenu from '@/app/lib/dynamicMenu';
 import { usePathname } from 'next/navigation';
 
 export default function Sidebar() {

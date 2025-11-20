@@ -21,7 +21,9 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
     routes: [
       '/dashboard/usuarios',
       '/dashboard/usuarios/create',
+      '/dashboard/profile',
       /^\/dashboard\/usuarios\/\d+\/edit$/,
+      /^\/dashboard\/profile\/\d+\/edit$/,
       
     ],
     menu: {
@@ -44,7 +46,7 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
       /^\/dashboard\/operaciones\/admin\/reportes\/caja\/\d+\/detalle$/,
     ],
     menu: {
-      href: '/dashboard/operaciones',
+      href: '/dashboard/operaciones/admin',
       label: 'Operaciones',
       icon: ShoppingCart,
     },
@@ -54,6 +56,8 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
       '/dashboard/productos',
       '/dashboard/productos/create',
       /^\/dashboard\/productos\/\d+\/edit$/,
+      '/dashboard/productos/tipo-producto',
+      '/dashboard/productos/tipo-producto/create',
     ],
     menu: {
       href: '/dashboard/productos',
@@ -96,6 +100,17 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
     menu: {
       href: '/dashboard/tipo-producto',
       label: 'Tipo Producto',
+      icon: FileText,
+    }
+  },
+  profile : {
+    routes: [
+      '/dashboard/profile',
+      /^\/dashboard\/profile\/\d+\/edit$/,
+    ],
+    menu: {
+      href: '/dashboard/profile',
+      label: 'Profiles',
       icon: FileText,
     }
   }

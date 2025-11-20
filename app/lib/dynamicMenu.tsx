@@ -61,7 +61,7 @@ export default function DynamicMenu() {
       </aside>
     );
   }
-
+ 
   if (!modules || modules.length === 0) {
     return (
       <div className="p-4 text-gray-400">

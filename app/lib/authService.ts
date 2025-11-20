@@ -35,3 +35,17 @@ export function isTokenExpired(): boolean {
   const currentTime = Date.now() / 1000;
   return decoded.exp < currentTime;
 }
+
+export function getAuthHeader() {
+  if (typeof window === 'undefined') return {};
+
+  const token = localStorage.getItem('token');
+  if (!token) return {};
+
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+}
+

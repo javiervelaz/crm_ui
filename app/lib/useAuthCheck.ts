@@ -41,7 +41,7 @@ export const useAuthCheck = () => {
 
       // Verificar módulos
       const userModules: string[] = decodedToken.modules || [];
-
+      console.log(userModules);
       if (userModules.length === 0) {
         console.warn('⚠️ Usuario sin módulos asignados');
         setLoading(false);
@@ -55,7 +55,7 @@ export const useAuthCheck = () => {
       // Validar acceso actual (exceptuamos login y rutas públicas)
       const publicRoutes = ['/', '/login'];
       const normalizedPath = pathname.toLowerCase();
-
+      console.log("norm path",normalizedPath);
       // Si está en login y tiene token válido → redirigir al primer módulo
       if (publicRoutes.includes(normalizedPath)) {
         const defaultModule = userModules[0];
@@ -65,10 +65,20 @@ export const useAuthCheck = () => {
         return;
       }
 
-      // Verificar si el módulo actual está permitido
-      const hasAccess = userModules.some((mod) =>
-        normalizedPath.includes(`/dashboard/${mod}`)
-      );
+      // 🧩 Rutas auxiliares permitidas (no son módulos, pero deben ser accesibles)
+      const auxiliaryRoutes = [
+        '/dashboard/profile',
+        '/dashboard/settings',
+        '/dashboard/productos/tipo-proucto',
+        '/dashboard/home',
+      ];
+
+      // Verificar acceso por módulo o por ruta auxiliar
+      const hasAccess =
+        userModules.some((mod) =>
+          normalizedPath.startsWith(`/dashboard/${mod}`)
+        ) ||
+        auxiliaryRoutes.some((aux) => normalizedPath.startsWith(aux));
 
       if (!hasAccess) {
         console.warn(`🚫 Acceso denegado a ${normalizedPath}`);
