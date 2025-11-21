@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
  * Solo controla el orden visual, no los permisos.
  */
 const MODULE_ORDER = [
-  'pedidos',
+  'operaciones',
   'productos',
   'caja',
   'gasto',
@@ -27,7 +27,6 @@ const MODULE_ORDER = [
   'cerrarcaja',
   'reportes',
   'usuarios',
-  'operaciones',
 ];
 
 /**
@@ -39,7 +38,7 @@ const MODULE_ICONS: Record<string, any> = {
   productos: Pizza,
   caja: DollarSign,
   gasto: DollarSign,
-  pedidos: ShoppingCart,
+  operaciones: ShoppingCart,
   flujo: DollarSign,
   cerrarcaja:DollarSign
 };
@@ -53,8 +52,7 @@ const MODULE_LABELS: Record<string, string> = {
   productos: 'Productos',
   caja: 'Caja',
   gasto: 'Gastos',
-  pedidos: 'Pedidos',
-  operaciones: 'Operaciones',
+  operaciones: 'Tomar Pedidos',
   flujo: 'Cash Flow',
   cerrarcaja: 'Cerrar caja'
 };

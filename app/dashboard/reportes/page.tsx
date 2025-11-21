@@ -47,28 +47,28 @@ const Page = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ResumenCard
                 title="Resumen de Ventas"
-                href="/dashboard/operaciones/admin/reportes/ventas"
+                href="/dashboard/reportes/reportes/ventas"
                 data={ventasData}
                 color="#10b981" // verde
               />
 
               <ResumenCard
                 title="Resumen de Gastos"
-                href="/dashboard/operaciones/admin/reportes/gastos"
+                href="/dashboard/reportes/reportes/gastos"
                 data={gastosData}
                 color="#ef4444" // rojo
               />
 
               <ResumenCard
                 title="Clientes del Día"
-                href="/dashboard/operaciones/admin/reportes/clientes"
+                href="/dashboard/reportes/reportes/clientes"
                 data={clientesData}
                 color="#8b5cf6" // violeta
               />
 
               <ResumenCard
                 title="Reporte Caja"
-                href="/dashboard/operaciones/admin/reportes/caja"
+                href="/dashboard/reportes/reportes/caja"
                 data={clientesData}
                 color="#8b5cf6" // violeta
               />

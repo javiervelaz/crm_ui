@@ -50,13 +50,13 @@ export const createProfile = async (profileDetails: any) => {
       if (response.status === 404) {
         return [];
       }
-  
+      console.log(response)
       // Si hay otro tipo de error, lanza una excepción
-      if (!response.ok) {
+      if (response.status !== 200) {
         throw new Error('Failed to fetch user');
       }
   
-      return await response.json();
+      return await response.data;
     } catch (error) {
       console.error('Error al obtener el perfil del usuario:', error);
       // Si ocurre cualquier otro error, retorna un array vacío
@@ -65,7 +65,8 @@ export const createProfile = async (profileDetails: any) => {
   };
 
   export const updateProfile = async (id: string, updatedProfileDetails: any) => {
-    const response = await apiClient(`${apiUrl}/profile/${id}`, {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/profile/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
