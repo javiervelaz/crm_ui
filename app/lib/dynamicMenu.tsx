@@ -24,6 +24,7 @@ const MODULE_ORDER = [
   'caja',
   'gasto',
   'flujo',
+  'cerrarcaja',
   'reportes',
   'usuarios',
   'operaciones',
@@ -40,6 +41,7 @@ const MODULE_ICONS: Record<string, any> = {
   gasto: DollarSign,
   pedidos: ShoppingCart,
   flujo: DollarSign,
+  cerrarcaja:DollarSign
 };
 
 /**
@@ -54,6 +56,7 @@ const MODULE_LABELS: Record<string, string> = {
   pedidos: 'Pedidos',
   operaciones: 'Operaciones',
   flujo: 'Cash Flow',
+  cerrarcaja: 'Cerrar caja'
 };
 
 /**
