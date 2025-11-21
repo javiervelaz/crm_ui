@@ -15,28 +15,70 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 /**
- * Mapeo de íconos y etiquetas por módulo.
- * El backend define `modules: ['usuarios', 'reportes', 'productos']`
- * y aquí definimos cómo mostrarlos.
+ * Orden maestro de los módulos en el menú.
+ * Solo controla el orden visual, no los permisos.
+ */
+const MODULE_ORDER = [
+  'pedidos',
+  'productos',
+  'caja',
+  'gasto',
+  'flujo',
+  'reportes',
+  'usuarios',
+  'operaciones',
+];
+
+/**
+ * Mapeo de íconos por módulo.
  */
 const MODULE_ICONS: Record<string, any> = {
   usuarios: Users,
   reportes: BarChart3,
   productos: Pizza,
   caja: DollarSign,
-  gastos: FileText,
+  gasto: DollarSign,
   pedidos: ShoppingCart,
+  flujo: DollarSign,
 };
 
+/**
+ * Etiquetas legibles por módulo.
+ */
 const MODULE_LABELS: Record<string, string> = {
   usuarios: 'Usuarios',
   reportes: 'Reportes',
   productos: 'Productos',
   caja: 'Caja',
-  gastos: 'Gastos',
+  gasto: 'Gastos',
   pedidos: 'Pedidos',
-  operaciones: 'Operaciones'
+  operaciones: 'Operaciones',
+  flujo: 'Cash Flow',
 };
+
+/**
+ * Ordena la lista de módulos según MODULE_ORDER.
+ * Los que no estén definidos en MODULE_ORDER se van al final,
+ * ordenados alfabéticamente entre sí.
+ */
+function sortModules(mods: string[]): string[] {
+  return [...mods].sort((a, b) => {
+    const indexA = MODULE_ORDER.indexOf(a);
+    const indexB = MODULE_ORDER.indexOf(b);
+
+    const aInOrder = indexA !== -1;
+    const bInOrder = indexB !== -1;
+
+    if (aInOrder && bInOrder) {
+      return indexA - indexB;
+    }
+    if (aInOrder && !bInOrder) return -1; // a primero
+    if (!aInOrder && bInOrder) return 1;  // b primero
+
+    // Ninguno está en MODULE_ORDER → orden alfabético estable
+    return a.localeCompare(b);
+  });
+}
 
 export default function DynamicMenu() {
   const { modules, loading } = useAuthCheck();
@@ -61,7 +103,7 @@ export default function DynamicMenu() {
       </aside>
     );
   }
- 
+
   if (!modules || modules.length === 0) {
     return (
       <div className="p-4 text-gray-400">
@@ -69,6 +111,8 @@ export default function DynamicMenu() {
       </div>
     );
   }
+
+  const orderedModules = sortModules(modules);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -78,7 +122,7 @@ export default function DynamicMenu() {
   return (
     <nav className="flex flex-col flex-1 overflow-y-auto">
       <ul className="flex flex-col p-4 space-y-2">
-        {modules.map((mod) => {
+        {orderedModules.map((mod) => {
           const Icon = MODULE_ICONS[mod] || FileText;
           const label = MODULE_LABELS[mod] || mod;
           const href = `/dashboard/${mod}`;

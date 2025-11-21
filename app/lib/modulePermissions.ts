@@ -113,5 +113,15 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
       label: 'Profiles',
       icon: FileText,
     }
-  }
+  },
+  flujo: {
+    routes: [
+      '/dashboard/flujo',
+    ],
+    menu: {
+      href: '/dashboard/flujo',
+      label: 'Flujo Caja',
+      icon: DollarSign,
+    },
+  },
 };

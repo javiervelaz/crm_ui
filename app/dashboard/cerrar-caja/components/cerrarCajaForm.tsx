@@ -5,7 +5,7 @@ import { cerrarCaja, checkAperturaCaja, getCajaInicial, pedidoMontoTotalDiario }
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getCurrentDate } from "../../../../../lib/utils";
+import { getCurrentDate } from "@/app/lib/utils";
 
 interface DecodedToken {
     userId: number;
