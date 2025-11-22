@@ -2,7 +2,7 @@ import { getClienteId } from "@/app/lib/authService";
 import { checkAperturaCaja, getPedidosByRegistroId } from "@/app/lib/operaciones.api";
 import { jwtDecode } from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
-import { getCurrentDate } from "../../../../../lib/utils";
+import { getCurrentDate } from "@/app/lib/utils";
 import Modal from './Modal';
 import PedidoForm from './PedidoForm';
 import PedidosGrid from './PedidosGrid';
@@ -26,6 +26,7 @@ useEffect(() => {
   const verificarCaja = async () => {
     try {
         const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
+        console.log(data)
         const res = await checkAperturaCaja(data);
         console.log("res:",res);
         if (res.caja_abierta) {
@@ -72,7 +73,7 @@ useEffect(() => {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Dashboard de Empleados</h1>
+      <h1 className="text-xl font-bold mb-4">Ingresar pedidos</h1>
 
       {!cajaAbierta ? (
         <div className="flex justify-end">

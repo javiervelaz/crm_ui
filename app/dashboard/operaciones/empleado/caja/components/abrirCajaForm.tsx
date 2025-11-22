@@ -4,6 +4,7 @@ import { abrirCaja } from '@/app/lib/operaciones.api';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getCurrentDate } from "@/app/lib/utils";
 
 interface DecodedToken {
     userId: string;
@@ -37,7 +38,7 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
           const token = localStorage.getItem('token');
           if(token) {
             const decoded = jwtDecode<DecodedToken>(token);
-            var currentDate = new Date();
+            var currentDate = getCurrentDate().fecha;
             const data = {
               fecha: currentDate,
               usuario_apertura_id: decoded.userId,
