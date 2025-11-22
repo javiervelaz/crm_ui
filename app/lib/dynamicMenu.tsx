@@ -21,7 +21,7 @@ import { useEffect, useState } from 'react';
 const MODULE_ORDER = [
   'operaciones',
   'productos',
-  'caja',
+  'roles',
   'gasto',
   'flujo',
   'cerrarcaja',
@@ -50,7 +50,7 @@ const MODULE_LABELS: Record<string, string> = {
   usuarios: 'Usuarios',
   reportes: 'Reportes',
   productos: 'Productos',
-  caja: 'Caja',
+  roles: 'Configurar Roles',
   gasto: 'Gastos',
   operaciones: 'Tomar Pedidos',
   flujo: 'Cash Flow',

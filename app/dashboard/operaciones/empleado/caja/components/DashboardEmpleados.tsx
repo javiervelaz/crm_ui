@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getCurrentDate } from "@/app/lib/utils";
 import Modal from './Modal';
 import PedidoForm from './PedidoForm';
-import PedidosGrid from './PedidosGrid';
+import PedidosGrid from './PedidosGrid';getCurrentDate().fecha
 import AbrirCajaForm from "./abrirCajaForm";
 
 interface DecodedToken {
@@ -25,7 +25,7 @@ const DashboardEmpleados = () => {
 useEffect(() => {
   const verificarCaja = async () => {
     try {
-        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
+        const data = {fecha:,cliente_id:getClienteId()} as any;
         console.log(data)
         const res = await checkAperturaCaja(data);
         console.log("res:",res);
