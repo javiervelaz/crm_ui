@@ -2,7 +2,6 @@
 'use client'
 
 import ProductosPage from '@/app/dashboard/productos/componentes/productosPage';
-import DynamicMenu from '@/app/lib/dynamicMenu';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 
 const Page = () => {
@@ -29,7 +28,6 @@ const Page = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="flex">
-        <DynamicMenu />
         
         <main className="flex-1 min-h-screen bg-gray-100">
           <ProductosPage />

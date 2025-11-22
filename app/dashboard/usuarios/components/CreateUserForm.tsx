@@ -1,18 +1,22 @@
 'use client'
 
+import { getClienteId } from '@/app/lib/authService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { createUser } from '@/app/lib/usuario.api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 
 
 const CreateUserPage = () => {
+  const clienteId = getClienteId();
   useAuthCheck();
   const [userDetails, setUserDetails] = useState({
     nombre:'',
     apellido: '',
     email: '',
-    user_type_id: 0
+    user_type_id: 0,
+    cliente_id: clienteId
   });
   const router = useRouter();
 
@@ -24,6 +28,10 @@ const CreateUserPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    if (!validarCampos()) {
+      notifyError('Debe seleccionar rellenar los campos obligatorios.');
+      return;
+    }
     e.preventDefault();
     try {
       await createUser(userDetails);
@@ -44,6 +52,48 @@ const CreateUserPage = () => {
     router.push("/dashboard/usuarios");
   };
 
+  const [errors, setErrors] = useState<{
+    nombre: string;
+    apellido: string;
+    email: string;
+    user_type_id: number
+  }>({
+    nombre: '',
+    apellido: '',
+    email: '',
+    user_type_id: 0
+  });
+
+   // Función para validar todos los campos
+  const validarCampos = () => {
+    const newErrors = {
+      nombre: '',
+      apellido: '',
+      email: '',
+      user_type_id: 0,
+    };
+
+    let isValid = true;
+
+     // 1. Validar Teléfono (siempre obligatorio)
+    if (!userDetails.nombre || userDetails.nombre.trim() === '') {
+      newErrors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+    if (!userDetails.apellido || userDetails.apellido.trim() === '') {
+      newErrors.apellido = 'El apellido es obligatorio';
+      isValid = false;
+    }
+     if (!userDetails.email || userDetails.email.trim() === '') {
+      newErrors.email = 'El email es obligatorio';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  }
+
+
   return (
     <div className="w-full p-6">
       <h1 className="text-2xl mb-6">Crear nuevo usuario</h1>
@@ -57,8 +107,14 @@ const CreateUserPage = () => {
             name="nombre"
             value={userDetails.nombre}
             onChange={handleChange}
+            onBlur={() => {
+              if ( (!userDetails.nombre || userDetails.nombre.trim() === '')) {
+                setErrors({ ...errors, nombre: 'El nombre es obligatorio' });
+              }
+            }}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
           />
+          {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700">
@@ -69,8 +125,14 @@ const CreateUserPage = () => {
             name="apellido"
             value={userDetails.apellido}
             onChange={handleChange}
+            onBlur={() => {
+              if ( (!userDetails.apellido || userDetails.apellido.trim() === '')) {
+                setErrors({ ...errors, apellido: 'El apellido es obligatorio' });
+              }
+            }}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
           />
+           {errors.apellido && <p className="text-red-500 text-sm mt-1">{errors.apellido}</p>}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700">
@@ -82,7 +144,13 @@ const CreateUserPage = () => {
             value={userDetails.email}
             onChange={handleChange}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+            onBlur={() => {
+              if ( (!userDetails.email || userDetails.email.trim() === '')) {
+                setErrors({ ...errors, email: 'El email es obligatorio' });
+              }
+            }}
           />
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700">

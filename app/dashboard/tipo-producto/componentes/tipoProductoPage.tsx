@@ -1,5 +1,6 @@
 'use client'
 
+import { getClienteId } from "@/app/lib/authService";
 import { deleteTipoProducto, getTipoProductoList } from '@/app/lib/tipoproducto.api';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { lusitana } from '@/app/ui/fonts';
@@ -28,7 +29,7 @@ export default function TipoProductoPage() {
 
   const fetchTipos = async () => {
     try {
-      const data = await getTipoProductoList();
+      const data = await getTipoProductoList(getClienteId());
       setTipos(data);
     } catch (err) {
       console.error('Error cargando tipos de producto:', err);
@@ -61,7 +62,7 @@ export default function TipoProductoPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className={`${lusitana.className} text-2xl`}>Tipos de Producto</h1>
         <button
-          onClick={() => router.push('/dashboard/tipo-producto/create')}
+          onClick={() => router.push('/dashboard/productos/tipo-producto/create')}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
         >
           <FontAwesomeIcon icon={faPlus} className="mr-2" />

@@ -1,5 +1,6 @@
 "use client";
 
+import { getClienteId } from "@/app/lib/authService";
 import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getCajaInicial, pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
@@ -61,10 +62,10 @@ export default function GastoWizard() {
     const fetchData = async () => {
       try {
         const [categoriasData, gastosData,montoVentas,montoCajaInicial] = await Promise.all([
-          getGastoCategorias(),
-          registroDiarioId ? getGastosPorRegistro(registroDiarioId) : Promise.resolve([]),
-          registroDiarioId ? pedidoMontoTotalDiario(registroDiarioId) : Promise.resolve({ sum: 0 }),
-          registroDiarioId ? getCajaInicial(registroDiarioId) : Promise.resolve(0)
+          getGastoCategorias(getClienteId()),
+          registroDiarioId ? getGastosPorRegistro(registroDiarioId,getClienteId()) : Promise.resolve([]),
+          registroDiarioId ? pedidoMontoTotalDiario(registroDiarioId,getClienteId()) : Promise.resolve({ sum: 0 }),
+          registroDiarioId ? getCajaInicial(registroDiarioId,getClienteId()) : Promise.resolve(0)
         ]);
         setCategoriasCompletas(categoriasData);
         setGastosExistentes(gastosData);
@@ -129,7 +130,8 @@ export default function GastoWizard() {
               monto: g.monto,
               categoria_salida_id: categoriaId,
               registro_diario_id: registroDiarioId,
-              usuario_id: usuario_id
+              usuario_id: usuario_id,
+              cliente_id: getClienteId()
             }));
             console.log(payload); 
           break;
@@ -142,7 +144,8 @@ export default function GastoWizard() {
               monto: g.monto,
               categoria_salida_id: categoriaId,
               registro_diario_id: registroDiarioId,
-              usuario_id: usuario_id
+              usuario_id: usuario_id,
+              cliente_id: getClienteId()
             }));
             console.log(payload);
           break;
@@ -155,7 +158,8 @@ export default function GastoWizard() {
               monto: g.monto,
               categoria_salida_id: categoriaId,
               registro_diario_id: registroDiarioId,
-              usuario_id: usuario_id
+              usuario_id: usuario_id,
+              cliente_id: getClienteId()
             }));
           break;
       }
@@ -169,7 +173,7 @@ export default function GastoWizard() {
       notifySuccess('Gastos registrados correctamente');
 
       // Actualizar lista de gastos existentes
-      const nuevosGastos = await getGastosPorRegistro(registroDiarioId);
+      const nuevosGastos = await getGastosPorRegistro(registroDiarioId,getClienteId());
       setGastosExistentes(nuevosGastos);
 
       // Limpiar el formulario de la categoría guardada

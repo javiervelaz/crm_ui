@@ -25,7 +25,7 @@ const MultiSelect = ({ selectedRoles, onChange, rolesList }) => {
         options={options}
         value={selectedOptions}
         onChange={handleChange}
-        placeholder="Selecciona roles..."
+        placeholder="Selecciona un item..."
         className="react-select-container"
         classNamePrefix="react-select"
         styles={{

@@ -1,7 +1,8 @@
+import { getClienteId } from "@/app/lib/authService";
 import { checkAperturaCaja, getPedidosByRegistroId } from "@/app/lib/operaciones.api";
 import { jwtDecode } from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
-import { getCurrentDate } from "../../../../../lib/utils";
+import { getCurrentDate } from "@/app/lib/utils";
 import Modal from './Modal';
 import PedidoForm from './PedidoForm';
 import PedidosGrid from './PedidosGrid';
@@ -24,8 +25,10 @@ const DashboardEmpleados = () => {
 useEffect(() => {
   const verificarCaja = async () => {
     try {
-      console.log(getCurrentDate());
-        const res = await checkAperturaCaja(getCurrentDate());
+        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
+        console.log(data)
+        const res = await checkAperturaCaja(data);
+        console.log("res:",res);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
@@ -44,7 +47,7 @@ useEffect(() => {
   const fetchPedidos = useCallback(async () => {
     try {
       if (!registroDiario) return;
-      const response = await getPedidosByRegistroId(registroDiario);
+      const response = await getPedidosByRegistroId(registroDiario,getClienteId());
       setPedidos(response);
     } catch (error) {
       console.error('Error al cargar pedidos:', error);
@@ -70,7 +73,7 @@ useEffect(() => {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Dashboard de Empleados</h1>
+      <h1 className="text-xl font-bold mb-4">Ingresar pedidos</h1>
 
       {!cajaAbierta ? (
         <div className="flex justify-end">

@@ -6,7 +6,7 @@ export const CreateTipoProductoButton = () => {
   const router = useRouter();
 
   const handleCreateUsers = () => {
-    router.push('/dashboard/tipo-producto');
+    router.push('/dashboard/productos/tipo-producto');
   };
 
   return (

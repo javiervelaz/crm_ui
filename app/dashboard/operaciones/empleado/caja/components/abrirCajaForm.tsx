@@ -1,8 +1,10 @@
 "use client"
+import { getClienteId } from "@/app/lib/authService";
 import { abrirCaja } from '@/app/lib/operaciones.api';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getCurrentDate } from "@/app/lib/utils";
 
 interface DecodedToken {
     userId: string;
@@ -32,16 +34,19 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
+          const client_id = getClienteId();
           const token = localStorage.getItem('token');
           if(token) {
             const decoded = jwtDecode<DecodedToken>(token);
-            var currentDate = new Date();
+            var currentDate = getCurrentDate().fecha;
             const data = {
               fecha: currentDate,
               usuario_apertura_id: decoded.userId,
               caja_inicial: parseFloat(montoInicial),
-              sucursal_id: 1//tokenData.sucursal_id
+              sucursal_id: 1,
+              cliente_id: client_id
             };
+           
             await abrirCaja(data);
             if (typeof onClose === 'function') {
               onClose();  // Verifica si onClose es una función antes de llamarla

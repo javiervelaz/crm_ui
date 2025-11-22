@@ -1,5 +1,6 @@
 'use client';
 
+import { getClienteId } from "@/app/lib/authService";
 import { getProductoById, updateProducto } from '@/app/lib/producto.api';
 import { getTipoProductoList } from "@/app/lib/tipoproducto.api";
 import { useParams, useRouter } from 'next/navigation';
@@ -12,7 +13,8 @@ const EditProductoPage = () => {
     nombre: '',
     precio_unitario: null,
     tipo_producto_id: null,
-    permite_mitad: false // Nuevo campo agregado
+    permite_mitad: false,
+    cliente_id : getClienteId(),
   });
   const router = useRouter();
 
@@ -20,7 +22,7 @@ const EditProductoPage = () => {
     if (id) {
       const fetchProducto = async () => {
         try {
-          const data = await getProductoById(id);
+          const data = await getProductoById(id,getClienteId());
           setProductoDetails({
             ...data,
             permite_mitad: data.permite_mitad || false // Asegurar que tenga valor
@@ -32,7 +34,7 @@ const EditProductoPage = () => {
 
       const fetchTipoProduto = async () => {
         try {
-          const data = await getTipoProductoList();
+          const data = await getTipoProductoList(getClienteId());
           setTipoProd(data); // Guarda la lista de tipos de productos
         } catch (err) {
           console.error(err);

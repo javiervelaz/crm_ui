@@ -1,8 +1,10 @@
 'use client';
 
+import { getClienteId } from "@/app/lib/authService";
+import { notifySuccess,notifyError } from '@/app/lib/notificationService';
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
-import { createUserRol, deleteUserRol, getUserRolUserById, updateUserRol } from '@/app/lib/userRol.api';
+import { createUserRol, deleteUserRol, getUserRolUserById } from '@/app/lib/userRol.api';
 import { getUserById, getUserRol, getUserTypeById, updateUser } from '@/app/lib/usuario.api'; // Importar getUserTypeById
 import { useParams, useRouter } from 'next/navigation'; // Para manejar navegación
 import { useEffect, useState } from 'react';
@@ -19,10 +21,11 @@ const EditUserPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    const cliente =  getClienteId();
     if (id) {
       const fetchUsers = async () => {
         try {
-          const data = await getUserById(id); // Llamada a tu servicio que obtiene la lista de usuarios
+          const data = await getUserById(id,cliente); // Llamada a tu servicio que obtiene la lista de usuarios
           setUserDetails(data);
 
           // Obtener la descripción del tipo de usuario
@@ -33,11 +36,12 @@ const EditUserPage = () => {
 
           // Obtener los detalles del perfil del usuario
           if (data.id) {
-            const profile = await getProfileUserById(data.id);
+            const profile = await getProfileUserById(data.id,cliente);
+            console.log(profile)
             setProfileDetails(profile);
           }
           // Inicializar los roles seleccionados con los roles del usuario
-          const userRols = await getUserRol(data.id);
+          const userRols = await getUserRol(data.id,cliente);
           if (userRols) {
             // Mapeamos los roles obtenidos de la base de datos y los inicializamos en el estado
             const rolesFormatted = userRols.map((rol) => ({
@@ -55,7 +59,7 @@ const EditUserPage = () => {
 
       const fetchRols = async () => {
         try {
-          const data = await getRolList();
+          const data = await getRolList(getClienteId());
           setRolDetails(data);
         } catch (err) {
           console.error(err);
@@ -87,6 +91,7 @@ const EditUserPage = () => {
 
   // Manejar cambios en los roles seleccionados con casillas de verificación
 const handleRoleCheckboxChange = (e, rol) => {
+  //console.log(rol);
   if (e.target.checked) {
     // Añadir rol seleccionado
     setSelectedRoles((prevRoles) => [...prevRoles, { id: rol.id, descripcion: rol.descripcion }]);
@@ -107,6 +112,10 @@ const handleRoleCheckboxChange = (e, rol) => {
   };
 
   const handleSubmit = async () => {
+    if (!validarCampos()) {
+      setErrorMessage('Debe seleccionar rellenar los campos obligatorios.');
+      return;
+    }
     if (selectedRoles.length === 0) {
       setErrorMessage('Debe seleccionar al menos un rol antes de guardar.');
       return;
@@ -119,7 +128,8 @@ const handleRoleCheckboxChange = (e, rol) => {
     };
   
     try {
-      const user = await getUserById(payload.id);
+      // 🔹 Verificar si el usuario existe
+      const user = await getUserById(payload.id, payload.cliente_id);
       if (user) {
         await updateUser(user.id, {
           nombre: payload.nombre,
@@ -129,8 +139,10 @@ const handleRoleCheckboxChange = (e, rol) => {
         });
       }
   
-      const profile = await getProfileUserById(payload.id);
-      if (profile.length === 0) {
+      // 🔹 Crear o actualizar perfil
+      const profile = await getProfileUserById(payload.id, payload.cliente_id);
+      console.log(payload)
+      if (!profile || profile.length === 0) {
         await createProfile({
           id_user: payload.id,
           dni: payload.profile.dni,
@@ -138,45 +150,131 @@ const handleRoleCheckboxChange = (e, rol) => {
           password: payload.profile.password,
           legajo: payload.profile.legajo,
           fecha_ingreso: payload.profile.fecha_ingreso,
+          cliente_id: payload.cliente_id,
         });
       } else {
         await updateProfile(profile.id, payload.profile);
       }
   
-      const existingUserRoles = await getUserRolUserById(payload.id);
+      // ======================================================
+      // 🔹 SINCRONIZACIÓN DE ROLES (versión robusta)
+      // ======================================================
   
-      // Crear un Set de IDs de roles existentes
-      const existingRoleIds = new Set(existingUserRoles.map((rol) => rol.id_rol));
+      const existingUserRoles = await getUserRolUserById(payload.id, payload.cliente_id);
+      console.log("Roles actuales:", existingUserRoles);
   
-      // Iterar sobre roles seleccionados
-      for (const role of payload.roles) {
-        const idRoleAsInteger = parseInt(role.id, 10);
-        const existingRole = existingUserRoles.find((rol) => rol.id_rol === idRoleAsInteger);
+      // Normalizar los valores a números
+      const existingRoleIds = new Set(existingUserRoles.map(r => Number(r.id_rol)));
+      const selectedRoleIds = new Set(payload.roles.map(r => Number(r.id)));
   
-        if (existingRole) {
-          // Si el rol existe, actualiza con los valores actuales
-          await updateUserRol(existingRole.id, { id_rol: idRoleAsInteger, id_user: payload.id });
-          existingRoleIds.delete(idRoleAsInteger); // Eliminar de la lista de roles existentes
-        } else {
-          // Si no existe, crea uno nuevo
-          await createUserRol({ id_rol: idRoleAsInteger, id_user: payload.id });
-        }
+      // Calcular diferencias
+      const rolesToAdd = [...selectedRoleIds].filter(id => !existingRoleIds.has(id));
+      const rolesToDelete = [...existingRoleIds].filter(id => !selectedRoleIds.has(id));
+  
+      console.log("Roles a agregar:", rolesToAdd);
+      console.log("Roles a eliminar:", rolesToDelete);
+  
+      // 🔸 Crear roles nuevos
+      for (const id_rol of rolesToAdd) {
+        await createUserRol({
+          id_rol,
+          id_user: payload.id,
+          cliente_id: payload.cliente_id,
+        });
       }
   
-      // Eliminar los roles no seleccionados
-      for (const remainingRoleId of existingRoleIds) {
-        const roleToDelete = existingUserRoles.find((rol) => rol.id_rol === remainingRoleId);
+      // 🔸 Eliminar roles removidos
+      for (const id_rol of rolesToDelete) {
+        const roleToDelete = existingUserRoles.find(r => Number(r.id_rol) === id_rol);
         if (roleToDelete) {
-          await deleteUserRol(roleToDelete.id);
+          await deleteUserRol(roleToDelete.id,getClienteId());
         }
       }
   
-      // Redirigir al usuario después de guardar
+      // ======================================================
+  
+      notifySuccess('Usuario actualizado correctamente.');
       router.push('/dashboard/usuarios');
+  
     } catch (e) {
+      console.error('Error en handleSubmit:', e);
       setErrorMessage('Error: ' + e.message);
     }
   };
+
+
+  const [errors, setErrors] = useState<{
+    nombre: string;
+    apellido: string;
+    email: string;
+    password:string;
+    dni:string;
+    telefono:string;
+    legajo : number;
+    fecha_ingreso:string;
+  }>({
+    nombre: '',
+    apellido: '',
+    email: '',
+    password:'',
+    dni:'',
+    telefono:'',
+    legajo : 0,
+    fecha_ingreso:'',
+  });
+
+   // Función para validar todos los campos
+  const validarCampos = () => {
+    const newErrors = {
+      nombre: '',
+      apellido: '',
+      email: '',
+      password:'',
+      dni:'',
+      telefono:'',
+      legajo : 0,
+      fecha_ingreso:'',
+    };
+
+    let isValid = true;
+
+     // 1. Validar Teléfono (siempre obligatorio)
+    if (!userDetails.nombre || userDetails.nombre.trim() === '') {
+      newErrors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+    if (!userDetails.apellido || userDetails.apellido.trim() === '') {
+      newErrors.apellido = 'El apellido es obligatorio';
+      isValid = false;
+    }
+    if (!userDetails.email || userDetails.email.trim() === '') {
+      newErrors.email = 'El email es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.password || profileDetails.password.trim() === '') {
+      newErrors.password = 'El password es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.dni || profileDetails.dni.trim() === '') {
+      newErrors.dni = 'El dni es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.telefono || profileDetails.telefono.trim() === '') {
+      newErrors.telefono = 'El telefono es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.legajo || profileDetails.legajo.trim() === '') {
+      newErrors.legajo = 'El legajo es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.fecha_ingreso || profileDetails.fecha_ingreso.trim() === '') {
+      newErrors.fecha_ingreso = 'El fecha_ingreso es obligatorio';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  }
   
 
   if (!userDetails) {
@@ -191,6 +289,8 @@ const handleRoleCheckboxChange = (e, rol) => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  
 
   return (
     <div className="w-full p-6 bg-gray-50 min-h-screen">
@@ -209,8 +309,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="nombre"
                 value={userDetails.nombre || ''}
                 onChange={handleUserDetailChange}
+                onBlur={() => {
+                  if ( (!userDetails.nombre || userDetails.nombre.trim() === '')) {
+                    setErrors({ ...errors, nombre: 'El nombre es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+               {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Apellido</label>
@@ -219,8 +325,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="apellido"
                 value={userDetails.apellido || ''}
                 onChange={handleUserDetailChange}
+                onBlur={() => {
+                  if ( (!userDetails.apellido || userDetails.apellido.trim() === '')) {
+                    setErrors({ ...errors, apellido: 'El apellido es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.apellido && <p className="text-red-500 text-sm mt-1">{errors.apellido}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -231,8 +343,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="email"
                 value={userDetails.email || ''}
                 onChange={handleUserDetailChange}
+                onBlur={() => {
+                  if ( (!userDetails.email || userDetails.email.trim() === '')) {
+                    setErrors({ ...errors, email: 'El email es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Tipo de usuario</label>
@@ -258,8 +376,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="password"
                 value={profileDetails.password || ''}
                 onChange={handleProfileDetailChange}
+                onBlur={() => {
+                  if ( (!profileDetails.password || profileDetails.password.trim() === '')) {
+                    setErrors({ ...errors, password: 'El password es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -270,8 +394,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="dni"
                 value={profileDetails.dni || ''}
                 onChange={handleProfileDetailChange}
+                onBlur={() => {
+                  if ( (!profileDetails.dni || profileDetails.dni.trim() === '')) {
+                    setErrors({ ...errors, dni: 'El dni es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Teléfono</label>
@@ -279,9 +409,15 @@ const handleRoleCheckboxChange = (e, rol) => {
                 type="text"
                 name="telefono"
                 value={profileDetails.telefono || ''}
+                onBlur={() => {
+                  if ( (!profileDetails.telefono || profileDetails.telefono.trim() === '')) {
+                    setErrors({ ...errors, telefono: 'El telefono es obligatorio' });
+                  }
+                }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+               {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Legajo</label>
@@ -289,9 +425,15 @@ const handleRoleCheckboxChange = (e, rol) => {
                 type="text"
                 name="legajo"
                 value={profileDetails.legajo || ''}
+                onBlur={() => {
+                  if ( (!profileDetails.legajo || profileDetails.legajo.trim() === '')) {
+                    setErrors({ ...errors, legajo: 'El legajo es obligatorio' });
+                  }
+                }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+               {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.legajo}</p>}
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Fecha de Ingreso</label>
@@ -299,9 +441,15 @@ const handleRoleCheckboxChange = (e, rol) => {
                 type="date"
                 name="fecha_ingreso"
                 value={formatDate(profileDetails.fecha_ingreso) || ''}
+                onBlur={() => {
+                  if ( (!profileDetails.fecha_ingreso || profileDetails.fecha_ingreso.trim() === '')) {
+                    setErrors({ ...errors, fecha_ingreso: 'El fecha deingreso es obligatorio' });
+                  }
+                }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.fecha_ingreso}</p>}
             </div>
           </div>
         </section>
@@ -332,7 +480,7 @@ const handleRoleCheckboxChange = (e, rol) => {
             </div>
           </div>
         </section>
-
+        
 
         {/* Botón de envío */}
         {errorMessage && <p className="text-red-500">{errorMessage}</p>}

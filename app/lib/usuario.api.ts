@@ -1,5 +1,7 @@
 // userService.ts
+import apiClient from "@/app/lib/apiClient";
 import { notifyError, notifySuccess } from './notificationService';
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export const createUser = async (userDetails: any) => {
@@ -20,8 +22,8 @@ export const createUser = async (userDetails: any) => {
     return await response.json();
   };
   
-  export const getUserById = async (userId: string) => {
-    const response = await fetch(`${apiUrl}/users/${userId}`, {
+  export const getUserById = async (userId: string, cliente: BigInt) => {
+    const response = await fetch(`${apiUrl}/users/${userId}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -53,9 +55,9 @@ export const createUser = async (userDetails: any) => {
     return await response.json();
   };
   
-  export const deleteUser = async (userId: number) => {
+  export const deleteUser = async (userId: number, cliente: BigInt) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/users/${userId}`, {
+    const response = await fetch(`${apiUrl}/users/${userId}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -68,21 +70,25 @@ export const createUser = async (userDetails: any) => {
     return await response.json();
   };
   
-  export const getUserList = async () => {
-    const response = await fetch(`${apiUrl}/users/list`, {
+  export const getUserList = async (cliente :  BigInt) => {
+    const token = localStorage.getItem('token');
+    const response = await apiClient(`${apiUrl}/users/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
+    console.log(response);
      // Si la respuesta es un 404, retorna un array vacío
-     if (response.status === 404) {
+    if (response.status === 404) {
       return [];
     }
-    if (!response.ok) {
+   
+    if (!response.status === 200) {
       throw new Error('Failed to fetch user list');
     }
-    return await response.json();
+    return await response.data;
   };
 
   //User type
@@ -105,8 +111,8 @@ export const createUser = async (userDetails: any) => {
   
 
   //User Rol
-  export const getUserRol = async (userId: string) => {
-    const response = await fetch(`${apiUrl}/users/rol/${userId}` , {
+  export const getUserRol = async (userId: string, cliente : BigInt) => {
+    const response = await fetch(`${apiUrl}/users/rol/${userId}/${cliente}` , {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -123,7 +129,7 @@ export const createUser = async (userDetails: any) => {
   };
 
   export const getUserTypes = async () => {
-    const response = await fetch(`${apiUrl}/users/tipo/list`, {
+    const response = await fetch(`${apiUrl}/users/tipo`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

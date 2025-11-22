@@ -17,11 +17,12 @@ interface Usuario {
   user_type_id: number;
   user_type_codigo?: string;
   user_type_descripcion?: string;
+  cliente_id: BigInt
 }
 
 interface UsuarioTableProps {
   usuarios: Usuario[];
-  onDelete: (id: number) => void;
+  onDelete: (id: number, cliente_id: BigInt) => void;
   onEdit: (id: number) => void;
 }
 
@@ -127,7 +128,7 @@ export default function UsuarioTable({ usuarios, onEdit,onDelete }: UsuarioTable
                     <FontAwesomeIcon icon={faEdit} />
                   </button>
                   <button
-                    onClick={() => onDelete(usuario.id)}
+                    onClick={() => onDelete(usuario.id, usuario.cliente_id)}
                     className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
                     title="Eliminar"
                   >

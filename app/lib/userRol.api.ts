@@ -51,9 +51,9 @@ export const createUserRol = async (userRolDetails: any) => {
     return await response.json();
   };
 
-  export const getUserRolUserById = async (userId: string) => {
+  export const getUserRolUserById = async (userId: string, cliente: BigInt )=> {
     try {
-      const response = await fetch(`${apiUrl}/userrol/user/${userId}`, {
+      const response = await fetch(`${apiUrl}/userrol/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,8 +78,8 @@ export const createUserRol = async (userRolDetails: any) => {
     }
   };
 
-  export const deleteUserRol = async (Id: string) => {
-    const response = await fetch(`${apiUrl}/userrol/${Id}`, {
+  export const deleteUserRol = async (Id: string, cliente: BigInt) => {
+    const response = await fetch(`${apiUrl}/userrol/${Id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

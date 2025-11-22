@@ -1,6 +1,5 @@
 'use client'
 
-import DynamicMenu from '@/app/lib/dynamicMenu';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import ResumenCard from './components/ResumenCard';
 
@@ -44,7 +43,6 @@ const Page = () => {
       
       <div className="min-h-screen bg-gray-100">
         <div className="flex">
-          <DynamicMenu />
           <main className="flex-1 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ResumenCard

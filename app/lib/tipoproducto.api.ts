@@ -2,9 +2,9 @@ import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 
-export const getTipoProductoList = async () => {
+export const getTipoProductoList = async (cliente:BigInt) => {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${apiUrl}/tipo-producto/list`, {
+    const response = await fetch(`${apiUrl}/tipo-producto/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
