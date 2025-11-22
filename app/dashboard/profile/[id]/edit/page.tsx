@@ -1,7 +1,7 @@
 'use client';
 
 import { getClienteId } from "@/app/lib/authService";
-import { notifySuccess } from '@/app/lib/notificationService';
+import { notifySuccess,notifyError } from '@/app/lib/notificationService';
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
 import { createUserRol, deleteUserRol, getUserRolUserById } from '@/app/lib/userRol.api';
@@ -37,6 +37,7 @@ const EditUserPage = () => {
           // Obtener los detalles del perfil del usuario
           if (data.id) {
             const profile = await getProfileUserById(data.id,cliente);
+            console.log(profile)
             setProfileDetails(profile);
           }
           // Inicializar los roles seleccionados con los roles del usuario
@@ -111,6 +112,10 @@ const handleRoleCheckboxChange = (e, rol) => {
   };
 
   const handleSubmit = async () => {
+    if (!validarCampos()) {
+      setErrorMessage('Debe seleccionar rellenar los campos obligatorios.');
+      return;
+    }
     if (selectedRoles.length === 0) {
       setErrorMessage('Debe seleccionar al menos un rol antes de guardar.');
       return;
@@ -136,6 +141,7 @@ const handleRoleCheckboxChange = (e, rol) => {
   
       // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
+      console.log(payload)
       if (!profile || profile.length === 0) {
         await createProfile({
           id_user: payload.id,
@@ -195,7 +201,80 @@ const handleRoleCheckboxChange = (e, rol) => {
       setErrorMessage('Error: ' + e.message);
     }
   };
-  
+
+
+  const [errors, setErrors] = useState<{
+    nombre: string;
+    apellido: string;
+    email: string;
+    password:string;
+    dni:string;
+    telefono:string;
+    legajo : number;
+    fecha_ingreso:string;
+  }>({
+    nombre: '',
+    apellido: '',
+    email: '',
+    password:'',
+    dni:'',
+    telefono:'',
+    legajo : 0,
+    fecha_ingreso:'',
+  });
+
+   // Función para validar todos los campos
+  const validarCampos = () => {
+    const newErrors = {
+      nombre: '',
+      apellido: '',
+      email: '',
+      password:'',
+      dni:'',
+      telefono:'',
+      legajo : 0,
+      fecha_ingreso:'',
+    };
+
+    let isValid = true;
+
+     // 1. Validar Teléfono (siempre obligatorio)
+    if (!userDetails.nombre || userDetails.nombre.trim() === '') {
+      newErrors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+    if (!userDetails.apellido || userDetails.apellido.trim() === '') {
+      newErrors.apellido = 'El apellido es obligatorio';
+      isValid = false;
+    }
+    if (!userDetails.email || userDetails.email.trim() === '') {
+      newErrors.email = 'El email es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.password || profileDetails.password.trim() === '') {
+      newErrors.password = 'El password es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.dni || profileDetails.dni.trim() === '') {
+      newErrors.dni = 'El dni es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.telefono || profileDetails.telefono.trim() === '') {
+      newErrors.telefono = 'El telefono es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.legajo || profileDetails.legajo.trim() === '') {
+      newErrors.legajo = 'El legajo es obligatorio';
+      isValid = false;
+    }
+    if (!profileDetails.fecha_ingreso || profileDetails.fecha_ingreso.trim() === '') {
+      newErrors.fecha_ingreso = 'El fecha_ingreso es obligatorio';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  }
   
 
   if (!userDetails) {
@@ -210,6 +289,8 @@ const handleRoleCheckboxChange = (e, rol) => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  
 
   return (
     <div className="w-full p-6 bg-gray-50 min-h-screen">
@@ -228,8 +309,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="nombre"
                 value={userDetails.nombre || ''}
                 onChange={handleUserDetailChange}
+                onBlur={() => {
+                  if ( (!userDetails.nombre || userDetails.nombre.trim() === '')) {
+                    setErrors({ ...errors, nombre: 'El nombre es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+               {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Apellido</label>
@@ -238,8 +325,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="apellido"
                 value={userDetails.apellido || ''}
                 onChange={handleUserDetailChange}
+                onBlur={() => {
+                  if ( (!userDetails.apellido || userDetails.apellido.trim() === '')) {
+                    setErrors({ ...errors, apellido: 'El apellido es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.apellido && <p className="text-red-500 text-sm mt-1">{errors.apellido}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -250,8 +343,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="email"
                 value={userDetails.email || ''}
                 onChange={handleUserDetailChange}
+                onBlur={() => {
+                  if ( (!userDetails.email || userDetails.email.trim() === '')) {
+                    setErrors({ ...errors, email: 'El email es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Tipo de usuario</label>
@@ -277,8 +376,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="password"
                 value={profileDetails.password || ''}
                 onChange={handleProfileDetailChange}
+                onBlur={() => {
+                  if ( (!profileDetails.password || profileDetails.password.trim() === '')) {
+                    setErrors({ ...errors, password: 'El password es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -289,8 +394,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="dni"
                 value={profileDetails.dni || ''}
                 onChange={handleProfileDetailChange}
+                onBlur={() => {
+                  if ( (!profileDetails.dni || profileDetails.dni.trim() === '')) {
+                    setErrors({ ...errors, dni: 'El dni es obligatorio' });
+                  }
+                }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Teléfono</label>
@@ -298,9 +409,15 @@ const handleRoleCheckboxChange = (e, rol) => {
                 type="text"
                 name="telefono"
                 value={profileDetails.telefono || ''}
+                onBlur={() => {
+                  if ( (!profileDetails.telefono || profileDetails.telefono.trim() === '')) {
+                    setErrors({ ...errors, telefono: 'El telefono es obligatorio' });
+                  }
+                }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+               {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Legajo</label>
@@ -308,9 +425,15 @@ const handleRoleCheckboxChange = (e, rol) => {
                 type="text"
                 name="legajo"
                 value={profileDetails.legajo || ''}
+                onBlur={() => {
+                  if ( (!profileDetails.legajo || profileDetails.legajo.trim() === '')) {
+                    setErrors({ ...errors, legajo: 'El legajo es obligatorio' });
+                  }
+                }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+               {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.legajo}</p>}
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Fecha de Ingreso</label>
@@ -318,9 +441,15 @@ const handleRoleCheckboxChange = (e, rol) => {
                 type="date"
                 name="fecha_ingreso"
                 value={formatDate(profileDetails.fecha_ingreso) || ''}
+                onBlur={() => {
+                  if ( (!profileDetails.fecha_ingreso || profileDetails.fecha_ingreso.trim() === '')) {
+                    setErrors({ ...errors, fecha_ingreso: 'El fecha deingreso es obligatorio' });
+                  }
+                }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
+              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.fecha_ingreso}</p>}
             </div>
           </div>
         </section>
