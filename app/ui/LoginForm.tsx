@@ -65,7 +65,7 @@ const LoginForm: React.FC = () => {
       <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
         {/* Branding */}
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          🍕 Pizzería Pati
+          🍕 CRM
         </h1>
         <p className="text-center text-gray-500 mb-6">Accedé a tu cuenta</p>
 
@@ -113,7 +113,7 @@ const LoginForm: React.FC = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
-          © {new Date().getFullYear()} Pizzería Pati
+          © {new Date().getFullYear()} @crm
         </p>
       </div>
     </div>
