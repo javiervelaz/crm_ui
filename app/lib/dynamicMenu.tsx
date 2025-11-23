@@ -51,7 +51,7 @@ const MODULE_LABELS: Record<string, string> = {
   reportes: 'Reportes',
   productos: 'Productos',
   roles: 'Configurar Roles',
-  gasto: 'Gastos',
+  gasto: 'Gastos config',
   operaciones: 'Tomar Pedidos',
   flujo: 'Cash Flow',
   cerrarcaja: 'Cerrar caja'
