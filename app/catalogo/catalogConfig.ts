@@ -23,7 +23,7 @@ export function getMicrositeUsuarioId(): number {
   const raw = process.env.NEXT_PUBLIC_MICROSITIO_USUARIO_ID;
   const id = raw ? Number.parseInt(raw, 10) : NaN;
   // Por defecto usamos 1 como "usuario micrositio"
-  if (Number.isNaN(id)) return 1;
+  if (Number.isNaN(id)) return 9999;
   return id;
 }
 
