@@ -1,9 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogProduct } from './types';
 import { fetchCatalogProducts } from './catalogApi';
@@ -14,12 +10,17 @@ export default function CatalogPage() {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-   const { session } = useHandoffSession();
+  const { session } = useHandoffSession();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('Todas');
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!session) {
+      setLoading(false);
+      return;
+    }
 
     async function loadProducts() {
       try {
@@ -46,7 +47,7 @@ export default function CatalogPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [session]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -69,10 +70,18 @@ export default function CatalogPage() {
     [category, search, products],
   );
 
+  if (!session && !loading && !error) {
+    return (
+      <main className="p-4">
+        <p className="text-sm text-red-500">
+          El enlace no es válido o la sesión expiró. Volvé a pedir el link desde WhatsApp.
+        </p>
+      </main>
+    );
+  }
+
   return (
-    
     <div className="flex w-full flex-col gap-4">
-      {/* Buscador + categorías */}
       <div className="space-y-3">
         <input
           type="text"
@@ -102,20 +111,14 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      {/* Estado loading / error */}
       {loading && (
-        <p className="text-sm text-slate-500">
-          Cargando productos...
-        </p>
+        <p className="text-sm text-slate-500">Cargando productos...</p>
       )}
 
       {error && !loading && (
-        <p className="text-sm text-red-500">
-          {error}
-        </p>
+        <p className="text-sm text-red-500">{error}</p>
       )}
 
-      {/* Listado */}
       {!loading && !error && (
         <div className="mt-2 flex flex-col gap-3 pb-4">
           {filtered.length === 0 ? (

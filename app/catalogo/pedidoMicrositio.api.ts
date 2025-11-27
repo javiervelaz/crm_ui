@@ -91,7 +91,7 @@ export async function crearPedidoDesdeMicrositio(
     throw new Error('Debe seleccionar un medio de pago');
   }
 console.log("session",session)
-  const clienteId = session?.cliente_id ?? getMicrositeClienteId();//getMicrositeClienteId();
+  const clienteId = session?.clienteId ?? getMicrositeClienteId();//getMicrositeClienteId();
   const sucursalId = getMicrositeSucursalId();
   const usuarioId = getMicrositeUsuarioId();
 
