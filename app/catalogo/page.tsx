@@ -1,5 +1,7 @@
-// app/catalogo/page.tsx
 'use client';
+
+
+
 
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogProduct } from './types';
@@ -67,6 +69,7 @@ export default function CatalogPage() {
   );
 
   return (
+    
     <div className="flex w-full flex-col gap-4">
       {/* Buscador + categorías */}
       <div className="space-y-3">
