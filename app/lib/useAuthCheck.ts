@@ -71,7 +71,8 @@ export const useAuthCheck = () => {
         '/dashboard/settings',
         '/dashboard/productos/tipo-proucto',
         '/dashboard/home',
-        '/dashboard/tipo-salida'
+        '/dashboard/tipo-salida',
+        '/catalogo'
       ];
 
       // Verificar acceso por módulo o por ruta auxiliar
