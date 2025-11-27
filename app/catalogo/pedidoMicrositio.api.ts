@@ -8,7 +8,6 @@ import {
   getMicrositeSucursalId,
   getMicrositeUsuarioId,
 } from './catalogConfig';
-import { useHandoffSession } from './HandoffSessionContext';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -18,17 +17,25 @@ interface CheckCajaResponse {
   registro_diario_id: number;
 }
 
-interface CrearPedidoParams {
+export interface CrearPedidoParams {
+  // datos del cliente
   name: string;
   phone: string;
   address: string;
   deliveryType: 'delivery' | 'pickup';
   extraNotes: string;
+
+  // carrito
   items: CartItem[];
-  total: number; // total de productos (sin el delivery "demo" del UI)
-  medio_pago_id: number; // 🔹 obligatorio ahora
+  total: number;
+
+  // pago
+  medio_pago_id: number;
   paga_efectivo?: number;
   vuelto_pago_efectivo?: number;
+
+  // sesión / contexto
+  clienteId?: number;      // opcional → si no viene usamos getMicrositeClienteId
 }
 
 /**
@@ -39,7 +46,7 @@ async function getRegistroDiarioIdOrThrow(
 ): Promise<number> {
   const today = new Date();
   const fecha = today.toISOString().slice(0, 10); // YYYY-MM-DD
-  
+
   const res = await fetch(`${API_BASE_URL}/operaciones/check-caja`, {
     method: 'POST',
     headers: {
@@ -80,8 +87,8 @@ export async function crearPedidoDesdeMicrositio(
     medio_pago_id,
     paga_efectivo,
     vuelto_pago_efectivo,
+    clienteId: clienteIdFromSession,
   } = params;
-  const { session } = useHandoffSession();
 
   if (!items.length) {
     throw new Error('El carrito está vacío');
@@ -90,8 +97,8 @@ export async function crearPedidoDesdeMicrositio(
   if (!medio_pago_id) {
     throw new Error('Debe seleccionar un medio de pago');
   }
-console.log("session",session)
-  const clienteId = session?.clienteId ?? getMicrositeClienteId();//getMicrositeClienteId();
+
+  const clienteId = clienteIdFromSession ?? getMicrositeClienteId();
   const sucursalId = getMicrositeSucursalId();
   const usuarioId = getMicrositeUsuarioId();
 
@@ -108,14 +115,12 @@ console.log("session",session)
     monto_adicional: 0,
   }));
 
-  // 3) Armamos el payload compatible con operacionesDiariasService.crearPedido
+  // 3) Payload compatible con operacionesDiariasService.crearPedido
   const body = {
     cliente_nombre: name,
     cliente_telefono: phone,
-    cliente_casa_nro:
-      deliveryType === 'delivery' ? address : '',
-    cliente_barrio:
-      deliveryType === 'delivery' ? '' : '',
+    cliente_casa_nro: deliveryType === 'delivery' ? address : '',
+    cliente_barrio: deliveryType === 'delivery' ? '' : '',
     pedido_obs: [
       deliveryType === 'delivery' ? 'Delivery' : 'Retiro en local',
       extraNotes || '',
@@ -127,7 +132,7 @@ console.log("session",session)
     monto_total: total,
     usuario_id: usuarioId,
     sucursal_id: sucursalId,
-    medio_pago_id: medio_pago_id,
+    medio_pago_id,
     user_cliente_id: null,
     paga_efectivo: paga_efectivo ?? 0,
     vuelto_pago_efectivo: vuelto_pago_efectivo ?? 0,
@@ -139,7 +144,6 @@ console.log("session",session)
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // Sin Authorization: este endpoint no usa auth middleware
     },
     body: JSON.stringify(body),
   });
