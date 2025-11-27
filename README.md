@@ -1,2 +1,5 @@
 # pizzeria-ui
 frontend
+
+token de usuario permanente meta para el bot:
+EAAS81bDeB2YBQLCuy4YkWUXXpZC5CdR92Rwsb5zbcxTfntiUqZBpJwdqz5EJ8ZBTzEUUMgJYWcFibPSm80IK00dw1Qkvj7hRl1vZBLqhWsQiZBZBnZCHQjS5BuSWMnZASIHNPH9q2OpGZA2jdsQMXQLM27TZCYN8KJkJ2vERkTSjvajuDYZBMaZB4ULlxBJiOmkogIQdBAZDZD
