@@ -133,7 +133,7 @@ export async function crearPedidoDesdeMicrositio(
     usuario_id: usuarioId,
     sucursal_id: sucursalId,
     medio_pago_id,
-    user_cliente_id: null,
+    user_cliente_id: clienteId,
     paga_efectivo: paga_efectivo ?? 0,
     vuelto_pago_efectivo: vuelto_pago_efectivo ?? 0,
     cliente_id: clienteId,
