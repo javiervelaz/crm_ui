@@ -8,6 +8,8 @@ import { jwtDecode } from 'jwt-decode';
 import React, { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { usePathname } from 'next/navigation';
+
 
 
 export default function RootLayout({
@@ -46,21 +48,30 @@ interface DecodedToken {
     }
   };
 
+  const pathname = usePathname();
+  const isCatalogRoute = pathname.startsWith('/catalogo');
 
-  return (
+
+   return (
     <html lang="es">
       <body className={`${lusitana.className} antialiased bg-gray-100`}>
-        <div className="flex h-screen">
-          {/* Sidebar */}
-          {isLoggedIn && (
-          <Sidebar />
-          )}
-          {/* Contenedor principal */}
-          <div className="flex flex-col flex-1">
-            <Header />
-            <main className="p-6 overflow-y-auto">{children}</main>
+        {isCatalogRoute ? (
+          // Layout público para el micrositio de catálogo
+          <div className="min-h-screen bg-slate-50">
+            {children}
           </div>
-        </div>
+        ) : (
+          // Layout actual del CRM
+          <div className="flex h-screen">
+            {/* Sidebar */}
+            {isLoggedIn && <Sidebar />}
+            {/* Contenedor principal */}
+            <div className="flex flex-col flex-1">
+              <Header />
+              <main className="p-6 overflow-y-auto">{children}</main>
+            </div>
+          </div>
+        )}
         <ToastContainer />
       </body>
     </html>
