@@ -4,14 +4,16 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../CartContext';
+import { useHandoffSession } from '../HandoffSessionContext';
 import { crearPedidoDesdeMicrositio } from '../pedidoMicrositio.api';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { fetchMedioPagoList, MedioPago } from '../medioPagoApi';
 
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
-
+   const { session } = useHandoffSession();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -36,7 +38,10 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     let cancelled = false;
-
+    if (!session) {
+      notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
+      return;
+    }
     async function loadMediosPago() {
       const data = await fetchMedioPagoList();
       if (!cancelled) {
@@ -149,6 +154,7 @@ export default function CheckoutPage() {
         medio_pago_id: selectedMedioPagoId,
         paga_efectivo: pagaEfectivoNum,
         vuelto_pago_efectivo: vueltoNum,
+        clienteId: session?.clienteId, 
       });
 
       notifySuccess(
