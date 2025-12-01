@@ -56,10 +56,10 @@ function CatalogGuard({ children }: { children: ReactNode }) {
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Catálogo
             </p>
-            <h1 className="text-lg font-bold text-slate-900">Tu Comercio</h1>
+            <h1 className="text-lg font-bold text-slate-900">App pedidos</h1>
           </div>
           <div className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">
-            WPA demo
+            CRM beta
           </div>
         </div>
       </header>

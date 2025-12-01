@@ -35,7 +35,8 @@ export interface CrearPedidoParams {
   vuelto_pago_efectivo?: number;
 
   // sesión / contexto
-  clienteId?: number;      // opcional → si no viene usamos getMicrositeClienteId
+  clienteId?: number; 
+  conversation_id?: number;     // opcional → si no viene usamos getMicrositeClienteId
 }
 
 /**
@@ -88,6 +89,7 @@ export async function crearPedidoDesdeMicrositio(
     paga_efectivo,
     vuelto_pago_efectivo,
     clienteId: clienteIdFromSession,
+    conversation_id: conversation_id
   } = params;
 
   if (!items.length) {
@@ -101,7 +103,7 @@ export async function crearPedidoDesdeMicrositio(
   const clienteId = clienteIdFromSession ?? getMicrositeClienteId();
   const sucursalId = getMicrositeSucursalId();
   const usuarioId = getMicrositeUsuarioId();
-
+  const conversationId =  conversation_id;
   // 1) Obtenemos el registro_diario_id de la caja abierta
   const registroDiarioId = await getRegistroDiarioIdOrThrow(clienteId);
 
@@ -138,6 +140,7 @@ export async function crearPedidoDesdeMicrositio(
     vuelto_pago_efectivo: vuelto_pago_efectivo ?? 0,
     cliente_id: clienteId,
     monto_adicional: 0,
+    conversation_id:conversationId
   };
 
   const res = await fetch(`${API_BASE_URL}/operaciones/crear-pedido`, {

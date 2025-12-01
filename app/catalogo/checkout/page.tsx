@@ -8,6 +8,7 @@ import { useHandoffSession } from '../HandoffSessionContext';
 import { crearPedidoDesdeMicrositio } from '../pedidoMicrositio.api';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { fetchMedioPagoList, MedioPago } from '../medioPagoApi';
+import { Phone } from 'lucide-react';
 
 
 export default function CheckoutPage() {
@@ -21,7 +22,6 @@ export default function CheckoutPage() {
     'delivery',
   );
   const [extraNotes, setExtraNotes] = useState('');
-
   // 🔹 Estado para medios de pago
   const [medioPagoList, setMedioPagoList] = useState<MedioPago[]>([]);
   const [selectedMedioPagoId, setSelectedMedioPagoId] = useState<number | null>(
@@ -42,6 +42,7 @@ export default function CheckoutPage() {
       notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
       return;
     }
+    setPhone(session?.userPhoneE164);
     async function loadMediosPago() {
       const data = await fetchMedioPagoList();
       if (!cancelled) {
@@ -155,6 +156,7 @@ export default function CheckoutPage() {
         paga_efectivo: pagaEfectivoNum,
         vuelto_pago_efectivo: vueltoNum,
         clienteId: session?.clienteId, 
+        conversation_id: session?.conversationId
       });
 
       notifySuccess(
@@ -240,7 +242,8 @@ export default function CheckoutPage() {
             type="tel"
             required
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            disabled
+          
             className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
           />
         </div>
