@@ -42,9 +42,18 @@ interface Pedido {
 interface PedidosGridProps {
   pedidos: Pedido[];
   fetchPedidos: () => Promise<void>;
+  /**
+   * 'abiertos' → muestra toggle de finalizar + botón cancelar
+   * 'cerrados' → solo lectura + detalle expandible
+   */
+  mode?: 'abiertos' | 'cerrados';
 }
 
-const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
+const PedidosGrid = ({
+  pedidos,
+  fetchPedidos,
+  mode = 'abiertos',
+}: PedidosGridProps) => {
   const [paginaActual, setPaginaActual] = useState<number>(1);
   const [totalPaginas, setTotalPaginas] = useState<number>(1);
   const [pedidosLocal, setPedidosLocal] = useState<Pedido[]>(pedidos);
@@ -57,10 +66,16 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
   const [detalleLoadingId, setDetalleLoadingId] = useState<number | null>(null);
   const [detalleErrorId, setDetalleErrorId] = useState<number | null>(null);
 
+  const isModoAbiertos = mode === 'abiertos';
+
+  // columnas totales, para colSpan del detalle
+  const detalleColSpan = isModoAbiertos ? 8 : 6;
+
   // Sincronizar el estado local con los pedidos prop cuando estos cambien
   useEffect(() => {
     setPedidosLocal(pedidos);
-    setTotalPaginas(2); // TODO: calcular bien totalPaginas cuando implementes paginación real
+    // TODO: calcular bien totalPaginas cuando implementes paginación real
+    setTotalPaginas(2);
   }, [pedidos]);
 
   const cargarDetalleSiEsNecesario = async (pedidoId: number) => {
@@ -94,8 +109,10 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
     await cargarDetalleSiEsNecesario(pedidoId);
   };
 
-  // Función para cambiar el estado de un pedido
+  // Función para cambiar el estado de un pedido (solo en modo abiertos)
   const handleStatusChange = async (pedidoId: number, newStatus: boolean) => {
+    if (!isModoAbiertos) return;
+
     try {
       if (confirm('¿Estás seguro de finalizar el pedido?')) {
         // Actualiza visualmente el estado antes de hacer la llamada a la API
@@ -114,6 +131,8 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
   };
 
   const handleDelete = async (id: number) => {
+    if (!isModoAbiertos) return;
+
     if (confirm('¿Estás seguro de cancelar el pedido?')) {
       try {
         await deletePedido(id, getClienteId());
@@ -148,12 +167,17 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
             <th className="px-4 py-2 text-gray-600 font-medium">Teléfono</th>
             <th className="px-4 py-2 text-gray-600 font-medium">Monto</th>
             <th className="px-4 py-2 text-gray-600 font-medium">Fecha</th>
-            <th className="px-4 py-2 text-gray-600 font-medium">
-              Finalizar pedido
-            </th>
-            <th className="px-4 py-2 text-gray-600 font-medium">
-              Cancelar pedido
-            </th>
+
+            {isModoAbiertos && (
+              <>
+                <th className="px-4 py-2 text-gray-600 font-medium">
+                  Finalizar pedido
+                </th>
+                <th className="px-4 py-2 text-gray-600 font-medium">
+                  Cancelar pedido
+                </th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -168,7 +192,9 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
                     className="group relative text-gray-600 hover:text-gray-900"
                   >
                     <FontAwesomeIcon
-                      icon={expandedId === pedido.id ? faChevronDown : faChevronRight}
+                      icon={
+                        expandedId === pedido.id ? faChevronDown : faChevronRight
+                      }
                     />
 
                     {/* Tooltip */}
@@ -183,10 +209,11 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
                         pointer-events-none
                       "
                     >
-                      {expandedId === pedido.id ? 'Ocultar detalle' : 'Ver detalle'}
+                      {expandedId === pedido.id
+                        ? 'Ocultar detalle'
+                        : 'Ver detalle'}
                     </span>
                   </button>
-
                 </td>
                 <td className="px-4 py-2 border-b border-gray-200">
                   {pedido.comanda_nro || 'N/A'}
@@ -203,38 +230,43 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
                 <td className="px-4 py-2 border-b border-gray-200">
                   {new Date(pedido.created_at).toLocaleString()}
                 </td>
-                <td className="px-4 py-2 border-b border-gray-200">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={pedido.status || false}
-                      onChange={(e) =>
-                        handleStatusChange(pedido.id, e.target.checked)
-                      }
-                    />
-                    <div
-                      className={`w-10 h-5 rounded-full p-1 ${
-                        pedido.status ? 'bg-green-500' : 'bg-gray-300'
-                      } transition-colors duration-300`}
-                    >
-                      <div
-                        className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${
-                          pedido.status ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </div>
-                  </label>
-                </td>
-                <td className="px-4 py-2 border-b border-gray-200">
-                  <button
-                    onClick={() => handleDelete(pedido.id)}
-                    className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
-                    title="Eliminar"
-                  >
-                    <FontAwesomeIcon icon={faTrashAlt} />
-                  </button>
-                </td>
+
+                {isModoAbiertos && (
+                  <>
+                    <td className="px-4 py-2 border-b border-gray-200">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={pedido.status || false}
+                          onChange={(e) =>
+                            handleStatusChange(pedido.id, e.target.checked)
+                          }
+                        />
+                        <div
+                          className={`w-10 h-5 rounded-full p-1 ${
+                            pedido.status ? 'bg-green-500' : 'bg-gray-300'
+                          } transition-colors duration-300`}
+                        >
+                          <div
+                            className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform duration-300 ${
+                              pedido.status ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </div>
+                      </label>
+                    </td>
+                    <td className="px-4 py-2 border-b border-gray-200">
+                      <button
+                        onClick={() => handleDelete(pedido.id)}
+                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
+                        title="Eliminar"
+                      >
+                        <FontAwesomeIcon icon={faTrashAlt} />
+                      </button>
+                    </td>
+                  </>
+                )}
               </tr>
 
               {/* Fila de detalle expandible */}
@@ -242,7 +274,7 @@ const PedidosGrid = ({ pedidos, fetchPedidos }: PedidosGridProps) => {
                 <tr className="bg-gray-50">
                   <td
                     className="px-4 py-3 border-b border-gray-200 text-xs text-gray-600"
-                    colSpan={8}
+                    colSpan={detalleColSpan}
                   >
                     {/* Estado de carga / error / datos */}
                     {detalleLoadingId === pedido.id && (
