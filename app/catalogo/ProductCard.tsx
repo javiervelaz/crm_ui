@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 import type { CatalogProduct } from './types';
 import { useCart } from './CartContext';
 
+
 interface Props {
   product: CatalogProduct;
+  session : any
 }
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product , session}: Props) {
   const router = useRouter();
   const { addItem } = useCart();
 
@@ -18,7 +20,7 @@ export default function ProductCard({ product }: Props) {
         <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden sm:h-28 sm:w-28">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.imageUrl}
+            src={'https://res.cloudinary.com/droqhxpim/image/upload/v1/' +product.imageUrl + '?_a=BAMAMifm0'}
             alt={product.name}
             className="h-full w-full object-cover"
           />

@@ -1,6 +1,5 @@
 'use client';
 
-
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../CartContext';
@@ -9,11 +8,26 @@ import { crearPedidoDesdeMicrositio } from '../pedidoMicrositio.api';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { fetchMedioPagoList, MedioPago } from '../medioPagoApi';
 
+interface CheckoutTicket {
+  name: string;
+  phone: string;
+  address: string;
+  deliveryType: 'delivery' | 'pickup';
+  extraNotes: string;
+  items: any[]; // mismos items que vienen de useCart
+  total: number;
+  deliveryCost: number;
+  grandTotal: number;
+  medioPagoDescripcion: string | null;
+  pagaEfectivo: number;
+  vuelto: number;
+}
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, total, clearCart } = useCart();
-   const { session } = useHandoffSession();
+  const { session } = useHandoffSession();
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -21,32 +35,32 @@ export default function CheckoutPage() {
     'delivery',
   );
   const [extraNotes, setExtraNotes] = useState('');
-
-  // 🔹 Estado para medios de pago
   const [medioPagoList, setMedioPagoList] = useState<MedioPago[]>([]);
-  const [selectedMedioPagoId, setSelectedMedioPagoId] = useState<number | null>(
-    null,
-  );
+  const [selectedMedioPagoId, setSelectedMedioPagoId] =
+    useState<number | null>(null);
   const [pagaEfectivo, setPagaEfectivo] = useState<string>('');
-
-  // 🔹 Estado de envío
   const [submitting, setSubmitting] = useState(false);
 
-  // Costos (el delivery acá es solo visual; al backend le mandamos solo total de productos)
+  // 🔹 Estado para el ticket una vez confirmado
+  const [ticket, setTicket] = useState<CheckoutTicket | null>(null);
+
   const deliveryCost = 1000; // demo
   const grandTotal = total + deliveryCost;
 
   useEffect(() => {
     let cancelled = false;
     if (!session) {
-      notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
+      notifyError(
+        'La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.',
+      );
       return;
     }
+    setPhone(session?.userPhoneE164);
+
     async function loadMediosPago() {
       const data = await fetchMedioPagoList();
       if (!cancelled) {
         setMedioPagoList(data);
-        // si querés seleccionar uno por defecto (p.ej. efectivo):
         const defaultMedio =
           data.find(
             (mp) =>
@@ -77,6 +91,126 @@ export default function CheckoutPage() {
     return codigo === 'EFE' || desc.includes('EFECTIVO');
   }, [medioPagoList, selectedMedioPagoId]);
 
+  // 🔹 Si ya hay ticket, mostramos el ticket en vez del formulario
+  if (ticket) {
+    return (
+      <div className="flex w-full flex-col gap-4 pb-4">
+        <h1 className="text-lg font-bold text-slate-900">Pedido confirmado</h1>
+
+        <div className="space-y-3 rounded-2xl border bg-white p-4 text-sm text-slate-800">
+          <p className="font-semibold text-slate-900">
+            ¡Gracias, {ticket.name || 'por tu pedido'}!
+          </p>
+          <p className="text-xs text-slate-600">
+            Tu pedido fue registrado correctamente. El local va a gestionar tu
+            pedido y se contactará si es necesario.
+          </p>
+
+          {/* Resumen de productos */}
+          <div className="mt-2 space-y-2">
+            <p className="text-xs font-semibold text-slate-700">
+              Detalle de tu pedido
+            </p>
+            <ul className="space-y-1">
+              {ticket.items.map((it: any) => (
+                <li
+                  key={it.product.id}
+                  className="flex justify-between text-xs"
+                >
+                  <span>
+                    {it.quantity}x {it.product.name}
+                    {it.notes && (
+                      <span className="block text-[10px] text-slate-500">
+                        Nota: {it.notes}
+                      </span>
+                    )}
+                  </span>
+                  <span>
+                    $
+                    {(it.quantity * it.product.price).toLocaleString('es-AR')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-2 flex justify-between border-t pt-2 text-xs text-slate-600">
+              <span>Subtotal</span>
+              <span>${ticket.total.toLocaleString('es-AR')}</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-600">
+              <span>Delivery (demo)</span>
+              <span>${ticket.deliveryCost.toLocaleString('es-AR')}</span>
+            </div>
+            <div className="flex justify-between pt-1 text-sm font-semibold">
+              <span>Total</span>
+              <span>${ticket.grandTotal.toLocaleString('es-AR')}</span>
+            </div>
+          </div>
+
+          {/* Datos de entrega */}
+          <div className="mt-3 space-y-1 text-xs">
+            <p className="font-semibold text-slate-700">
+              Datos de contacto y entrega
+            </p>
+            <p>
+              <span className="font-medium">Nombre: </span>
+              {ticket.name}
+            </p>
+            <p>
+              <span className="font-medium">Teléfono: </span>
+              {ticket.phone}
+            </p>
+            <p>
+              <span className="font-medium">Entrega: </span>
+              {ticket.deliveryType === 'delivery'
+                ? 'Delivery a domicilio'
+                : 'Retiro en local'}
+            </p>
+            {ticket.deliveryType === 'delivery' && (
+              <p>
+                <span className="font-medium">Dirección: </span>
+                {ticket.address}
+              </p>
+            )}
+            {ticket.extraNotes && (
+              <p>
+                <span className="font-medium">Comentarios: </span>
+                {ticket.extraNotes}
+              </p>
+            )}
+          </div>
+
+          {/* Medio de pago */}
+          <div className="mt-3 space-y-1 text-xs">
+            <p className="font-semibold text-slate-700">Medio de pago</p>
+            <p>{ticket.medioPagoDescripcion ?? 'No informado'}</p>
+            {ticket.pagaEfectivo > 0 && (
+              <>
+                <p>
+                  <span className="font-medium">Paga con: </span>$
+                  {ticket.pagaEfectivo.toFixed(2)}
+                </p>
+                <p>
+                  <span className="font-medium">Vuelto estimado: </span>$
+                  {ticket.vuelto.toFixed(2)}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push('/catalogo')}
+          className="mt-2 w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+        >
+          Volver al catálogo
+        </button>
+      </div>
+    );
+  }
+
+  // 🔹 Sin ticket todavía → flujo normal
   if (items.length === 0) {
     return (
       <div className="flex w-full flex-col gap-4 pb-4">
@@ -154,14 +288,37 @@ export default function CheckoutPage() {
         medio_pago_id: selectedMedioPagoId,
         paga_efectivo: pagaEfectivoNum,
         vuelto_pago_efectivo: vueltoNum,
-        clienteId: session?.clienteId, 
+        clienteId: session?.clienteId,
+        conversation_id: session?.conversationId,
       });
 
       notifySuccess(
         'Pedido registrado. El local va a gestionar tu pedido.',
       );
+
+      // 🔹 Armar ticket local con la info del pedido
+      const medioSeleccionado = medioPagoList.find(
+        (m) => m.id === selectedMedioPagoId,
+      );
+
+      setTicket({
+        name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        deliveryType,
+        extraNotes: extraNotes.trim(),
+        items: [...items],
+        total,
+        deliveryCost,
+        grandTotal: total + deliveryCost,
+        medioPagoDescripcion: medioSeleccionado?.descripcion ?? null,
+        pagaEfectivo: pagaEfectivoNum,
+        vuelto: vueltoNum,
+      });
+
       clearCart();
-      router.push('/catalogo');
+      // 👇 ya no redireccionamos acá; dejamos que se muestre el ticket
+      // router.push('/catalogo');
     } catch (err: any) {
       console.error(err);
       notifyError(err.message ?? 'No se pudo registrar el pedido.');
@@ -240,7 +397,7 @@ export default function CheckoutPage() {
             type="tel"
             required
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            disabled
             className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
           />
         </div>
@@ -348,9 +505,7 @@ export default function CheckoutPage() {
                   const num =
                     Number(pagaEfectivo.replace(',', '.')) || 0;
                   const v = num - total;
-                  return v > 0
-                    ? `$${v.toFixed(2)}`
-                    : '$0.00';
+                  return v > 0 ? `$${v.toFixed(2)}` : '$0.00';
                 })()}
               </p>
             )}

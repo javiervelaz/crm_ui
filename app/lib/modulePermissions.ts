@@ -84,6 +84,7 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
       '/dashboard/reportes/gastos',
       '/dashboard/reportes/clientes',
       '/dashboard/reportes/caja',
+      /^\/dashboard\/reportes\/reportes\/caja\/\d+\/detalle$/,
     ],
     menu: {
       href: '/dashboard/reportes',

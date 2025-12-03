@@ -400,7 +400,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
             }));
           } else if (pedido.cliente_telefono) {
             try {
-              const cliente = await getClienteByTelefono(pedido.cliente_telefono);
+              const cliente = await getClienteByTelefono(pedido.cliente_telefono,pedido.cliente_id);
               if (cliente && cliente.telefono) {
                 setPedido((prev) => ({
                   ...prev,

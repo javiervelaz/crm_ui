@@ -6,6 +6,9 @@ import { getTipoProductoList } from "@/app/lib/tipoproducto.api";
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { uploadProductoImage } from '@/app/lib/productoImg.api';
+import { notifyError, notifySuccess } from '@/app/lib/notificationService';
+
 
 const CreateUserPage = () => {
   useAuthCheck();
@@ -16,6 +19,8 @@ const CreateUserPage = () => {
     permite_mitad: false,
     cliente_id: getClienteId(),
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const [tipoProducto, setTipoProd] = useState([]); // Almacena los tipos de productos
   
@@ -41,16 +46,54 @@ const CreateUserPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      console.log("Producto details:", productoDetails);
-      await createProduct(productoDetails);
-      
-      router.push('/dashboard/productos');
-    } catch (error) {
-      console.log(error);
+  e.preventDefault();
+
+  try {
+    setSubmitting(true);
+
+    console.log('Producto details:', productoDetails);
+
+    // 1) Crear producto
+    const created = await createProduct(productoDetails);
+
+    // Asumimos que el backend devuelve el objeto creado con id.
+    const productoId =
+      created?.id ||
+      created?.producto?.id ||
+      created?.data?.id;
+
+    if (!productoId) {
+      notifyError('No se pudo obtener el ID del producto creado.');
+      console.error('Respuesta createProduct sin id:', created);
+      setSubmitting(false);
+      return;
     }
-  };
+
+    // 2) Si hay imagen seleccionada, subirla
+    if (imageFile) {
+      try {
+        await uploadProductoImage(productoId, imageFile);
+        notifySuccess('Producto y su imagen fueron creados correctamente.');
+      } catch (err: any) {
+        console.error(err);
+        notifyError(
+          err.message ?? 'Producto creado, pero hubo un error subiendo la imagen.',
+        );
+      }
+    } else {
+      notifySuccess('Producto creado correctamente.');
+    }
+
+    // 3) Redirigir al listado
+    router.push('/dashboard/productos');
+  } catch (error) {
+    console.log(error);
+    notifyError('Error creando el producto.');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const handleCancel = () => {
     setUserDetails({
@@ -129,7 +172,25 @@ const CreateUserPage = () => {
             Si está marcado, este producto podrá ser vendido por la mitad de su precio unitario
           </p>
         </div>
-        
+        {/* Imagen (opcional) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Imagen del producto (opcional)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null;
+              setImageFile(f);
+            }}
+            className="mt-1 block w-full text-sm text-gray-700"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Si seleccionás una imagen, se subirá cuando guardes el producto.
+          </p>
+        </div>
+
 
         <div className="flex justify-end gap-4">
           <button
@@ -141,9 +202,10 @@ const CreateUserPage = () => {
           </button>
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            disabled={submitting}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Guardar
+            {submitting ? 'Guardando...' : 'Guardar'}
           </button>
         </div>
       </form>

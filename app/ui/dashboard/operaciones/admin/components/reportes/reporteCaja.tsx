@@ -63,7 +63,7 @@ export default function ReporteCajaPage() {
   };
 
   const handleVerDetalle = (registroId: number) => {
-    router.push(`/dashboard/operaciones/admin/reportes/caja/${registroId}/detalle`);
+    router.push(`/dashboard/reportes/reportes/caja/${registroId}/detalle`);
   };
 
   const getColorTotal = (total: number | null) => {

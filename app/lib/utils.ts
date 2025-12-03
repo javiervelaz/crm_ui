@@ -81,7 +81,7 @@ export const getCurrentDate = (timeZone: string = 'America/Argentina/Buenos_Aire
     //hour: '2-digit',
     //minute: '2-digit',
     //second: '2-digit',
-    //hour12: false // Formato 24 horas
+    //hour12: true // Formato 24 horas
   });
   
   const formatted = formatter.format(currentDate);
