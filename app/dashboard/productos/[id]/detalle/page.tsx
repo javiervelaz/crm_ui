@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { getClienteId } from "@/app/lib/authService";
+import { getClienteId } from '@/app/lib/authService';
 import { getProductoById } from '@/app/lib/producto.api';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -17,7 +17,7 @@ export default function DetalleProductoPage() {
 
   const fetchProducto = async () => {
     try {
-      const data = await getProductoById(Number(id),getClienteId());
+      const data = await getProductoById(Number(id), getClienteId());
       setProducto(data);
     } catch (error) {
       console.error('Error cargando producto:', error);
@@ -29,22 +29,44 @@ export default function DetalleProductoPage() {
   if (loading) return <div>Cargando...</div>;
   if (!producto) return <div>Producto no encontrado</div>;
 
+  const imagenUrl = producto.imagen_url || producto.image_url; // por si usás otro nombre
+
   return (
     <div className="w-full p-6 max-w-2xl mx-auto">
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">Detalle del Producto</h1>
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Detalle del Producto
+          </h1>
         </div>
-        
+
+        {/* Imagen del producto */}
+        {imagenUrl && (
+          <div className="w-full border-b border-gray-200 bg-gray-50">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={"https://res.cloudinary.com/droqhxpim/image/upload/v1/"+imagenUrl+"?_a=BAMAMifm0"}
+              alt={producto.nombre}
+              className="h-64 w-full object-cover"
+            />
+          </div>
+        )}
+
         <div className="px-6 py-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-600">Nombre</label>
-              <p className="mt-1 text-lg font-semibold text-gray-900">{producto.nombre}</p>
+              <label className="block text-sm font-medium text-gray-600">
+                Nombre
+              </label>
+              <p className="mt-1 text-lg font-semibold text-gray-900">
+                {producto.nombre}
+              </p>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-600">Precio</label>
+              <label className="block text-sm font-medium text-gray-600">
+                Precio
+              </label>
               <p className="mt-1 text-lg font-semibold text-green-600">
                 ${Number(producto.precio_unitario).toFixed(2)}
               </p>
@@ -53,20 +75,27 @@ export default function DetalleProductoPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-600">Tipo de Producto</label>
+              <label className="block text-sm font-medium text-gray-600">
+                Tipo de Producto
+              </label>
               <p className="mt-1 text-sm text-gray-900">
-                {producto.tipo_producto_nombre || `Tipo ${producto.tipo_producto_id}`}
+                {producto.tipo_producto_nombre ||
+                  `Tipo ${producto.tipo_producto_id}`}
               </p>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-600">Permite Media Unidad</label>
+              <label className="block text-sm font-medium text-gray-600">
+                Permite Media Unidad
+              </label>
               <p className="mt-1">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  producto.permite_mitad 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    producto.permite_mitad
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
                   {producto.permite_mitad ? 'Sí' : 'No'}
                 </span>
               </p>

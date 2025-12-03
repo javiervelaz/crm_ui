@@ -25,7 +25,7 @@ const DashboardEmpleados = () => {
 useEffect(() => {
   const verificarCaja = async () => {
     try {
-        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
+        const data = {cliente_id:getClienteId()} as any;
         const res = await checkAperturaCaja(data);
         console.log("res:",res);
         if (res.caja_abierta) {

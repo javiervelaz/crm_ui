@@ -5,6 +5,7 @@ import type { CatalogProduct } from './types';
 import { fetchCatalogProducts } from './catalogApi';
 import ProductCard from './ProductCard';
 import { useHandoffSession } from './HandoffSessionContext';
+import { setMicrositeSession } from './catalogConfig';
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -13,6 +14,19 @@ export default function CatalogPage() {
   const { session } = useHandoffSession();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('Todas');
+
+  // 🔹 Cuando tengamos session del handoff, la persistimos para catalogConfig
+  useEffect(() => {
+    if (!session) return;
+
+    // Si tu session ya trae estos campos, los usamos tal cual.
+    // Si trae más cosas, no pasa nada: los extra se ignoran donde no se usen.
+    setMicrositeSession({
+      cliente_id: session.clienteId,
+      // por si querés guardar algo más:
+      ...session,
+    });
+  }, [session]);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,7 +141,11 @@ export default function CatalogPage() {
             </p>
           ) : (
             filtered.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                session={session}
+              />
             ))
           )}
         </div>

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import {
   faEdit,
@@ -6,7 +6,7 @@ import {
   faSort,
   faSortDown,
   faSortUp,
-  faTrashAlt
+  faTrashAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
@@ -18,6 +18,10 @@ interface Producto {
   tipo_producto_id: number;
   tipo_producto_nombre?: string;
   permite_mitad: boolean;
+  // nuevos campos posibles para imagen
+  imagen_url?: string;
+  image_url?: string;
+  imageUrl?: string;
 }
 
 interface ProductosTableProps {
@@ -30,7 +34,12 @@ interface ProductosTableProps {
 type SortField = 'nombre' | 'precio' | 'tipo' | 'permite_mitad';
 type SortDirection = 'asc' | 'desc';
 
-export default function ProductosTable({ productos, onDelete, onEdit, onView }: ProductosTableProps) {
+export default function ProductosTable({
+  productos,
+  onDelete,
+  onEdit,
+  onView,
+}: ProductosTableProps) {
   const [sortField, setSortField] = useState<SortField>('nombre');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [filterTipo, setFilterTipo] = useState<string>('all');
@@ -45,12 +54,14 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
   };
 
   const sortedAndFilteredProductos = productos
-    .filter(producto => 
-      filterTipo === 'all' || producto.tipo_producto_id.toString() === filterTipo
+    .filter(
+      (producto) =>
+        filterTipo === 'all' ||
+        producto.tipo_producto_id.toString() === filterTipo,
     )
     .sort((a, b) => {
       let aValue: any, bValue: any;
-      
+
       switch (sortField) {
         case 'precio':
           aValue = Number(a.precio_unitario);
@@ -75,22 +86,33 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
     });
 
   const getUniqueTipos = () => {
-    const tipos = new Set(productos.map(p => p.tipo_producto_id));
-    return Array.from(tipos).map(id => ({
+    const tipos = new Set(productos.map((p) => p.tipo_producto_id));
+    return Array.from(tipos).map((id) => ({
       id,
-      nombre: productos.find(p => p.tipo_producto_id === id)?.tipo_producto_nombre || `Tipo ${id}`
+      nombre:
+        productos.find((p) => p.tipo_producto_id === id)
+          ?.tipo_producto_nombre || `Tipo ${id}`,
     }));
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <FontAwesomeIcon icon={faSort} className="ml-1 opacity-50" />;
+    if (sortField !== field)
+      return (
+        <FontAwesomeIcon
+          icon={faSort}
+          className="ml-1 opacity-50"
+        />
+      );
     return (
-      <FontAwesomeIcon 
-        icon={sortDirection === 'asc' ? faSortUp : faSortDown} 
-        className="ml-1" 
+      <FontAwesomeIcon
+        icon={sortDirection === 'asc' ? faSortUp : faSortDown}
+        className="ml-1"
       />
     );
   };
+
+  const getImageUrl = (p: Producto): string | undefined =>
+    p.imagen_url || p.image_url || p.imageUrl || undefined;
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -103,7 +125,7 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
             className="px-3 py-2 border border-gray-300 rounded-md"
           >
             <option value="all">Todos los tipos</option>
-            {getUniqueTipos().map(tipo => (
+            {getUniqueTipos().map((tipo) => (
               <option key={tipo.id} value={tipo.id}>
                 {tipo.nombre}
               </option>
@@ -117,7 +139,11 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th 
+              {/* Nueva columna: Imagen */}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Imagen
+              </th>
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('nombre')}
               >
@@ -126,7 +152,7 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
                   <SortIcon field="nombre" />
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('precio')}
               >
@@ -135,7 +161,7 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
                   <SortIcon field="precio" />
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('tipo')}
               >
@@ -144,7 +170,7 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
                   <SortIcon field="tipo" />
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort('permite_mitad')}
               >
@@ -159,55 +185,85 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {sortedAndFilteredProductos.map((producto) => (
-              <tr key={producto.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{producto.nombre}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 font-mono">
-                    ${Number(producto.precio_unitario).toFixed(2)}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                    {producto.tipo_producto_nombre || `Tipo ${producto.tipo_producto_id}`}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    producto.permite_mitad 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {producto.permite_mitad ? 'Sí' : 'No'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button
-                    onClick={() => onView(producto.id)}
-                    className="text-green-600 hover:text-green-900"
-                    title="Ver detalle"
-                  >
-                    <FontAwesomeIcon icon={faEye} />
-                  </button>
-                  <button
-                    onClick={() => onEdit(producto.id)}
-                    className="text-blue-600 hover:text-blue-900"
-                    title="Editar"
-                  >
-                    <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(producto.id)}
-                    className="text-red-600 hover:text-red-900"
-                    title="Eliminar"
-                  >
-                    <FontAwesomeIcon icon={faTrashAlt} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {sortedAndFilteredProductos.map((producto) => {
+              const imageUrl = getImageUrl(producto);
+
+              return (
+                <tr key={producto.id} className="hover:bg-gray-50">
+                  {/* Celda de imagen */}
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="h-12 w-12 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                      {imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={'https://res.cloudinary.com/droqhxpim/image/upload/v1/'+imageUrl+'?_a=BAMAMifm0'}
+                          alt={producto.nombre}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-gray-400">
+                          Sin imagen
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {producto.nombre}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 font-mono">
+                      $
+                      {Number(
+                        producto.precio_unitario,
+                      ).toFixed(2)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                      {producto.tipo_producto_nombre ||
+                        `Tipo ${producto.tipo_producto_id}`}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        producto.permite_mitad
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {producto.permite_mitad ? 'Sí' : 'No'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button
+                      onClick={() => onView(producto.id)}
+                      className="text-green-600 hover:text-green-900"
+                      title="Ver detalle"
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                    </button>
+                    <button
+                      onClick={() => onEdit(producto.id)}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="Editar"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </button>
+                    <button
+                      onClick={() => onDelete(producto.id)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Eliminar"
+                    >
+                      <FontAwesomeIcon icon={faTrashAlt} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -216,8 +272,15 @@ export default function ProductosTable({ productos, onDelete, onEdit, onView }: 
       <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-700">
-            Mostrando <span className="font-medium">{sortedAndFilteredProductos.length}</span> de{' '}
-            <span className="font-medium">{productos.length}</span> productos
+            Mostrando{' '}
+            <span className="font-medium">
+              {sortedAndFilteredProductos.length}
+            </span>{' '}
+            de{' '}
+            <span className="font-medium">
+              {productos.length}
+            </span>{' '}
+            productos
           </div>
           {/* Aquí iría la paginación */}
         </div>

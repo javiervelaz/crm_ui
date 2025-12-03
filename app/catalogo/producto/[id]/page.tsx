@@ -1,8 +1,6 @@
 'use client';
 
-
-
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useCart } from '../../CartContext';
 import type { CatalogProduct } from '../../types';
@@ -28,13 +26,15 @@ export default function ProductDetailPage({ params }: Props) {
         setLoading(true);
         setError(null);
         const data = await fetchProductById(params.id);
-        if (!cancelled) {
-          if (!data) {
-            // Next maneja este notFound
-            notFound();
-          } else {
-            setProduct(data);
-          }
+
+        if (cancelled) return;
+
+        if (!data) {
+          // antes: notFound();
+          setError('No se encontró el producto');
+          setProduct(null);
+        } else {
+          setProduct(data);
         }
       } catch (err: any) {
         console.error(err);
@@ -87,6 +87,17 @@ export default function ProductDetailPage({ params }: Props) {
     );
   }
 
+  // si llegamos acá, tenemos product
+
+  // OJO con la URL de la imagen:
+  // si product.imageUrl ya es una URL completa, usala directo.
+  const imageSrc =
+    product.imageUrl?.startsWith('http')
+      ? product.imageUrl
+      : product.imageUrl
+      ? `https://res.cloudinary.com/droqhxpim/image/upload/v1/${product.imageUrl}?_a=BAMAMifm0`
+      : null;
+
   return (
     <div className="flex w-full flex-col gap-4 pb-4">
       <button
@@ -97,11 +108,11 @@ export default function ProductDetailPage({ params }: Props) {
         ← Volver
       </button>
 
-      {product.imageUrl && (
+      {imageSrc && (
         <div className="relative overflow-hidden rounded-2xl border bg-slate-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.imageUrl}
+            src={imageSrc}
             alt={product.name}
             className="h-56 w-full object-cover sm:h-64"
           />
@@ -109,7 +120,9 @@ export default function ProductDetailPage({ params }: Props) {
       )}
 
       <div className="space-y-2">
-        <h1 className="text-xl font-bold text-slate-900">{product.name}</h1>
+        <h1 className="text-xl font-bold text-slate-900">
+          {product.name}
+        </h1>
         <p className="text-lg font-semibold text-slate-900">
           ${product.price.toLocaleString('es-AR')}
         </p>

@@ -1,5 +1,22 @@
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+
+
+export interface PedidoItemDetalle {
+  id: number;
+  pedido_id: number;
+  producto_id: number;
+  producto_nombre: string;
+  cantidad: number;
+  cantidad_mitad: number;
+  precio_unitario: number;
+  precio_final: number | null;
+  monto_adicional: number | null;
+  observaciones: string | null;
+  producto_image_public_id: string | null;
+}
+
 export const abrirCaja = async (data: any) => {
     try {
       const token = localStorage.getItem('token');
@@ -209,3 +226,25 @@ export const abrirCaja = async (data: any) => {
       throw new Error('Falló recuprar monto caja incial');
     } 
   }
+
+
+  export async function getDetallePedido(pedidoId: number): Promise<PedidoItemDetalle[]> {
+
+  const res = await fetch(
+    `${apiUrl}/operaciones/detalle-pedido/${pedidoId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error('Error obteniendo detalle del pedido');
+  }
+
+  const data = await res.json();
+  return data as PedidoItemDetalle[];
+}
