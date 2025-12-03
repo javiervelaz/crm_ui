@@ -14,7 +14,7 @@ const useCajaAbierta = () => {
   useEffect(() => {
     const verificarCaja = async () => {
       try {
-        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()};
+        const data = {cliente_id:getClienteId()};
         const res = await checkAperturaCaja(data);
         if (res.caja_abierta) {
           setCajaAbierta(true);

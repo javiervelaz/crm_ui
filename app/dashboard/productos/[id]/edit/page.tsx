@@ -5,6 +5,7 @@ import { getProductoById, updateProducto } from '@/app/lib/producto.api';
 import { getTipoProductoList } from "@/app/lib/tipoproducto.api";
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ProductoImagenesManager } from '../../componentes/productoImagenesManager';
 
 const EditProductoPage = () => {
   const { id } = useParams();
@@ -23,6 +24,7 @@ const EditProductoPage = () => {
       const fetchProducto = async () => {
         try {
           const data = await getProductoById(id,getClienteId());
+          console.log(data)
           setProductoDetails({
             ...data,
             permite_mitad: data.permite_mitad || false // Asegurar que tenga valor
@@ -136,6 +138,16 @@ const EditProductoPage = () => {
             Si está marcado, este producto podrá ser vendido por la mitad de su precio unitario
           </p>
         </div>
+        <div className="mb-4">
+          {productoDetails.id ? (
+            <ProductoImagenesManager productoId={productoDetails.id} />
+          ) : (
+            <p className="text-xs text-gray-500">
+              Guardá el producto para poder administrar sus imágenes {productoDetails.id}.
+            </p>
+          )}
+        </div>
+
 
         <div className="flex justify-end gap-4">
           <button

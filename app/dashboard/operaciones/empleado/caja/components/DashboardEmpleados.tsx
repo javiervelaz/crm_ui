@@ -25,10 +25,8 @@ const DashboardEmpleados = () => {
 useEffect(() => {
   const verificarCaja = async () => {
     try {
-        const data = {fecha:getCurrentDate().fecha,cliente_id:getClienteId()} as any;
-        console.log(data)
+        const data = {cliente_id:getClienteId()} as any;
         const res = await checkAperturaCaja(data);
-        console.log("res:",res);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
@@ -73,7 +71,7 @@ useEffect(() => {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Ingresar pedidos</h1>
+      <h1 className="text-xl font-bold mb-4">Pedidos</h1>
 
       {!cajaAbierta ? (
         <div className="flex justify-end">
