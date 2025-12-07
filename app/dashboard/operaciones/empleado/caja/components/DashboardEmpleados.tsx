@@ -68,7 +68,7 @@ const DashboardEmpleados = () => {
         getClienteId(),
       );
       setPedidos(response);
-      console.log("pedidos",response)
+    
     } catch (error) {
       console.error("Error al cargar pedidos:", error);
     } finally {

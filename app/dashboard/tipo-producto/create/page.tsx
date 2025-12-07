@@ -42,7 +42,7 @@ export default function FormTipoProducto() {
         formData.cliente_id = getClienteId();
         await createTipoProducto(formData);
       }
-      router.push('/dashboard/tipo-producto');
+      router.push('/dashboard/productos/tipo-producto');
     } catch (error) {
       console.error('Error guardando tipo de producto:', error);
     } finally {

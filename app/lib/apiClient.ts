@@ -17,7 +17,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// 🔹 Interceptor global para manejar errores
+// 🔹 Interceptor de respuesta para manejar errores globales
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -25,13 +25,33 @@ apiClient.interceptors.response.use(
       const { status, data } = error.response;
 
       if (status === 403) {
-        const msg =
+        const rawMsg =
           data?.error ||
           'Acción no permitida. No tienes permisos suficientes.';
-        toast.error(msg, {
+
+        const lowerMsg = typeof rawMsg === 'string' ? rawMsg.toLowerCase() : '';
+
+        // Detectamos si el 403 viene por plan / tier (mensaje del middleware de features)
+        const isPlanError =
+          lowerMsg.includes('tu plan actual') ||
+          (lowerMsg.includes('plan') && lowerMsg.includes('no tiene acceso'));
+
+        const finalMsg = isPlanError
+          ? 'Tu plan actual no incluye esta funcionalidad. Podés mejorar el plan para acceder.'
+          : rawMsg;
+
+        // Aviso en pantalla
+        toast.error(finalMsg, {
           position: 'top-right',
           autoClose: 3000,
         });
+
+        // Si el error viene por plan, redirigimos a una página especial
+        if (isPlanError) {
+          setTimeout(() => {
+            window.location.href = '/dashboard/upgrade-plan';
+          }, 1500);
+        }
       } else if (status === 401) {
         toast.warning('Sesión expirada. Inicia sesión nuevamente.');
         localStorage.removeItem('token');

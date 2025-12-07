@@ -41,8 +41,17 @@ export default function ReporteVentasPage() {
       productos: selectedProductos.length > 0 ? selectedProductos.map(p => p.id).join(',') : null
     };
     try {
-      const res = await axios.post(`${apiUrl}/reportes/ventas`, payload);
-      setVentas(res.data);
+      const token = localStorage.getItem('token');
+        const response = await fetch(`${apiUrl}/reportes/ventas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          body: JSON.stringify(payload),
+        },
+      });
+     
+      setVentas(response.data);
     } catch (err) {
       console.error(err);
     }

@@ -19,6 +19,25 @@ export const getProductoList = async (cliente: BigInt) => {
       return await response.json();
   };
 
+  export const postProductoList = async (cliente: BigInt) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/producto/list/${cliente}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    // Si la respuesta es un 404, retorna un array vacío
+    if (response.status === 404) {
+        return [];
+      }
+      if (!response.ok) {
+        throw new Error('Failed to load producto list');
+      }
+      return await response.json();
+  };
+
   export const createProduct = async (data: any) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto`, {

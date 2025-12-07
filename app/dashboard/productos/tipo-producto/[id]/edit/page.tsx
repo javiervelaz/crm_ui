@@ -37,7 +37,7 @@ export default function FormTipoProducto() {
       } else {
         await createTipoProducto(formData);
       }
-      router.push('/dashboard/tipo-producto');
+      router.push('/dashboard/productos/tipo-producto');
     } catch (error) {
       console.error('Error guardando tipo de producto:', error);
     } finally {
@@ -69,7 +69,7 @@ export default function FormTipoProducto() {
         <div className="flex space-x-4 pt-4">
           <button
             type="button"
-            onClick={() => router.push('/dashboard/tipo-producto')}
+            onClick={() => router.push('/dashboard/productos/tipo-producto')}
             className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
           >
             Cancelar

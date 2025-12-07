@@ -117,6 +117,8 @@ export default function DynamicMenu() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+     localStorage.removeItem('role');
+    window.dispatchEvent(new Event("storage"));
     router.push('/');
   };
 

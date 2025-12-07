@@ -50,22 +50,21 @@ interface DecodedToken {
 
   const pathname = usePathname();
   const isCatalogRoute = pathname.startsWith('/catalogo');
+  const isSaasRoute = pathname?.startsWith('/saas');
+
+   const isPublicRoute = isCatalogRoute || isSaasRoute || pathname === '/auth';
 
 
    return (
     <html lang="es">
-      <body className={`${lusitana.className} antialiased bg-gray-100`}>
-        {isCatalogRoute ? (
-          // Layout público para el micrositio de catálogo
-          <div className="min-h-screen bg-slate-50">
-            {children}
-          </div>
+      <body className={lusitana.className}>
+        {isPublicRoute ? (
+          // Layout público (sin Sidebar/Header del CRM)
+          <div className="min-h-screen bg-slate-50">{children}</div>
         ) : (
-          // Layout actual del CRM
+          // Layout actual del CRM (Sidebar + Header)
           <div className="flex h-screen">
-            {/* Sidebar */}
             {isLoggedIn && <Sidebar />}
-            {/* Contenedor principal */}
             <div className="flex flex-col flex-1">
               <Header />
               <main className="p-6 overflow-y-auto">{children}</main>
