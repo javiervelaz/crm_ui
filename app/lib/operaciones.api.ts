@@ -1,4 +1,5 @@
 import { notifyError, notifySuccess } from './notificationService';
+import apiClient from "@/app/lib/apiClient";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 
@@ -86,24 +87,24 @@ export const abrirCaja = async (data: any) => {
 
   export const getPedidosByRegistroId = async (Id: number, cliente: BigInt) => {
     try {
-      const response = await fetch(`${apiUrl}/operaciones/listar-pedidos/${Id}/${cliente}`, {
+      const response = await apiClient(`${apiUrl}/operaciones/listar-pedidos/${Id}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-  
+      console.log(response)
       // Si la respuesta es un 404, retorna un array vacío
       if (response.status === 404) {
         return [];
       }
   
       // Si hay otro tipo de error, lanza una excepción
-      if (!response.ok) {
+      if (!response.status === 200) {
         throw new Error('Failed to fetch pedidos list');
       }
   
-      return await response.json();
+      return await response.data;
     } catch (error) {
       console.error('Error al obtener el listado de pedidos', error);
       // Si ocurre cualquier otro error, retorna un array vacío
@@ -132,18 +133,40 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const deletePedido = async (id: number,cliente: BigInt) => {
-    const response = await fetch(`${apiUrl}/operaciones/borrar-pedido/${id}/${cliente}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to delete tipo pedido');
-    }
-    return await response.json();
+  export const deletePedido = async (id: number, cliente: bigint) => {
+    const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${apiUrl}/operaciones/borrar-pedido/${id}/${cliente}`, 
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${token}`},
+        }
+      );
+
+      // Siempre tratamos de leer el body si viene JSON
+      let errorBody: any = null;
+      try {
+        errorBody = await response.clone().json();
+      } catch (e) {
+        // puede no ser JSON → lo ignoramos
+      }
+
+      console.log("RESPONSE RAW:", response.status, response.statusText);
+      console.log("RESPONSE BODY:", errorBody);
+
+      if (response.status === 403) {
+        throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
+      }
+
+      if (!response.ok) {
+        // Si el backend mandó mensaje propio → lo usamos
+        const messageBackend = errorBody?.error || errorBody?.message;
+        throw new Error(messageBackend || 'Error borrando pedido');
+      }
+
+      return await response.json();
   };
+
 
   export const pedidoMontoTotalDiario =  async (id: number, cliente: BigInt) => {
     try {

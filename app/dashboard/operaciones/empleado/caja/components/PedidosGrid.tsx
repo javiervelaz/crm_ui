@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Fragment, useEffect, useState } from 'react';
+import { notifyError } from '@/app/lib/notificationService';
 
 // Debe matchear lo que devuelve tu endpoint de detalle
 interface PedidoItemDetalle {
@@ -139,6 +140,7 @@ const PedidosGrid = ({
         await fetchPedidos();
       } catch (error) {
         console.error('Error eliminando pedido', error);
+        notifyError(error.message)
       }
     }
   };

@@ -1,10 +1,10 @@
 import { getClienteId } from "@/app/lib/authService";
-import { getProductoList } from '@/app/lib/producto.api';
+import { postProductoList } from '@/app/lib/producto.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
 import MultiSelect from '@/components/ui/MultiSelect';
-import axios from 'axios';
+import  apiClient  from '@/app/lib/apiClient';
 import { addDays, format, subDays } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -33,8 +33,7 @@ export default function ReporteVentasPage() {
     // Llamada a la API para obtener usuarios reales
     const fetchProductos = async () => {
       try {
-        const data = await getProductoList(getClienteId());
-        console.log("productos", data);
+        const data = await postProductoList(getClienteId());
         setProductos(data);
       } catch (err) {
         console.error(err);
@@ -45,13 +44,13 @@ export default function ReporteVentasPage() {
 
    // 🔹 Función para exportar a Excel
    const exportToExcel = () => {
-    if (ventas.length === 0) {
+    if (!ventas && ventas?.length === 0) {
       alert('No hay datos para exportar');
       return;
     }
 
     // Preparar datos para Excel
-    const excelData = ventas.map(venta => ({
+    const excelData = ventas?.map(venta => ({
       'Fecha': format(new Date(venta.fecha), 'yyyy-MM-dd'),
       'Producto': venta.producto,
       'Cantidad Total': venta.cantidad_total,
@@ -59,8 +58,8 @@ export default function ReporteVentasPage() {
     }));
 
     // Calcular totales
-    const totalCantidad = ventas.reduce((sum, v) => sum + parseInt(v.cantidad_total), 0);
-    const totalVendido = ventas.reduce((sum, v) => sum + parseFloat(v.total_vendido), 0);
+    const totalCantidad = ventas?.reduce((sum, v) => sum + parseInt(v.cantidad_total), 0);
+    const totalVendido = ventas?.reduce((sum, v) => sum + parseFloat(v.total_vendido), 0);
 
     // Agregar fila de totales
     excelData.push({
@@ -84,12 +83,12 @@ export default function ReporteVentasPage() {
 
   // 🔹 Función para exportar a CSV (alternativa más simple)
   const exportToCSV = () => {
-    if (ventas.length === 0) {
+    if (ventas?.length === 0) {
       alert('No hay datos para exportar');
       return;
     }
 
-    const csvData = ventas.map(venta => 
+    const csvData = ventas?.map(venta => 
       `"${format(new Date(venta.fecha), 'yyyy-MM-dd')}","${venta.producto}",${venta.cantidad_total},${parseFloat(venta.total_vendido).toFixed(2)}`
     ).join('\n');
 
@@ -107,23 +106,28 @@ export default function ReporteVentasPage() {
   };
 
   const fetchVentas = useCallback(async () => {
-    // Solo hacer fetch si ambas fechas están definidas
-    if (!fechaDesde || !fechaHasta) return;
-    
-    const payload = {
-      fecha_desde: format(fechaDesde, 'yyyy-MM-dd'),
-      fecha_hasta: format(fechaHasta, 'yyyy-MM-dd'),
-      productos: selectedProductos.length > 0 ? selectedProductos.map(p => p.id).join(',') : null,
-      cliente_id: getClienteId(),
-    };
-    
-    try {
-      const res = await axios.post(`${apiUrl}/reportes/ventas`, payload);
-      setVentas(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  }, [fechaDesde, fechaHasta, selectedProductos, apiUrl]);
+  if (!fechaDesde || !fechaHasta) return;
+
+  const payload = {
+    fecha_desde: format(fechaDesde, 'yyyy-MM-dd'),
+    fecha_hasta: format(fechaHasta, 'yyyy-MM-dd'),
+    productos: selectedProductos.length > 0 
+      ? selectedProductos.map(p => p.id).join(',')
+      : null,
+    cliente_id: getClienteId(),
+  };
+
+  try {
+    const response = await apiClient.post('/reportes/ventas', payload);
+    console.log("data", response.data);
+
+    setVentas(response.data);
+
+  } catch (err) {
+    console.error(err);
+  }
+}, [fechaDesde, fechaHasta, selectedProductos]);
+
 
   useEffect(() => {
     fetchVentas();
@@ -167,7 +171,7 @@ export default function ReporteVentasPage() {
               onClick={exportToExcel}
               variant="outline"
               className="bg-green-600 text-white hover:bg-green-700"
-              disabled={ventas.length === 0}
+              disabled={ventas?.length === 0}
             >
               Exportar Excel
             </Button>
@@ -175,14 +179,14 @@ export default function ReporteVentasPage() {
               onClick={exportToCSV}
               variant="outline"
               className="bg-blue-600 text-white hover:bg-blue-700"
-              disabled={ventas.length === 0}
+              disabled={ventas?.length === 0}
             >
               Exportar CSV
             </Button>
           </div>
         </CardContent>
       </Card>
-
+      
       <Card>
         <CardContent className="p-4">
           <h2 className="text-lg font-semibold mb-4">Resultados de Ventas</h2>
@@ -196,32 +200,43 @@ export default function ReporteVentasPage() {
               </tr>
             </thead>
             <tbody>
-              {ventas.map((venta, idx) => (
-                <tr key={idx} className="border-b">
-                  <td className="p-2">{format(new Date(venta.fecha), 'yyyy-MM-dd')}</td>
-                  <td className="p-2">{venta.producto}</td>
-                  <td className="p-2 text-right">{venta.cantidad_total}</td>
-                  <td className="p-2 text-right">${parseFloat(venta.total_vendido).toFixed(2)}</td>
-                </tr>
-              ))}
+                {ventas?.length > 0 &&
+                ventas.map((venta, idx) => (
+                  <tr key={idx} className="border-b">
+                    <td className="p-2">{format(new Date(venta.fecha), 'yyyy-MM-dd')}</td>
+                    <td className="p-2">{venta.producto}</td>
+                    <td className="p-2 text-right">{venta.cantidad_total}</td>
+                    <td className="p-2 text-right">${parseFloat(venta.total_vendido).toFixed(2)}</td>
+                  </tr>
+                ))
+              }
+
             </tbody>
           </table>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-4">
-          <h2 className="text-lg font-semibold mb-4">Gráfico de Ventas</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={ventas}>
-              <XAxis dataKey={(entry) => format(new Date(entry.fecha), 'MM-dd')} />
-              <YAxis />
-              <Tooltip formatter={(value) => `$${parseFloat(value).toFixed(2)}`} />
-              <Bar dataKey="total_vendido" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+     <Card>
+    <CardContent className="p-4">
+      <h2 className="text-lg font-semibold mb-4">Gráfico de Ventas</h2>
+
+      {ventas?.length > 0 ? (
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={ventas}>
+            <XAxis dataKey={(entry) => format(new Date(entry.fecha), 'MM-dd')} />
+            <YAxis />
+            <Tooltip formatter={(value) => `$${parseFloat(value).toFixed(2)}`} />
+            <Bar dataKey="total_vendido" fill="#3b82f6" />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="text-center text-gray-500 py-12">
+          No hay ventas para mostrar en el gráfico
+        </div>
+      )}
+    </CardContent>
+  </Card>
+
     </div>
   );
 }

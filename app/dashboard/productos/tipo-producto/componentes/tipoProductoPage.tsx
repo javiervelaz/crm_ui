@@ -39,7 +39,7 @@ export default function TipoProductoPage() {
   };
 
   const handleEdit = (id: number) => {
-    router.push(`/dashboard/tipo-producto/${id}/edit`);
+    router.push(`/dashboard/productos/tipo-producto/${id}/edit`);
   };
 
   const handleDelete = async (id: number) => {
@@ -62,7 +62,7 @@ export default function TipoProductoPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className={`${lusitana.className} text-2xl`}>Tipos de Producto</h1>
         <button
-          onClick={() => router.push('/dashboard/tipo-producto/create')}
+          onClick={() => router.push('/dashboard/productos/tipo-producto/create')}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
         >
           <FontAwesomeIcon icon={faPlus} className="mr-2" />

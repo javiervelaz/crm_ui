@@ -69,11 +69,12 @@ export const useAuthCheck = () => {
       const auxiliaryRoutes = [
         '/dashboard/profile',
         '/dashboard/settings',
-        '/dashboard/productos/tipo-proucto',
+        '/dashboard/productos/tipo-producto',
         '/dashboard/home',
         '/dashboard/tipo-salida',
         '/catalogo',
-        'dashboard/operaciones/admin/reportes/caja'
+        'dashboard/operaciones/admin/reportes/caja',
+        '/dashboard/upgrade-plan'
       ];
 
       // Verificar acceso por módulo o por ruta auxiliar
