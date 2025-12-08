@@ -5,7 +5,7 @@ import { useClientePlan } from '@/app/lib/useClientePlan';
 import { useTiers } from '@/app/lib/useTiers';
 import { createBillingCheckout, simulateBillingMock } from '@/app/lib/billing.api';
 import { useSearchParams } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState,useEffect,useMemo } from 'react';
 
 const IS_MOCK = process.env.NEXT_PUBLIC_MP_MOCK === 'true';
 
@@ -15,6 +15,11 @@ export default function PlanPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const searchParams = useSearchParams();
   const statusParam = searchParams?.get('status') ?? null;
+
+    useEffect(() => {
+    // fetch solo en cliente
+    }, []);
+
 
   const handleUpgrade = async (tierCode: 'BASIC' | 'PREMIUM') => {
     try {
