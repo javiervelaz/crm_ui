@@ -3,6 +3,7 @@
 
 import { useRef, useState, FormEvent } from 'react';
 import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
+import { useTiers } from '@/app/lib/useTiers';   // 👈 NUEVO
 
 type StatusState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -10,6 +11,12 @@ const PLAN_LABELS: Record<PlanTier, string> = {
   FREE: 'Free',
   BASIC: 'Básico',
   PREMIUM: 'Premium',
+};
+
+const formatPrice = (price: number | null | undefined) => {
+  if (price == null) return '(definir precio)';
+  if (price === 0) return 'Sin costo';
+  return `$ ${price.toLocaleString('es-AR')} / mes`;
 };
 
 export default function SaasLandingPage() {
@@ -29,6 +36,13 @@ export default function SaasLandingPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const formRef = useRef<HTMLDivElement | null>(null);
+
+  // 🔹 Traemos los planes desde la API (/api/tiers)
+  const { tiers, loading: tiersLoading, error: tiersError } = useTiers();
+
+  const freeTier = tiers.find((t) => t.code.toUpperCase() === 'FREE');
+  const basicTier = tiers.find((t) => t.code.toUpperCase() === 'BASIC');
+  const premiumTier = tiers.find((t) => t.code.toUpperCase() === 'PREMIUM');
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,7 +77,6 @@ export default function SaasLandingPage() {
         'Tu cuenta fue creada correctamente. Ya podés acceder al CRM con tu usuario.'
       );
 
-      // reset mínimo (dejamos el plan como está)
       setComercioNombre('');
       setCuit('');
       setAdminNombre('');
@@ -137,7 +150,7 @@ export default function SaasLandingPage() {
                     <p className="text-rose-100">Gastos</p>
                     <p className="text-lg font-bold">$12.000</p>
                   </div>
-                  <div className="rounded-lg bg-indigo-500/20 p-3 col-span-2">
+                  <div className="col-span-2 rounded-lg bg-indigo-500/20 p-3">
                     <p className="text-indigo-100">Clientes del día</p>
                     <p className="text-lg font-bold">Nuevos 7 · Recurrentes 21</p>
                   </div>
@@ -239,6 +252,14 @@ export default function SaasLandingPage() {
             <p className="mt-2 text-sm text-slate-300">
               Empezá gratis y cuando tu negocio lo pida, pasás a un plan pago.
             </p>
+            {tiersLoading && (
+              <p className="mt-2 text-xs text-slate-400">Cargando precios...</p>
+            )}
+            {tiersError && (
+              <p className="mt-2 text-xs text-red-400">
+                Error cargando precios: {tiersError}
+              </p>
+            )}
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
@@ -246,7 +267,7 @@ export default function SaasLandingPage() {
             <PlanCard
               title="Free"
               description="Para probar el sistema en tu comercio."
-              price="Sin costo"
+              price={formatPrice(freeTier?.precio_mensual ?? 0)}
               features={[
                 'Registro de pedidos del día',
                 'Gestión básica de productos',
@@ -261,7 +282,7 @@ export default function SaasLandingPage() {
             <PlanCard
               title="Básico"
               description="Para comercios que usan el CRM todos los días."
-              price="(definir precio)"
+              price={formatPrice(basicTier?.precio_mensual)}
               highlight
               features={[
                 'Todo lo del plan Free',
@@ -277,7 +298,7 @@ export default function SaasLandingPage() {
             <PlanCard
               title="Premium"
               description="Para dueños que quieren ver el negocio completo."
-              price="(definir precio)"
+              price={formatPrice(premiumTier?.precio_mensual)}
               features={[
                 'Todo lo del plan Básico',
                 'Reportes diarios y por medio de pago',
@@ -523,7 +544,7 @@ function PlanCard({
       </div>
       <button
         onClick={() => onSelect(plan)}
-        className="mt-4 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-100"
+        className="mt-4 rounded-full bg.white px-4 py-2 text-xs font-semibold text-slate-900 bg-white hover:bg-slate-100"
       >
         Elegir {title}
       </button>

@@ -31,7 +31,7 @@ const UpgradePlanPage = () => {
             </button>
           </Link>
 
-          <Link href="/saas">
+          <Link href="/dashboard/plan">
             <button className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
               Ver planes y mejorar
             </button>
