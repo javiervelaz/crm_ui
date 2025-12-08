@@ -9,6 +9,7 @@ import {
   Pizza,
   ShoppingCart,
   Users,
+  CreditCard 
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -27,6 +28,7 @@ const MODULE_ORDER = [
   'cerrarcaja',
   'reportes',
   'usuarios',
+  'plan', 
 ];
 
 /**
@@ -40,7 +42,8 @@ const MODULE_ICONS: Record<string, any> = {
   gasto: DollarSign,
   operaciones: ShoppingCart,
   flujo: DollarSign,
-  cerrarcaja:DollarSign
+  cerrarcaja:DollarSign,
+   plan: CreditCard, 
 };
 
 /**
@@ -54,7 +57,8 @@ const MODULE_LABELS: Record<string, string> = {
   gasto: 'Agregar Gastos',
   operaciones: 'Tomar Pedidos',
   flujo: 'Cash Flow',
-  cerrarcaja: 'Cerrar caja'
+  cerrarcaja: 'Cerrar caja',
+  plan: 'Mi plan', 
 };
 
 /**
