@@ -14,7 +14,7 @@ export default function PlanPage() {
   const { tiers, loading: loadingTiers, error: errorTiers } = useTiers();
   const [isProcessing, setIsProcessing] = useState(false);
   const searchParams = useSearchParams();
-  const statusParam = searchParams.get('status');
+  const statusParam = searchParams?.get('status') ?? null;
 
   const handleUpgrade = async (tierCode: 'BASIC' | 'PREMIUM') => {
     try {
@@ -61,28 +61,15 @@ export default function PlanPage() {
 
       {statusParam === 'success' && (
         <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            ✅ ¡Pago exitoso! Si no ves el cambio de plan, recargá la página en unos segundos.
+          Pago procesado correctamente. Si no ves el cambio de plan, recargá en unos segundos.
         </div>
-        )}
+      )}
 
-        {statusParam === 'pending' && (
-        <div className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-            ⏳ El pago está pendiente. Vas a recibir una confirmación cuando se acredite.
-        </div>
-        )}
-
-        {statusParam === 'rejected' && (
+      {statusParam === 'failed' && (
         <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
-            ❌ El pago fue rechazado. Verificá los datos de la tarjeta o intentá con otro medio.
+          El pago no se completó. Podés intentarlo nuevamente.
         </div>
-        )}
-
-        {statusParam === 'cancelled' && (
-        <div className="rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-800">
-            El pago fue cancelado o no se completó. No se generó ningún cargo.
-        </div>
-        )}
-
+      )}
 
       {isLoading && <p>Cargando información de tu plan y precios...</p>}
 
