@@ -11,6 +11,8 @@ export interface Tier {
   descripcion: string | null;
   precio_mensual: number | null;
   es_activo: boolean;
+  es_personalizado:boolean;
+  duracion_meses: number;
 }
 
 export function useTiers() {

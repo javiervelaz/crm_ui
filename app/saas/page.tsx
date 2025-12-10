@@ -60,7 +60,7 @@ export default function SaasLandingPage() {
     setSuccessMessage(null);
 
     try {
-      await registerSaasCliente({
+      var response = await registerSaasCliente({
         plan: selectedPlan,
         comercioNombre,
         cuit,
@@ -85,6 +85,11 @@ export default function SaasLandingPage() {
       setAdminDni('');
       setTelefono('');
       setPassword('');
+
+      if (response.paymentUrl) {
+        window.location.href = response.paymentUrl;
+        return;
+      }
     } catch (err: any) {
       setStatus('error');
       setErrorMessage(err?.message || 'Error creando la cuenta.');
@@ -449,6 +454,14 @@ export default function SaasLandingPage() {
                 />
               </div>
             </div>
+              {status === 'loading' && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                  <div className="text-center">
+                    <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-300 border-t-slate-900 mx-auto"></div>
+                    <p className="text-slate-700 font-medium">Creando tu cuenta...</p>
+                  </div>
+                </div>
+              )}
 
             {/* Mensajes */}
             {status === 'error' && errorMessage && (
