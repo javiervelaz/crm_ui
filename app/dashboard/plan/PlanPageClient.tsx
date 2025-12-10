@@ -20,7 +20,7 @@ export function PlanPageClient() {
     // fetch solo en cliente (si lo necesitás después)
   }, []);
 
-  const handleUpgrade = async (tierCode: 'BASIC' | 'PREMIUM') => {
+  const handleUpgrade = async (tierCode: string) => {
     try {
       setIsProcessing(true);
       const { initPoint, preapprovalId } = await createBillingCheckout(tierCode);
@@ -41,17 +41,11 @@ export function PlanPageClient() {
 
   const currentTier = plan?.tierCode?.toUpperCase() || 'FREE';
 
-  const basicTier = useMemo(
-    () => tiers.find((t) => t.code.toUpperCase() === 'BASIC'),
-    [tiers]
-  );
-  const premiumTier = useMemo(
-    () => tiers.find((t) => t.code.toUpperCase() === 'PREMIUM'),
-    [tiers]
-  );
-
   const isLoading = loadingPlan || loadingTiers;
   const hasError = errorPlan || errorTiers;
+
+  const standardTiers = tiers.filter((t) => !t.es_personalizado);
+  const promoTiers = tiers.filter((t) => t.es_personalizado);
 
   return (
     <>
@@ -82,68 +76,71 @@ export function PlanPageClient() {
       )}
 
       {plan && !isLoading && (
-        <section className="grid gap-6 md:grid-cols-3">
-          {/* Plan actual */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase text-gray-500">
-              Plan actual
-            </p>
-            <h2 className="mt-2 text-xl font-bold text-gray-900">
-              {plan.tierNombre} ({currentTier})
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Cliente: {plan.clienteNombre}
-            </p>
+        <>
+          <section className="grid gap-6 md:grid-cols-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase text-gray-500">
+                Plan actual
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-gray-900">
+                {plan.tierNombre} ({currentTier})
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                Cliente: {plan.clienteNombre}
+              </p>
 
-            <ul className="mt-4 space-y-1 text-sm text-gray-700">
-              <li>
-                • Reportes:{' '}
-                {plan.features.canUseReports ? 'Habilitados' : 'No disponible en este plan'}
-              </li>
-              <li>
-                • Bot WhatsApp:{' '}
-                {plan.features.canUseWhatsappBot
-                  ? 'Habilitado'
-                  : 'No disponible en este plan'}
-              </li>
-            </ul>
-          </div>
+              <ul className="mt-4 space-y-1 text-sm text-gray-700">
+                <li>
+                  • Reportes:{' '}
+                  {plan.features.canUseReports ? 'Habilitados' : 'No disponible en este plan'}
+                </li>
+                <li>
+                  • Bot WhatsApp:{' '}
+                  {plan.features.canUseWhatsappBot
+                    ? 'Habilitado'
+                    : 'No disponible en este plan'}
+                </li>
+              </ul>
+            </div>
 
-          {/* Plan Básico */}
-          <PlanCard
-            title="Básico"
-            tierCode="BASIC"
-            description={basicTier?.descripcion || 'Para comercios que usan el CRM todos los días.'}
-            features={[
-              'Todo lo del plan Free',
-              'Pedidos y productos sin límite',
-              'Cierre de caja y gastos',
-            ]}
-            price={basicTier?.precio_mensual ?? null}
-            currentTier={currentTier}
-            onUpgrade={handleUpgrade}
-            isProcessing={isProcessing}
-          />
+            {standardTiers.map((tier) => (
+              <PlanCard
+                key={tier.code}
+                title={tier.nombre_publico}
+                tierCode={tier.code}
+                description={tier.descripcion}
+                features={tier.beneficios || []}
+                price={tier.precio_mensual}
+                currentTier={currentTier}
+                onUpgrade={handleUpgrade}
+                isProcessing={isProcessing}
+                duracion = {tier.duracion_meses}
+              />
+            ))}
+          </section>
 
-          {/* Plan Premium */}
-          <PlanCard
-            title="Premium"
-            tierCode="PREMIUM"
-            description={
-              premiumTier?.descripcion ||
-              'Para dueños que quieren ver reportes y automatizar pedidos.'
-            }
-            features={[
-              'Todo lo del plan Básico',
-              'Reportes diarios y por medio de pago',
-              'Micrositio y bot de pedidos por WhatsApp',
-            ]}
-            price={premiumTier?.precio_mensual ?? null}
-            currentTier={currentTier}
-            onUpgrade={handleUpgrade}
-            isProcessing={isProcessing}
-          />
-        </section>
+          {promoTiers.length > 0 && (
+            <>
+              <h3 className="mt-10 text-lg font-bold text-gray-800">Promociones especiales</h3>
+              <section className="mt-4 grid gap-6 md:grid-cols-3">
+                {promoTiers.map((tier) => (
+                  <PlanCard
+                    key={tier.code}
+                    title={tier.nombre_publico}
+                    tierCode={tier.code}
+                    description={tier.descripcion}
+                    features={tier.beneficios || []}
+                    price={tier.precio_mensual}
+                    currentTier={currentTier}
+                    onUpgrade={handleUpgrade}
+                    isProcessing={isProcessing}
+                    duracion = {tier.duracion_meses}
+                  />
+                ))}
+              </section>
+            </>
+          )}
+        </>
       )}
     </>
   );
@@ -151,13 +148,14 @@ export function PlanPageClient() {
 
 interface PlanCardProps {
   title: string;
-  tierCode: 'BASIC' | 'PREMIUM';
+  tierCode: string;
   description: string;
   features: string[];
   currentTier: string;
-  onUpgrade: (tierCode: 'BASIC' | 'PREMIUM') => void;
+  onUpgrade: (tierCode: string) => void;
   isProcessing: boolean;
   price: number | null;
+  duracion: number | null;
 }
 
 function PlanCard({
@@ -169,24 +167,21 @@ function PlanCard({
   onUpgrade,
   isProcessing,
   price,
+  duracion
 }: PlanCardProps) {
   const isCurrent = currentTier === tierCode;
-  const isHigher =
-    currentTier === 'FREE' ||
-    (currentTier === 'BASIC' && tierCode === 'PREMIUM');
+  const isHigher = currentTier === 'FREE' || currentTier === 'BASIC';
 
-  const priceLabel =
-    price == null ? 'Consultar' : `$ ${price.toLocaleString('es-AR')} / mes`;
+  const priceLabel = price == null ? 'Consultar' : `$ ${price.toLocaleString('es-AR')} / mes`;
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div>
         <p className="text-xs font-semibold uppercase text-gray-500">{title}</p>
-        <h3 className="mt-1 text-lg font-semibold text-gray-900">
-          Plan {title}
-        </h3>
+        <h3 className="mt-1 text-lg font-semibold text-gray-900">Plan {title}</h3>
         <p className="mt-1 text-xl font-bold text-gray-900">{priceLabel}</p>
         <p className="mt-2 text-sm text-gray-600">{description}</p>
+        <p className="mt-2 text-sm text-gray-600">{duracion} meses</p>
         <ul className="mt-3 space-y-1 text-sm text-gray-700">
           {features.map((f) => (
             <li key={f}>• {f}</li>
@@ -208,7 +203,7 @@ function PlanCard({
               ? IS_MOCK
                 ? 'Simulando pago...'
                 : 'Redirigiendo a pago...'
-              : `Mejorar a ${title}`}
+              : `Seleccionar ${title}`}
           </button>
         ) : (
           <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
