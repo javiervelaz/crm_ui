@@ -3,6 +3,7 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useEffect, useState } from 'react';
+import { notifyAuthChanged } from '@/app/lib/authEvents';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -52,6 +53,7 @@ const LoginForm: React.FC = () => {
         const decodedToken: DecodedToken = jwtDecode(token);
         localStorage.setItem('token', token);
         window.dispatchEvent(new Event('storage'));
+        notifyAuthChanged();
         const redirectionRoute = getRedirectionRoute(decodedToken.role);
         router.push(redirectionRoute);
       }
