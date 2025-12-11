@@ -88,7 +88,7 @@ const CreateUserPage = () => {
     router.push('/dashboard/productos');
   } catch (error) {
     console.log(error);
-    notifyError('Error creando el producto.');
+    notifyError(error.message);
   } finally {
     setSubmitting(false);
   }
