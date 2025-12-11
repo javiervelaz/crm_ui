@@ -1,7 +1,7 @@
 // app/lib/saas.api.ts
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-export type PlanTier = 'FREE' | 'BASIC' | 'PREMIUM';
+export type PlanTier = 'FREE' | 'BASIC' | 'PREMIUM' | 'CUSTOM';
 
 export interface SaaSRegisterFormValues {
   plan: PlanTier;

@@ -11,6 +11,7 @@ const PLAN_LABELS: Record<PlanTier, string> = {
   FREE: 'Free',
   BASIC: 'Básico',
   PREMIUM: 'Premium',
+  CUSTOM: 'Plan anual'
 };
 
 const formatPrice = (price: number | null | undefined) => {
@@ -43,6 +44,7 @@ export default function SaasLandingPage() {
   const freeTier = tiers.find((t) => t.code.toUpperCase() === 'FREE');
   const basicTier = tiers.find((t) => t.code.toUpperCase() === 'BASIC');
   const premiumTier = tiers.find((t) => t.code.toUpperCase() === 'PREMIUM');
+  const customTier = tiers.find((t) => t.code.toUpperCase() === 'CUSTOM');
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -311,6 +313,20 @@ export default function SaasLandingPage() {
               ]}
               plan="PREMIUM"
               selected={selectedPlan === 'PREMIUM'}
+              onSelect={handleSelectPlan}
+            />
+            {/* CUSTOM */}
+            <PlanCard
+              title="Plan anual"
+              description="Paga menos abonando en un solo pago anual."
+              price={formatPrice(customTier?.precio_mensual)}
+              features={[
+                'Todo lo del plan Básico',
+                'Reportes diarios y por medio de pago',
+                'Micrositio y bot de pedidos por WhatsApp',
+              ]}
+              plan="CUSTOM"
+              selected={selectedPlan === 'CUSTOM'}
               onSelect={handleSelectPlan}
             />
           </div>
