@@ -64,7 +64,14 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
           })
         );
 
-        setModulos(modulesWithPerms);
+        // ⛔️ Si el rol NO es admin, ocultar el módulo "plan"
+        const isAdminRole = rolData?.some((rm: any) => rm.modulo_codigo === 'plan');
+        if (!isAdminRole) {
+          setModulos(modulesWithPerms.filter((m) => m.codigo !== 'plan'));
+        } else {
+          setModulos(modulesWithPerms);
+        }
+
       } catch (error) {
         console.error('Error cargando datos de roles/modulos/permiso:', error);
         notifyError('Error al cargar datos de permisos del rol.');

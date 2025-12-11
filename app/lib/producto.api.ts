@@ -49,9 +49,20 @@ export const getProductoList = async (cliente: BigInt) => {
       body: JSON.stringify(data),
     });
     
+    // Siempre tratamos de leer el body si viene JSON
+    let errorBody: any = null;
+    try {
+      errorBody = await response.clone().json();
+    } catch (e) {
+      // puede no ser JSON → lo ignoramos
+    }
+    if (response.status === 403) {
+        throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
+    }
+
     if (!response.ok) {
-      notifyError( 'Failed to load producto');
-      throw new Error('Failed to create producto');
+      const messageBackend = errorBody?.error || errorBody?.message;
+      throw new Error(messageBackend ||'Failed to create producto');
     }
     notifySuccess('producto loaded successfully');
     return await response.json();
