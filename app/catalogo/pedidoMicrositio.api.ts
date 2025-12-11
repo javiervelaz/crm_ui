@@ -143,7 +143,7 @@ export async function crearPedidoDesdeMicrositio(
     conversation_id:conversationId
   };
 
-  const res = await fetch(`${API_BASE_URL}/operaciones/crear-pedido`, {
+  const res = await fetch(`${API_BASE_URL}/operaciones/crear-pedido-whatsaap`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
