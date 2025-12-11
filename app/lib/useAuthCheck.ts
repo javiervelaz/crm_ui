@@ -55,10 +55,10 @@ export const useAuthCheck = () => {
       // Validar acceso actual (exceptuamos login y rutas públicas)
       const publicRoutes = ['/', '/login'];
       const normalizedPath = pathname.toLowerCase();
-      console.log("norm path",normalizedPath);
+      console.log("user modules",userModules);
       // Si está en login y tiene token válido → redirigir al primer módulo
       if (publicRoutes.includes(normalizedPath)) {
-        const defaultModule = userModules[4];
+        const defaultModule = userModules[3];
         console.log(`➡️ Usuario autenticado, redirigiendo al módulo ${defaultModule}`);
         router.push(`/dashboard/${defaultModule}`);
         setLoading(false);
