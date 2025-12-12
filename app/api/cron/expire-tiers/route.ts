@@ -1,21 +1,27 @@
 // app/api/cron/expire-tiers/route.ts
 import { NextResponse } from 'next/server';
 
-export async function GET() {
-  if (process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+export async function GET(req: Request) {
+  // Seguridad opcional con CRON_SECRET
+  if (process.env.NODE_ENV === 'production') {
     const auth = req.headers.get('Authorization');
-    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    const expected = `Bearer ${process.env.CRON_SECRET}`;
+    if (auth !== expected) {
       return new Response('Unauthorized', { status: 401 });
     }
   }
 
-  const result = await fetch(`${process.env.API_BASE_URL}/api/billing/expire-tiers`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const res = await fetch(`${process.env.API_BASE_URL}/api/billing/expire-tiers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
 
-  const data = await result.json();
-  return NextResponse.json({ success: true, downgraded: data.downgraded });
+    const data = await res.json();
+    return NextResponse.json({ downgraded: data.downgraded || 0 });
+  } catch (err) {
+    console.error('[Cron] Error al degradar planes:', err);
+    return new Response('Error al degradar planes', { status: 500 });
+  }
 }
+
