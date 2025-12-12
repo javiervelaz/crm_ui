@@ -53,7 +53,7 @@ export default function ProductosPage() {
       }));
       setProductos(productosConDatos);
     } catch (err) {
-      setError('Error al cargar productos');
+      setError(err.message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export default function ProductosPage() {
         notifySuccess('Producto eliminado correctamente');
       } catch (error) {
         console.error('Error eliminando producto:', error);
-        notifyError('Error al eliminar el producto');
+        notifyError(error.message);
       }
     }
   };

@@ -6,6 +6,7 @@ import { getTipoProductoList } from "@/app/lib/tipoproducto.api";
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ProductoImagenesManager } from '../../componentes/productoImagenesManager';
+import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 
 const EditProductoPage = () => {
   const { id } = useParams();
@@ -55,6 +56,7 @@ const EditProductoPage = () => {
       await updateProducto(id, productoDetails);
       router.push('/dashboard/productos');
     } catch (error) {
+       notifyError(error.message);
       console.log(error);
     }
   };
