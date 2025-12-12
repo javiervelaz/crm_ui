@@ -9,6 +9,16 @@ export const getProductoList = async (cliente: BigInt) => {
         'Authorization': `Bearer ${token}`,
       },
     });
+     // Siempre tratamos de leer el body si viene JSON
+    let errorBody: any = null;
+    try {
+      errorBody = await response.clone().json();
+    } catch (e) {
+      // puede no ser JSON → lo ignoramos
+    }
+    if (response.status === 403) {
+        throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
+    }
     // Si la respuesta es un 404, retorna un array vacío
     if (response.status === 404) {
         return [];
@@ -28,6 +38,16 @@ export const getProductoList = async (cliente: BigInt) => {
         'Authorization': `Bearer ${token}`,
       },
     });
+    // Siempre tratamos de leer el body si viene JSON
+    let errorBody: any = null;
+    try {
+      errorBody = await response.clone().json();
+    } catch (e) {
+      // puede no ser JSON → lo ignoramos
+    }
+    if (response.status === 403) {
+        throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
+    }
     // Si la respuesta es un 404, retorna un array vacío
     if (response.status === 404) {
         return [];
@@ -95,6 +115,16 @@ export const getProductoList = async (cliente: BigInt) => {
       },
       body: JSON.stringify(data),
     });
+    // Siempre tratamos de leer el body si viene JSON
+    let errorBody: any = null;
+    try {
+      errorBody = await response.clone().json();
+    } catch (e) {
+      // puede no ser JSON → lo ignoramos
+    }
+    if (response.status === 403) {
+        throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
+    }
     if (!response.ok) {
       throw new Error('Failed to update producto');
     }
@@ -102,12 +132,24 @@ export const getProductoList = async (cliente: BigInt) => {
   };
 
   export const deleteProducto = async (id: number | string | string[],cliente: BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto/${id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
+    // Siempre tratamos de leer el body si viene JSON
+    let errorBody: any = null;
+    try {
+      errorBody = await response.clone().json();
+    } catch (e) {
+      // puede no ser JSON → lo ignoramos
+    }
+    if (response.status === 403) {
+        throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
+    }
     if (!response.ok) {
       throw new Error('Failed to delete  producto');
     }
