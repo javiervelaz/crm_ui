@@ -52,10 +52,10 @@ export const useAuthCheck = () => {
       // Guardamos módulos en estado
       setModules(userModules);
 
-      // Validar acceso actual (exceptuamos login y rutas públicas)
       const publicRoutes = ['/', '/login'];
       const normalizedPath = pathname.toLowerCase();
-      console.log("user modules",userModules);
+      console.log("user modules", userModules);
+
       // Si está en login y tiene token válido → redirigir al primer módulo
       if (publicRoutes.includes(normalizedPath)) {
         const defaultModule = userModules[3];
@@ -65,24 +65,39 @@ export const useAuthCheck = () => {
         return;
       }
 
-      // 🧩 Rutas auxiliares permitidas (no son módulos, pero deben ser accesibles)
+      // Rutas auxiliares fijas permitidas
       const auxiliaryRoutes = [
         '/dashboard/profile',
         '/dashboard/settings',
-        '/dashboard/productos/tipo-producto',
         '/dashboard/home',
         '/dashboard/tipo-salida',
         '/catalogo',
-        'dashboard/operaciones/admin/reportes/caja',
-        '/dashboard/upgrade-plan'
+        '/dashboard/operaciones/admin/reportes/caja',
+        '/dashboard/upgrade-plan',
+        '/dashboard/gasto',
+        '/dashboard/gasto/create'
       ];
 
-      // Verificar acceso por módulo o por ruta auxiliar
+      const auxiliaryPrefixRoutes = [
+        '/dashboard/tipo-producto',
+        '/dashboard/operaciones/admin/reportes',
+        '/dashboard/profile',
+        '/dashboard/gasto',
+        '/dashboard/tipo-salida'
+      ];
+
+      // Verificar acceso por módulo o ruta auxiliar
+      const cleanedPath = normalizedPath.replace(/\/+$/, ''); // eliminar slash final si existe
+
       const hasAccess =
         userModules.some((mod) =>
-          normalizedPath.startsWith(`/dashboard/${mod}`)
+          cleanedPath.startsWith(`/dashboard/${mod}`)
         ) ||
-        auxiliaryRoutes.some((aux) => normalizedPath.startsWith(aux));
+        auxiliaryRoutes.includes(cleanedPath) ||
+        auxiliaryPrefixRoutes.some((prefix) =>
+          cleanedPath.startsWith(prefix)
+        );
+        console.log('[ACCESS CHECK] current path:', cleanedPath);
 
       if (!hasAccess) {
         console.warn(`🚫 Acceso denegado a ${normalizedPath}`);
