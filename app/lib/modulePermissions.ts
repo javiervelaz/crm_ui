@@ -94,12 +94,12 @@ export const MODULE_PERMISSIONS: Record<string, ModuleDefinition> = {
   },
   tipo : {
     routes: [
-      '/dashboard/tipo-producto',
-      '/dashboard/tipo-producto/create',
-      /^\/dashboard\/tipo-producto\/\d+\/edit$/,
+      '/dashboard/ptoductos/tipo-producto',
+      '/dashboard/ptoductos/tipo-producto/create',
+      /^\/dashboard\/ptoductos\/tipo-producto\/\d+\/edit$/,
     ],
     menu: {
-      href: '/dashboard/tipo-producto',
+      href: '/dashboard/productos/tipo-producto',
       label: 'Tipo Producto',
       icon: FileText,
     }
