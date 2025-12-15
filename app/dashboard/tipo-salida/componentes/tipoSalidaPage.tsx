@@ -92,7 +92,7 @@ export default function TipoSalidaPage() {
   return (
     <div className="w-full p-6">
       <div className="flex w-full items-center justify-between mb-4">
-        <h1 className={`${lusitana.className} text-2xl`}>Tipos de gastos</h1>
+        <h1 className={`${lusitana.className} text-2xl`}>Categoria gastos</h1>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
         <SearchTipoSalida placeholder="Buscar tipo de gasto..." onSearch={handleSearch} />

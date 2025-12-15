@@ -158,8 +158,13 @@ const PedidosGrid = ({
     return baseUnit * baseCantidad + montoAdicional;
   };
 
+
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4">
+  <>
+
+    {/* DESKTOP */}
+   <div className="hidden md:block">
+      <div className="bg-white rounded-lg shadow-lg p-4 ">
       <table className="table-auto w-full text-left">
         <thead>
           <tr className="bg-gray-100">
@@ -372,7 +377,119 @@ const PedidosGrid = ({
         </tbody>
       </table>
     </div>
-  );
+  
+    </div> 
+
+    {/* MOBILE */}
+    <div className="md:hidden space-y-4">
+      {pedidosLocal.map((pedido) => (
+        <div
+          key={pedido.id}
+          className="bg-white rounded-lg shadow p-4 flex flex-col gap-3"
+        >
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500">Comanda</span>
+            <span className="font-semibold">#{pedido.comanda_nro || 'N/A'}</span>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-500">Cliente</p>
+            <p className="font-medium">{pedido.nombre || 'MOSTRADOR'}</p>
+          </div>
+
+          <div className="flex justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Monto</p>
+              <p className="font-mono font-semibold">
+                ${Number(pedido.monto_total).toLocaleString('es-AR')}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Fecha</p>
+              <p className="text-sm">{new Date(pedido.created_at).toLocaleString()}</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => toggleExpanded(pedido.id)}
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded-md"
+          >
+            {expandedId === pedido.id ? 'Ocultar detalle' : 'Ver detalle'}
+          </button>
+
+          {isModoAbiertos && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleStatusChange(pedido.id, true)}
+                className="flex-1 bg-green-500 text-white py-2 rounded-md"
+              >
+                Finalizar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(pedido.id)}
+                className="flex-1 bg-red-500 text-white py-2 rounded-md"
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+
+          {/* Detalle mobile (reusa tu state actual) */}
+          {expandedId === pedido.id && (
+            <div className="pt-2 border-t text-sm">
+              {detalleLoadingId === pedido.id && (
+                <p className="text-gray-500">Cargando detalle...</p>
+              )}
+
+              {detalleErrorId === pedido.id && (
+                <p className="text-red-500">Error al cargar el detalle.</p>
+              )}
+
+              {detallePorPedido[pedido.id]?.length ? (
+                <ul className="space-y-2">
+                  {detallePorPedido[pedido.id].map((item) => (
+                    <li key={item.id} className="flex justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{item.producto_nombre}</p>
+                        {item.observaciones && (
+                          <p className="text-xs text-gray-500 truncate">
+                            Nota: {item.observaciones}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          Cant: {item.cantidad} • Mitad: {item.cantidad_mitad}
+                        </p>
+                      </div>
+                      <div className="font-mono whitespace-nowrap">
+                        ${calcularSubtotal(item).toLocaleString('es-AR')}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                !detalleLoadingId &&
+                detalleErrorId !== pedido.id && (
+                  <p className="text-gray-500">Sin ítems.</p>
+                )
+              )}
+
+              <div className="mt-2 flex justify-between font-semibold">
+                <span>Total</span>
+                <span className="font-mono">
+                  ${Number(pedido.monto_total).toLocaleString('es-AR')}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </>
+);
+
 };
 
 export default PedidosGrid;
