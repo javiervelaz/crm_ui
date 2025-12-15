@@ -108,30 +108,45 @@ export default function ProductosPage() {
   );
 
   return (
-    <div className="w-full p-6">
-      <div className="flex w-full items-center justify-between mb-4">
-        <h1 className={`${lusitana.className} text-2xl`}>Productos</h1>
-      </div>
-      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
+  <div className="w-full p-4 md:p-6">
+    <div className="flex w-full items-center justify-between mb-4">
+      <h1 className={`${lusitana.className} text-2xl`}>Productos</h1>
+    </div>
+
+    {/* Toolbar responsive */}
+    <div className="mt-4 mb-6 flex flex-col gap-3 md:mt-8 sm:flex-row sm:items-center sm:justify-between">
+      {/* Search ocupa todo y no empuja */}
+      <div className="flex-1 min-w-0">
         <SearchProducto placeholder="Buscar producto..." onSearch={handleSearch} />
-        {tipos.length === 0 && (
-  <p className="text-sm text-red-600">Creá al menos una Categoria de producto para habilitar esta opción.</p>
-)}
+      </div>
+
+      {/* Mensaje de warning: que no rompa el layout */}
+      {tipos.length === 0 && (
+        <p className="text-sm text-red-600 sm:max-w-[260px]">
+          Creá al menos una Categoria de producto para habilitar esta opción.
+        </p>
+      )}
+
+      {/* Botones: en mobile van en fila y wrappean */}
+      <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:justify-end">
         <CreateProductoButton disabled={tipos.length === 0} />
         <CreateTipoProductoButton />
       </div>
-      {loading ? (
-        <TableSkeleton />
-      ) : error ? (
-        <div className="text-red-600">{error}</div>
-      ) : (
-        <ProductosTable 
-          productos={filteredProductos} 
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      )}
     </div>
-  );
+
+    {loading ? (
+      <TableSkeleton />
+    ) : error ? (
+      <div className="text-red-600">{error}</div>
+    ) : (
+      <ProductosTable
+        productos={filteredProductos}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+    )}
+  </div>
+);
+
 }

@@ -10,7 +10,7 @@ interface SearchProps {
 
 export default function Search({ placeholder, onSearch }: SearchProps) {
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1 min-w-0">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
       </div>

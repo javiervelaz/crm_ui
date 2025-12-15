@@ -171,7 +171,7 @@ export default function TipoSalidaTable({ tipoSalida, onDelete, onEdit }: Produc
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-700">
             Mostrando <span className="font-medium">{sortedAndFilteredProductos.length}</span> de{' '}
-            <span className="font-medium">{tipoSalida.length}</span> tipos de gastos
+            <span className="font-medium">{tipoSalida.length}</span> categoria gastos
           </div>
           {/* Aquí iría la paginación */}
         </div>
