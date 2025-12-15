@@ -237,17 +237,7 @@ export default function GastoWizard() {
         ))}
       </div>
 
-      {/* Botón de guardado para solapas con gastos */}
-      {['fijos', 'sueldos', 'variables'].includes(activeTab) && (
-        <div className="mb-4 text-right">
-          <button
-            onClick={handleGuardarSolapaActual}
-            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-          >
-            Guardar {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-          </button>
-        </div>
-      )}
+     
 
       {/* Renderizado condicional de cada planilla */}
       <div>
@@ -285,6 +275,17 @@ export default function GastoWizard() {
             registroDiarioId={registroDiarioId} // ← Aquí pasas el valor
           />
         )}
+         {/* Botón de guardado para solapas con gastos */}
+          {['fijos', 'sueldos', 'variables'].includes(activeTab) && (
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={handleGuardarSolapaActual}
+                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+              >
+                Guardar {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+              </button>
+            </div>
+          )}
       </div>
 
       {/* Mostrar gastos existentes en todas las solapas excepto resumen */}

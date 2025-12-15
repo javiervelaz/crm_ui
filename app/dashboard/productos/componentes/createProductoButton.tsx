@@ -1,20 +1,25 @@
-'use client'
+'use client';
 
 import { useRouter } from 'next/navigation';
 
-export const CreateProductoButton = () => {
+export const CreateProductoButton = ({ disabled = false }: { disabled?: boolean }) => {
   const router = useRouter();
 
   const handleCreateUsers = () => {
-    router.push('/dashboard/productos/create');
+    if (!disabled) {
+      router.push('/dashboard/productos/create');
+    }
   };
 
   return (
     <button
       onClick={handleCreateUsers}
-      className="bg-blue-500 text-white px-4 py-2 rounded-md"
+      disabled={disabled}
+      className={`px-4 py-2 rounded-md text-white ${
+        disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+      }`}
     >
-      Agregar Producto
+      + Producto
     </button>
   );
 };

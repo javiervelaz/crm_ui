@@ -11,6 +11,8 @@ import { CreateProductoButton } from './createProductoButton';
 import { CreateTipoProductoButton } from './createTipoProductoButton';
 import ProductosTable from './productoTable';
 import SearchProducto from './searchProducto';
+import { getTipoProductoList } from '@/app/lib/tipoProducto.api';
+
 
 
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
@@ -31,6 +33,7 @@ export default function ProductosPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const [tipos, setTipos] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -41,6 +44,20 @@ export default function ProductosPage() {
 
     fetchProductos();
   }, [router]);
+
+  useEffect(() => {
+    const fetchTipos = async () => {
+      try {
+        const data = await getTipoProductoList(getClienteId());
+        setTipos(data);
+      } catch (err) {
+        console.error('Error cargando tipos de producto:', err);
+      }
+    };
+
+    fetchTipos();
+  }, []);
+
 
   const fetchProductos = async () => {
     try {
@@ -97,8 +114,11 @@ export default function ProductosPage() {
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
         <SearchProducto placeholder="Buscar producto..." onSearch={handleSearch} />
+        {tipos.length === 0 && (
+  <p className="text-sm text-red-600">Creá al menos una Categoria de producto para habilitar esta opción.</p>
+)}
+        <CreateProductoButton disabled={tipos.length === 0} />
         <CreateTipoProductoButton />
-        <CreateProductoButton />
       </div>
       {loading ? (
         <TableSkeleton />

@@ -48,13 +48,13 @@ export default function FormTipoProducto() {
   return (
     <div className="w-full p-6 max-w-md mx-auto">
       <h1 className="text-2xl font-bold mb-6">
-        {id ? 'Editar' : 'Crear'} Tipo de Producto
+        {id ? 'Editar' : 'Crear'} Categoria de producto
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre del Tipo
+            Nombre categoria
           </label>
           <input
             type="text"
