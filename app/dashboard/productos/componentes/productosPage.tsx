@@ -11,7 +11,7 @@ import { CreateProductoButton } from './createProductoButton';
 import { CreateTipoProductoButton } from './createTipoProductoButton';
 import ProductosTable from './productoTable';
 import SearchProducto from './searchProducto';
-import { getTipoProductoList } from '@/app/lib/tipoProducto.api';
+import { getTipoProductoList } from '@/app/lib/tipoproducto.api';
 
 
 
