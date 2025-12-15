@@ -32,7 +32,7 @@ export async function fetchCatalogProducts(session:any): Promise<CatalogProduct[
   const clienteId = session.clienteId ?? getMicrositeClienteId();
 
   const res = await fetch(
-    `${API_BASE_URL}/producto/list/${clienteId}`,
+    `${API_BASE_URL}/producto/w/list/${clienteId}`,
     {
       method: 'GET',
       headers: {
