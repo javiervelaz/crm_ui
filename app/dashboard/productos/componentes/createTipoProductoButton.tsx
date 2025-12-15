@@ -1,6 +1,10 @@
 'use client'
 
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/navigation';
+import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+
 
 export const CreateTipoProductoButton = () => {
   const router = useRouter();
@@ -12,9 +16,9 @@ export const CreateTipoProductoButton = () => {
   return (
     <button
       onClick={handleCreateUsers}
-      className="bg-green-500 text-white px-4 py-2 rounded-md"
+      className="bg-blue-500 text-white px-4 py-2 rounded-md"
     >
-      Tipo Producto
+      <FontAwesomeIcon icon={faPlus} className="mr-2" /> Categoria
     </button>
   );
 };

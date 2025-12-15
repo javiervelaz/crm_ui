@@ -60,18 +60,18 @@ export default function TipoProductoPage() {
   return (
     <div className="w-full p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className={`${lusitana.className} text-2xl`}>Tipos de Producto</h1>
+        <h1 className={`${lusitana.className} text-2xl`}>Categoria de Producto</h1>
         <button
           onClick={() => router.push('/dashboard/productos/tipo-producto/create')}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
         >
           <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Crear Tipo
+          Categoria
         </button>
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
-        <Search placeholder="Buscar tipo..." onSearch={setQuery} />
+        <Search placeholder="Buscar..." onSearch={setQuery} />
       </div>
 
       {loading ? (
