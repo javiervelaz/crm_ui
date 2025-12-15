@@ -14,7 +14,7 @@ export const CreateTipoSalidaButton = () => {
       onClick={handleCreateUsers}
       className="bg-blue-500 text-white px-4 py-2 rounded-md"
     >
-      Agregar tipo de gastos
+      Categoria gastos
     </button>
   );
 };

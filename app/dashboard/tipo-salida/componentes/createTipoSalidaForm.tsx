@@ -61,7 +61,7 @@ const CreateTipoSalidaPage = () => {
 
   return (
     <div className="w-full p-6">
-      <h1 className="text-2xl mb-6">Nuevo tipo de gasto</h1>
+      <h1 className="text-2xl mb-6">Categoria gastos</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700">
@@ -79,7 +79,7 @@ const CreateTipoSalidaPage = () => {
         
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tipo de salida
+            Categoria gasto
           </label>
           <select
             name="categoria_tipo_id"
@@ -88,7 +88,7 @@ const CreateTipoSalidaPage = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value="">Seleccionar tipo...</option>
+            <option value="">Seleccionar...</option>
             {categoriaTipo.map((tipo) => (
               <option key={tipo.id} value={tipo.id}>
                 {tipo.descripcion}

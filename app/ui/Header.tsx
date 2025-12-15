@@ -10,7 +10,11 @@ interface DecodedToken {
   role: string;
 }
 
-const Header: React.FC = () => {
+type HeaderProps = {
+  onMenuClick?: () => void;
+};
+
+const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [userName, setUserName] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -35,14 +39,6 @@ const Header: React.FC = () => {
     );
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    setIsLoggedIn(false);
-    window.dispatchEvent(new Event("storage"));
-    router.push('/');
-  };
-
   const decodeTokenAndSetState = () => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -61,20 +57,42 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 px-6 flex justify-between items-center shadow-sm">
-      <div className="text-gray-600">{currentDate}</div>
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 px-4 md:px-6 flex justify-between items-center shadow-sm">
+      <div className="flex items-center gap-3 min-w-0">
+        {onMenuClick && (
+          <button
+          type="button"
+          onClick={onMenuClick}
+          className="
+            md:hidden
+            inline-flex h-10 w-10 items-center justify-center
+            rounded-md
+            bg-gray-200 text-gray-800
+            border border-gray-300
+            hover:bg-gray-300
+            active:bg-gray-400
+          "
+          aria-label="Abrir menú"
+        >
+          ☰
+        </button>
+
+        )}
+        <div className="text-gray-600 hidden sm:block truncate">{currentDate}</div>
+      </div>
+
       {isLoggedIn && (
-        <div className="flex items-center gap-4">
-          <span className="font-semibold text-gray-800 whitespace-nowrap">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          <span className="font-semibold text-gray-800 whitespace-nowrap hidden sm:inline">
             {userName}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-sm whitespace-nowrap">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Plan: {plan?.tierNombre}
+            <span className="hidden md:inline">Plan:</span>
+            <span className="font-medium">{loading ? '...' : (plan?.tierNombre ?? '-')}</span>
           </span>
         </div>
       )}
-      
     </header>
   );
 };

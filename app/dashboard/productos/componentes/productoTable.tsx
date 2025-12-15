@@ -135,8 +135,8 @@ export default function ProductosTable({
       </div>
 
       {/* Tabla */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+      <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+        <table className="min-w-[760px] w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               {/* Nueva columna: Imagen */}
@@ -179,8 +179,10 @@ export default function ProductosTable({
                   <SortIcon field="permite_mitad" />
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
+              <th className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <div className="flex items-center gap-3">
+                  Acciones
+                </div>  
               </th>
             </tr>
           </thead>
