@@ -2,7 +2,7 @@
 'use client';
 import Header from '@/app/ui/Header';
 import Sidebar from '@/app/ui/Sidebar';
-import { lusitana } from '@/app/ui/fonts';
+import { inter, lusitana } from '@/app/ui/fonts';
 import '@/app/ui/global.css';
 import { jwtDecode } from 'jwt-decode';
 import React, { useEffect, useState } from 'react';
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="es">
-      <body className={lusitana.className}>
+      <body className={`${inter.variable} ${lusitana.variable}`}>
         {isPublicRoute ? (
           <div className="min-h-screen bg-slate-50">{children}</div>
         ) : (
