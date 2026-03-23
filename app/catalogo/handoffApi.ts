@@ -32,7 +32,7 @@ export async function validateHandoffToken(
     }
 
     const data = await res.json();
-
+    
     if (!data.valid) {
       return null;
     }
