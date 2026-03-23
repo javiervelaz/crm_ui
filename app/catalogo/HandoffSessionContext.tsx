@@ -81,7 +81,7 @@ export function HandoffSessionProvider({
 
     const now = Date.now();
     let expiresAt: number | null = null;
-
+   
     if (validated.expiresIn != null && validated.expiresIn > 0) {
       expiresAt = now + validated.expiresIn * 1000;
     } else if (validated.exp != null) {
