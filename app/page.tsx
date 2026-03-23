@@ -21,7 +21,7 @@ export default function Page() {
     if (token) {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
-        console.log("🚀 Token detectado:", decodedToken);
+      
         const currentTime = Date.now() / 1000;
         if (decodedToken.exp < currentTime) {
           console.warn('Token expirado');
