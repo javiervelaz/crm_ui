@@ -3,7 +3,6 @@
 import { getClienteId } from "@/app/lib/authService";
 import { deleteCategoriaSalida, getGastoCategorias } from '@/app/lib/gasto';
 import useAuthCheck from '@/app/lib/useAuthCheck';
-import { lusitana } from '@/app/ui/fonts';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
@@ -90,11 +89,11 @@ export default function TipoSalidaPage() {
   );
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 md:p-6">
       <div className="flex w-full items-center justify-between mb-4">
-        <h1 className={`${lusitana.className} text-2xl`}>Categoria gastos</h1>
+        <h1 className={`font-display text-2xl`}>Categoria gastos</h1>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mt-8 mb-6">
         <SearchTipoSalida placeholder="Buscar tipo de gasto..." onSearch={handleSearch} />
         <CreateTipoSalidaButton />
       </div>

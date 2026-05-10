@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import {
@@ -147,7 +147,7 @@ export default function TipoSalidaTable({ tipoSalida, onDelete, onEdit }: Produc
                   
                   <button
                     onClick={() => onEdit(tipoSalida.id,getClienteId())}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-brand-600 hover:text-brand-900"
                     title="Editar"
                   >
                     <FontAwesomeIcon icon={faEdit} />

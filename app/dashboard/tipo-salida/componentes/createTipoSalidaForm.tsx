@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { crearCategoriaSalida, getGastosCategoriaTipo } from '@/app/lib/gasto';
@@ -85,7 +85,7 @@ const CreateTipoSalidaPage = () => {
             name="categoria_tipo_id"
             value={productoDetails.categoria_tipo_id || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-600"
             required
           >
             <option value="">Seleccionar...</option>
@@ -108,7 +108,7 @@ const CreateTipoSalidaPage = () => {
           </button>
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-600"
           >
             Guardar
           </button>

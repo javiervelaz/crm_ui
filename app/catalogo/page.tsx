@@ -15,15 +15,10 @@ export default function CatalogPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('Todas');
 
-  // 🔹 Cuando tengamos session del handoff, la persistimos para catalogConfig
   useEffect(() => {
     if (!session) return;
-
-    // Si tu session ya trae estos campos, los usamos tal cual.
-    // Si trae más cosas, no pasa nada: los extra se ignoran donde no se usen.
     setMicrositeSession({
       cliente_id: session.clienteId,
-      // por si querés guardar algo más:
       ...session,
     });
   }, [session]);
@@ -102,9 +97,9 @@ export default function CatalogPage() {
           value={search}
           placeholder="Buscar productos..."
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm outline-none ring-slate-900/10 placeholder:text-slate-400 focus:ring-2"
+          className="w-full rounded-full border border-brand-200 bg-white px-4 py-2.5 text-sm outline-none placeholder:text-brand-300 focus:ring-2 focus:ring-brand-600/20"
         />
-        <div className="no-scrollbar flex gap-2 overflow-x-auto">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
           {categories.map((cat) => {
             const isActive = cat === category;
             return (
@@ -112,10 +107,10 @@ export default function CatalogPage() {
                 key={cat}
                 type="button"
                 onClick={() => setCategory(cat)}
-                className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                   isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-100 text-slate-700'
+                    ? 'bg-brand-600 text-white shadow-brand'
+                    : 'bg-brand-100 text-brand-700 hover:bg-brand-200'
                 }`}
               >
                 {cat}
@@ -126,7 +121,7 @@ export default function CatalogPage() {
       </div>
 
       {loading && (
-        <p className="text-sm text-slate-500">Cargando productos...</p>
+        <p className="text-sm text-brand-300">Cargando productos...</p>
       )}
 
       {error && !loading && (
@@ -136,7 +131,7 @@ export default function CatalogPage() {
       {!loading && !error && (
         <div className="mt-2 flex flex-col gap-3 pb-4">
           {filtered.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-brand-300">
               No encontramos productos para esos filtros.
             </p>
           ) : (

@@ -321,7 +321,7 @@ const CerrarCajaForm = () => {
               Egresos
             </h3>
 
-            <div className="mb-2 grid grid-cols-2 gap-2 text-xs">
+            <div className="mb-2 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
               <div>
                 <label className="block text-slate-600">Sueldos</label>
                 <input

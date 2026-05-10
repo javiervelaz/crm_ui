@@ -293,11 +293,11 @@ const handleRoleCheckboxChange = (e, rol) => {
   
 
   return (
-    <div className="w-full p-6 bg-gray-50 min-h-screen">
+    <div className="w-full p-4 md:p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">Editar Usuario</h1>
 
       {/* Contenedor principal */}
-      <div className="bg-white shadow-lg rounded-lg p-6 space-y-6">
+      <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 space-y-6">
         {/* Sección de Datos del Usuario */}
         <section className="space-y-4">
           <h2 className="text-xl font-medium text-gray-700 border-b pb-2">Datos del Usuario</h2>
@@ -469,7 +469,7 @@ const handleRoleCheckboxChange = (e, rol) => {
                       value={rol.descripcion}
                       checked={selectedRoles.some((selectedRol) => selectedRol.id === rol.id)}
                       onChange={(e) => handleRoleCheckboxChange(e, rol)}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-600"
                     />
                     <label htmlFor={`role-${rol.id}`} className="ml-2 text-sm text-gray-700">
                       {rol.descripcion}
@@ -495,7 +495,7 @@ const handleRoleCheckboxChange = (e, rol) => {
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600"
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg shadow-sm hover:bg-brand-600"
           >
             Guardar
           </button>

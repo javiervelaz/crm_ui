@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 
 export default function DatePicker({ label, value, onChange }) {
   const [showCalendar, setShowCalendar] = useState(false);
@@ -15,7 +15,7 @@ export default function DatePicker({ label, value, onChange }) {
         type="date"
         value={value}
         onChange={handleDateChange}
-        className="border border-gray-300 rounded-md px-3 py-2 w-full shadow-sm focus:ring-2 focus:ring-blue-500"
+        className="border border-gray-300 rounded-md px-3 py-2 w-full shadow-sm focus:ring-2 focus:ring-brand-600"
       />
     </div>
   );

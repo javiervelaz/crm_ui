@@ -1,4 +1,4 @@
-import { getClienteId } from "@/app/lib/authService";
+﻿import { getClienteId } from "@/app/lib/authService";
 import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useCajaAbierta from '@/app/lib/useCajaAbierta';
@@ -144,7 +144,7 @@ const GastoWizard = ({ }) => {
         </p>
         <button
           onClick={() => router.push('/dashboard/operaciones/empleado')}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-brand-600 text-white px-6 py-2 rounded hover:bg-brand-700 transition"
         >
           Abrir operaciones
         </button>
@@ -161,7 +161,7 @@ const GastoWizard = ({ }) => {
               onClick={() => setActiveTipoId(tipo.id)}
               className={`px-5 py-2 rounded-t-md text-sm font-semibold whitespace-nowrap ${
                 activeTipoId === tipo.id
-                  ? 'bg-blue-600 text-white shadow'
+                  ? 'bg-brand-600 text-white shadow'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               style={{ minWidth: '120px', maxWidth: '220px' }}
@@ -176,7 +176,7 @@ const GastoWizard = ({ }) => {
         {/* Categorías para el tipo seleccionado */}
         {categoriasPorTipo[activeTipoId]?.map((cat) => (
           <div key={cat.id} className="mb-6">
-            <h4 className="font-semibold text-sm mb-2 text-blue-800">{cat.nombre}</h4>
+            <h4 className="font-semibold text-sm mb-2 text-brand-800">{cat.nombre}</h4>
 
             {(gastosPorCategoria[cat.id] || []).map((gasto, idx) => (
               <div key={idx} className="flex items-center space-x-2 mb-2">
@@ -213,7 +213,7 @@ const GastoWizard = ({ }) => {
             <div className="mt-2 text-right">
               <button
                 onClick={() => handleGuardar(cat.id)}
-                className="bg-blue-600 text-white px-4 py-2 rounded"
+                className="bg-brand-600 text-white px-4 py-2 rounded"
               >
                 Guardar Gastos
               </button>

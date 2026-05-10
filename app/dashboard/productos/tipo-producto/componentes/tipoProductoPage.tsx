@@ -1,9 +1,8 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { deleteTipoProducto, getTipoProductoList } from '@/app/lib/tipoproducto.api';
 import useAuthCheck from '@/app/lib/useAuthCheck';
-import { lusitana } from '@/app/ui/fonts';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
 import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -58,12 +57,12 @@ export default function TipoProductoPage() {
   );
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className={`${lusitana.className} text-2xl`}>Tipos de Producto</h1>
+        <h1 className={`font-display text-2xl`}>Tipos de Producto</h1>
         <button
           onClick={() => router.push('/dashboard/productos/tipo-producto/create')}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+          className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-600 flex items-center"
         >
           <FontAwesomeIcon icon={faPlus} className="mr-2" />
           Crear Tipo
@@ -98,7 +97,7 @@ export default function TipoProductoPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleEdit(tipo.id)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-brand-600 hover:text-brand-900"
                       title="Editar"
                     >
                       <FontAwesomeIcon icon={faEdit} />

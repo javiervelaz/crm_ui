@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
@@ -149,7 +149,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
               </label>
 
               <div className="flex items-center gap-3">
-                <button onClick={() => toggleExpand(m.id)} className="text-sm text-blue-600 hover:underline">
+                <button onClick={() => toggleExpand(m.id)} className="text-sm text-brand-600 hover:underline">
                   {m.expanded ? 'Ocultar' : 'Ver permisos'}
                 </button>
               </div>
@@ -170,7 +170,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
       </div>
 
       <div className="flex justify-end gap-2 mt-4">
-        <button onClick={handleGuardar} disabled={saving} className={`px-4 py-2 rounded text-white ${saving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+        <button onClick={handleGuardar} disabled={saving} className={`px-4 py-2 rounded text-white ${saving ? 'bg-gray-400' : 'bg-brand-600 hover:bg-brand-700'}`}>
           {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </div>

@@ -1,9 +1,8 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { getRegistrosDiarios } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
-import { lusitana } from '@/app/ui/fonts';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -86,7 +85,7 @@ export default function ReporteCajaPage() {
   return (
     <div className="w-full p-6">
       <div className="flex w-full items-center justify-between mb-6">
-        <h1 className={`${lusitana.className} text-2xl`}>Reporte de Caja Diaria</h1>
+        <h1 className={`font-display text-2xl`}>Reporte de Caja Diaria</h1>
       </div>
 
       {/* Filtros */}
@@ -105,7 +104,7 @@ export default function ReporteCajaPage() {
           
           <button
             onClick={fetchRegistrosDiarios}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600"
+            className="bg-brand-600 text-white px-4 py-2 rounded-md text-sm hover:bg-brand-600"
           >
             Actualizar
           </button>
@@ -156,7 +155,7 @@ export default function ReporteCajaPage() {
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleVerDetalle(registro.id)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                      className="bg-brand-600 text-white px-3 py-1 rounded text-xs hover:bg-brand-600"
                       disabled={!registro.caja_cerrada}
                     >
                       Ver Detalle

@@ -1,4 +1,4 @@
-import { getClienteId } from "@/app/lib/authService";
+﻿import { getClienteId } from "@/app/lib/authService";
 import {
   checkAperturaCaja,
   getPedidosByRegistroId,
@@ -169,7 +169,7 @@ const DashboardEmpleados = () => {
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowPedidoForm(true)}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-600"
               >
                 Alta de Pedido
               </button>
