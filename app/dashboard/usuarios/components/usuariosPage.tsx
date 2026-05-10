@@ -4,7 +4,6 @@ import { getClienteId } from "@/app/lib/authService";
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { deleteUser, getUserList, getUserTypes } from '@/app/lib/usuario.api';
-import { lusitana } from '@/app/ui/fonts';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
@@ -144,13 +143,15 @@ export default function UsuariosPage() {
   });
 
   return (
-    <div className="w-full p-6">
-      <div className="flex w-full items-center justify-between mb-4">
-        <h1 className={`${lusitana.className} text-2xl`}>Usuarios</h1>
+    <div className="w-full">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-display text-2xl text-brand-800">Usuarios</h1>
       </div>
-      
-      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
-        <SearchUsuario placeholder="Buscar usuarios..." onSearch={handleSearch} />
+
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex-1 min-w-0">
+          <SearchUsuario placeholder="Buscar usuarios..." onSearch={handleSearch} />
+        </div>
         <CreateUsuarioButton />
       </div>
 

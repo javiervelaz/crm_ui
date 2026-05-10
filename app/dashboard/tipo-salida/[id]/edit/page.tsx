@@ -95,7 +95,7 @@ export default function FormTipoProducto() {
             required
             value={formData.nombre}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-600"
           />
         </div>
 
@@ -108,7 +108,7 @@ export default function FormTipoProducto() {
             required
             value={formData.categoria_tipo_id}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-600"
           >
             <option value="">Seleccionar tipo de categoría</option>
             {categoriaTipos.map((tipo) => (
@@ -129,7 +129,7 @@ export default function FormTipoProducto() {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:opacity-50"
+            className="flex-1 bg-brand-600 text-white py-2 px-4 rounded-md hover:bg-brand-600 disabled:opacity-50"
           >
             {loading ? 'Guardando...' : id ? 'Actualizar' : 'Crear'}
           </button>

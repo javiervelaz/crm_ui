@@ -57,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 px-4 md:px-6 flex justify-between items-center shadow-sm">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-brand-200 px-4 md:px-6 flex justify-between items-center shadow-card">
       <div className="flex items-center gap-3 min-w-0">
         {onMenuClick && (
           <button
@@ -67,10 +67,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             md:hidden
             inline-flex h-10 w-10 items-center justify-center
             rounded-md
-            bg-gray-200 text-gray-800
-            border border-gray-300
-            hover:bg-gray-300
-            active:bg-gray-400
+            bg-brand-100 text-brand-800
+            border border-brand-200
+            hover:bg-brand-200
+            active:bg-brand-300
           "
           aria-label="Abrir menú"
         >
@@ -83,10 +83,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
       {isLoggedIn && (
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          <span className="font-semibold text-gray-800 whitespace-nowrap hidden sm:inline">
+          <span className="font-semibold text-brand-800 whitespace-nowrap hidden sm:inline">
             {userName}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-sm whitespace-nowrap">
+          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             <span className="hidden md:inline">Plan:</span>
             <span className="font-medium">{loading ? '...' : (plan?.tierNombre ?? '-')}</span>

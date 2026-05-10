@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from '@/app/lib/authService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
@@ -95,7 +95,7 @@ const CreateUserPage = () => {
 
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 md:p-6">
       <h1 className="text-2xl mb-6">Crear nuevo usuario</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -182,7 +182,7 @@ const CreateUserPage = () => {
           </button>
           <button
             type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md"
+            className="bg-brand-600 text-white px-4 py-2 rounded-md"
           >
             Save
           </button>

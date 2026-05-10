@@ -30,7 +30,6 @@ export default function ProductDetailPage({ params }: Props) {
         if (cancelled) return;
 
         if (!data) {
-          // antes: notFound();
           setError('No se encontró el producto');
           setProduct(null);
         } else {
@@ -61,11 +60,11 @@ export default function ProductDetailPage({ params }: Props) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-xs font-medium text-slate-600"
+          className="text-xs font-medium text-brand-600 hover:text-brand-700"
         >
           ← Volver
         </button>
-        <p className="text-sm text-slate-500">Cargando producto...</p>
+        <p className="text-sm text-brand-300">Cargando producto...</p>
       </div>
     );
   }
@@ -76,7 +75,7 @@ export default function ProductDetailPage({ params }: Props) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-xs font-medium text-slate-600"
+          className="text-xs font-medium text-brand-600 hover:text-brand-700"
         >
           ← Volver
         </button>
@@ -87,10 +86,6 @@ export default function ProductDetailPage({ params }: Props) {
     );
   }
 
-  // si llegamos acá, tenemos product
-
-  // OJO con la URL de la imagen:
-  // si product.imageUrl ya es una URL completa, usala directo.
   const imageSrc =
     product.imageUrl?.startsWith('http')
       ? product.imageUrl
@@ -103,13 +98,13 @@ export default function ProductDetailPage({ params }: Props) {
       <button
         type="button"
         onClick={() => router.back()}
-        className="text-xs font-medium text-slate-600"
+        className="text-xs font-medium text-brand-600 hover:text-brand-700"
       >
         ← Volver
       </button>
 
       {imageSrc && (
-        <div className="relative overflow-hidden rounded-2xl border bg-slate-100">
+        <div className="relative overflow-hidden rounded-2xl border border-brand-100 bg-brand-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageSrc}
@@ -120,10 +115,10 @@ export default function ProductDetailPage({ params }: Props) {
       )}
 
       <div className="space-y-2">
-        <h1 className="text-xl font-bold text-slate-900">
+        <h1 className="text-xl font-bold text-brand-800">
           {product.name}
         </h1>
-        <p className="text-lg font-semibold text-slate-900">
+        <p className="text-lg font-bold text-brand-600">
           ${product.price.toLocaleString('es-AR')}
         </p>
         {product.tags && product.tags.length > 0 && (
@@ -131,24 +126,24 @@ export default function ProductDetailPage({ params }: Props) {
             {product.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600"
+                className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-600"
               >
                 {tag}
               </span>
             ))}
           </div>
         )}
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-brand-300">
           {product.description || 'Sin descripción'}
         </p>
       </div>
 
-      <div className="mt-4 space-y-2">
-        <label className="text-xs font-medium text-slate-600">
+      <div className="mt-2 space-y-2">
+        <label className="text-xs font-medium text-brand-600">
           Nota para la cocina (opcional)
         </label>
         <textarea
-          className="min-h-[80px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
+          className="min-h-[80px] w-full rounded-2xl border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
           placeholder="Ej: cortar en 8, sin sal, etc."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -161,7 +156,7 @@ export default function ProductDetailPage({ params }: Props) {
           addItem(product, 1, notes || undefined);
           router.push('/catalogo/carrito');
         }}
-        className="mt-2 w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+        className="mt-2 w-full rounded-full bg-accent-500 px-4 py-3.5 text-sm font-semibold text-white shadow-accent hover:bg-accent-400 transition-colors"
       >
         Agregar al carrito
       </button>

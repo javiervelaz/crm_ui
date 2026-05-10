@@ -2,6 +2,7 @@
 
 import DynamicMenu from '@/app/lib/dynamicMenu';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 type SidebarProps = {
   className?: string;
@@ -12,14 +13,21 @@ export default function Sidebar({ className = '', onRequestClose }: SidebarProps
   const pathname = usePathname();
 
   return (
-    <aside className={`w-72 max-w-[85vw] md:w-64 bg-gray-900 text-gray-200 flex flex-col border-r border-gray-800 ${className}`}>
-      <div className="h-16 flex items-center justify-between px-4 font-bold text-xl border-b border-gray-800 bg-gray-950">
-        <span className="select-none">🍕 CRM</span>
+    <aside className={`w-72 max-w-[85vw] md:w-64 bg-brand-800 text-white/80 flex flex-col border-r border-brand-700 ${className}`}>
+      <div className="h-16 flex items-center justify-between px-4 border-b border-brand-700 bg-brand-900">
+        <Image
+          src="/assets/Logos/COUNTER CRM/COUNTER CRM Logo horizontal claro.png"
+          alt="Counter CRM"
+          width={140}
+          height={32}
+          className="object-contain"
+          priority
+        />
         {onRequestClose && (
           <button
             type="button"
             onClick={onRequestClose}
-            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-200 hover:bg-gray-800"
+            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-white/80 hover:bg-brand-700"
             aria-label="Cerrar menú"
           >
             ✕
@@ -31,8 +39,8 @@ export default function Sidebar({ className = '', onRequestClose }: SidebarProps
         <DynamicMenu key={pathname} />
       </div>
 
-      <div className="text-center text-xs text-gray-500 py-3 border-t border-gray-800 bg-gray-950">
-        CRM v1.0 • {new Date().getFullYear()}
+      <div className="text-center text-xs text-white/40 py-3 border-t border-brand-700 bg-brand-900">
+        Counter CRM v1.0 • {new Date().getFullYear()}
       </div>
     </aside>
   );

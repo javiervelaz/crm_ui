@@ -1,4 +1,4 @@
-import { getClienteId } from "@/app/lib/authService";
+﻿import { getClienteId } from "@/app/lib/authService";
 import { postProductoList } from '@/app/lib/producto.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -178,7 +178,7 @@ export default function ReporteVentasPage() {
             <Button 
               onClick={exportToCSV}
               variant="outline"
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-brand-600 text-white hover:bg-brand-700"
               disabled={ventas?.length === 0}
             >
               Exportar CSV

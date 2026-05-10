@@ -14,7 +14,7 @@ interface CheckoutTicket {
   address: string;
   deliveryType: 'delivery' | 'pickup';
   extraNotes: string;
-  items: any[]; // mismos items que vienen de useCart
+  items: any[];
   total: number;
   deliveryCost: number;
   grandTotal: number;
@@ -31,17 +31,12 @@ export default function CheckoutPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>(
-    'delivery',
-  );
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [extraNotes, setExtraNotes] = useState('');
   const [medioPagoList, setMedioPagoList] = useState<MedioPago[]>([]);
-  const [selectedMedioPagoId, setSelectedMedioPagoId] =
-    useState<number | null>(null);
+  const [selectedMedioPagoId, setSelectedMedioPagoId] = useState<number | null>(null);
   const [pagaEfectivo, setPagaEfectivo] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
-
-  // 🔹 Estado para el ticket una vez confirmado
   const [ticket, setTicket] = useState<CheckoutTicket | null>(null);
 
   const deliveryCost = 1000; // demo
@@ -50,9 +45,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     let cancelled = false;
     if (!session) {
-      notifyError(
-        'La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.',
-      );
+      notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
       return;
     }
     setPhone(session?.userPhoneE164);
@@ -65,8 +58,7 @@ export default function CheckoutPage() {
           data.find(
             (mp) =>
               (mp.codigo && mp.codigo.toUpperCase() === 'EFE') ||
-              (mp.descripcion &&
-                mp.descripcion.toUpperCase().includes('EFECTIVO')),
+              (mp.descripcion && mp.descripcion.toUpperCase().includes('EFECTIVO')),
           ) || data[0];
 
         if (defaultMedio) {
@@ -76,10 +68,7 @@ export default function CheckoutPage() {
     }
 
     loadMediosPago();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const isEfectivoSelected = useMemo(() => {
@@ -91,109 +80,83 @@ export default function CheckoutPage() {
     return codigo === 'EFE' || desc.includes('EFECTIVO');
   }, [medioPagoList, selectedMedioPagoId]);
 
-  // 🔹 Si ya hay ticket, mostramos el ticket en vez del formulario
+  // Pantalla de ticket confirmado
   if (ticket) {
     return (
       <div className="flex w-full flex-col gap-4 pb-4">
-        <h1 className="text-lg font-bold text-slate-900">Pedido confirmado</h1>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            ✓
+          </span>
+          <h1 className="text-lg font-bold text-brand-800">Pedido confirmado</h1>
+        </div>
 
-        <div className="space-y-3 rounded-2xl border bg-white p-4 text-sm text-slate-800">
-          <p className="font-semibold text-slate-900">
+        <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 text-sm text-brand-800 shadow-card">
+          <p className="font-semibold text-brand-800">
             ¡Gracias, {ticket.name || 'por tu pedido'}!
           </p>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-brand-300">
             Tu pedido fue registrado correctamente. El local va a gestionar tu
             pedido y se contactará si es necesario.
           </p>
 
-          {/* Resumen de productos */}
           <div className="mt-2 space-y-2">
-            <p className="text-xs font-semibold text-slate-700">
-              Detalle de tu pedido
-            </p>
+            <p className="text-xs font-semibold text-brand-700">Detalle de tu pedido</p>
             <ul className="space-y-1">
               {ticket.items.map((it: any) => (
-                <li
-                  key={it.product.id}
-                  className="flex justify-between text-xs"
-                >
+                <li key={it.product.id} className="flex justify-between text-xs">
                   <span>
                     {it.quantity}x {it.product.name}
                     {it.notes && (
-                      <span className="block text-[10px] text-slate-500">
+                      <span className="block text-[10px] text-brand-300">
                         Nota: {it.notes}
                       </span>
                     )}
                   </span>
                   <span>
-                    $
-                    {(it.quantity * it.product.price).toLocaleString('es-AR')}
+                    ${(it.quantity * it.product.price).toLocaleString('es-AR')}
                   </span>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-2 flex justify-between border-t pt-2 text-xs text-slate-600">
+            <div className="mt-2 flex justify-between border-t border-brand-100 pt-2 text-xs text-brand-300">
               <span>Subtotal</span>
               <span>${ticket.total.toLocaleString('es-AR')}</span>
             </div>
-            <div className="flex justify-between text-xs text-slate-600">
+            <div className="flex justify-between text-xs text-brand-300">
               <span>Delivery (demo)</span>
               <span>${ticket.deliveryCost.toLocaleString('es-AR')}</span>
             </div>
-            <div className="flex justify-between pt-1 text-sm font-semibold">
+            <div className="flex justify-between pt-1 text-sm font-bold text-brand-800">
               <span>Total</span>
               <span>${ticket.grandTotal.toLocaleString('es-AR')}</span>
             </div>
           </div>
 
-          {/* Datos de entrega */}
           <div className="mt-3 space-y-1 text-xs">
-            <p className="font-semibold text-slate-700">
-              Datos de contacto y entrega
-            </p>
-            <p>
-              <span className="font-medium">Nombre: </span>
-              {ticket.name}
-            </p>
-            <p>
-              <span className="font-medium">Teléfono: </span>
-              {ticket.phone}
-            </p>
+            <p className="font-semibold text-brand-700">Datos de contacto y entrega</p>
+            <p><span className="font-medium">Nombre: </span>{ticket.name}</p>
+            <p><span className="font-medium">Teléfono: </span>{ticket.phone}</p>
             <p>
               <span className="font-medium">Entrega: </span>
-              {ticket.deliveryType === 'delivery'
-                ? 'Delivery a domicilio'
-                : 'Retiro en local'}
+              {ticket.deliveryType === 'delivery' ? 'Delivery a domicilio' : 'Retiro en local'}
             </p>
             {ticket.deliveryType === 'delivery' && (
-              <p>
-                <span className="font-medium">Dirección: </span>
-                {ticket.address}
-              </p>
+              <p><span className="font-medium">Dirección: </span>{ticket.address}</p>
             )}
             {ticket.extraNotes && (
-              <p>
-                <span className="font-medium">Comentarios: </span>
-                {ticket.extraNotes}
-              </p>
+              <p><span className="font-medium">Comentarios: </span>{ticket.extraNotes}</p>
             )}
           </div>
 
-          {/* Medio de pago */}
           <div className="mt-3 space-y-1 text-xs">
-            <p className="font-semibold text-slate-700">Medio de pago</p>
+            <p className="font-semibold text-brand-700">Medio de pago</p>
             <p>{ticket.medioPagoDescripcion ?? 'No informado'}</p>
             {ticket.pagaEfectivo > 0 && (
               <>
-                <p>
-                  <span className="font-medium">Paga con: </span>$
-                  {ticket.pagaEfectivo.toFixed(2)}
-                </p>
-                <p>
-                  <span className="font-medium">Vuelto estimado: </span>$
-                  {ticket.vuelto.toFixed(2)}
-                </p>
+                <p><span className="font-medium">Paga con: </span>${ticket.pagaEfectivo.toFixed(2)}</p>
+                <p><span className="font-medium">Vuelto estimado: </span>${ticket.vuelto.toFixed(2)}</p>
               </>
             )}
           </div>
@@ -202,7 +165,7 @@ export default function CheckoutPage() {
         <button
           type="button"
           onClick={() => router.push('/catalogo')}
-          className="mt-2 w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+          className="mt-2 w-full rounded-full bg-brand-600 px-4 py-3.5 text-sm font-semibold text-white shadow-brand hover:bg-brand-700 transition-colors"
         >
           Volver al catálogo
         </button>
@@ -210,18 +173,18 @@ export default function CheckoutPage() {
     );
   }
 
-  // 🔹 Sin ticket todavía → flujo normal
+  // Carrito vacío
   if (items.length === 0) {
     return (
       <div className="flex w-full flex-col gap-4 pb-4">
         <button
           type="button"
           onClick={() => router.push('/catalogo')}
-          className="text-xs font-medium text-slate-600"
+          className="text-xs font-medium text-brand-600 hover:text-brand-700"
         >
           ← Volver al catálogo
         </button>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-brand-300">
           No tenés productos en el carrito para confirmar.
         </p>
       </div>
@@ -231,52 +194,26 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!items.length) {
-      notifyError('No tenés productos en el carrito.');
-      return;
-    }
-
-    if (!name.trim() || !phone.trim()) {
-      notifyError('Completá al menos nombre y teléfono.');
-      return;
-    }
-
-    if (deliveryType === 'delivery' && !address.trim()) {
-      notifyError('Para delivery necesitamos una dirección.');
-      return;
-    }
-
-    if (!selectedMedioPagoId) {
-      notifyError('Seleccioná un medio de pago.');
-      return;
-    }
+    if (!items.length) { notifyError('No tenés productos en el carrito.'); return; }
+    if (!name.trim() || !phone.trim()) { notifyError('Completá al menos nombre y teléfono.'); return; }
+    if (deliveryType === 'delivery' && !address.trim()) { notifyError('Para delivery necesitamos una dirección.'); return; }
+    if (!selectedMedioPagoId) { notifyError('Seleccioná un medio de pago.'); return; }
 
     let pagaEfectivoNum = 0;
     let vueltoNum = 0;
 
     if (isEfectivoSelected) {
       pagaEfectivoNum = Number(pagaEfectivo.replace(',', '.')) || 0;
-
-      if (pagaEfectivoNum <= 0) {
-        notifyError('Ingresá el monto que paga el cliente.');
-        return;
-      }
-
+      if (pagaEfectivoNum <= 0) { notifyError('Ingresá el monto que paga el cliente.'); return; }
       if (pagaEfectivoNum < total) {
-        notifyError(
-          `El monto pagado ($${pagaEfectivoNum.toFixed(
-            2,
-          )}) debe ser mayor o igual al total ($${total.toFixed(2)}).`,
-        );
+        notifyError(`El monto pagado ($${pagaEfectivoNum.toFixed(2)}) debe ser mayor o igual al total ($${total.toFixed(2)}).`);
         return;
       }
-
       vueltoNum = pagaEfectivoNum - total;
     }
 
     try {
       setSubmitting(true);
-
       await crearPedidoDesdeMicrositio({
         name: name.trim(),
         phone: phone.trim(),
@@ -284,7 +221,7 @@ export default function CheckoutPage() {
         deliveryType,
         extraNotes: extraNotes.trim(),
         items,
-        total, // lo que consume el backend como monto_total
+        total,
         medio_pago_id: selectedMedioPagoId,
         paga_efectivo: pagaEfectivoNum,
         vuelto_pago_efectivo: vueltoNum,
@@ -292,15 +229,9 @@ export default function CheckoutPage() {
         conversation_id: session?.conversationId,
       });
 
-      notifySuccess(
-        'Pedido registrado. El local va a gestionar tu pedido.',
-      );
+      notifySuccess('Pedido registrado. El local va a gestionar tu pedido.');
 
-      // 🔹 Armar ticket local con la info del pedido
-      const medioSeleccionado = medioPagoList.find(
-        (m) => m.id === selectedMedioPagoId,
-      );
-
+      const medioSeleccionado = medioPagoList.find((m) => m.id === selectedMedioPagoId);
       setTicket({
         name: name.trim(),
         phone: phone.trim(),
@@ -317,8 +248,6 @@ export default function CheckoutPage() {
       });
 
       clearCart();
-      // 👇 ya no redireccionamos acá; dejamos que se muestre el ticket
-      // router.push('/catalogo');
     } catch (err: any) {
       console.error(err);
       notifyError(err.message ?? 'No se pudo registrar el pedido.');
@@ -328,92 +257,79 @@ export default function CheckoutPage() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full flex-col gap-4 pb-4"
-    >
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4 pb-4">
       <button
         type="button"
         onClick={() => router.push('/catalogo/carrito')}
-        className="text-xs font-medium text-slate-600"
+        className="text-xs font-medium text-brand-600 hover:text-brand-700"
       >
         ← Volver al carrito
       </button>
 
-      <h1 className="text-lg font-bold text-slate-900">Checkout</h1>
+      <h1 className="text-lg font-bold text-brand-800">Checkout</h1>
 
-      {/* Resumen */}
-      <div className="space-y-2 rounded-2xl border bg-white p-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">Resumen del pedido</p>
+      {/* Resumen del pedido */}
+      <div className="space-y-2 rounded-2xl border border-brand-100 bg-white p-4 text-sm text-brand-700 shadow-card">
+        <p className="font-semibold text-brand-800">Resumen del pedido</p>
         <ul className="space-y-1">
           {items.map((it) => (
             <li key={it.product.id} className="flex justify-between">
-              <span>
-                {it.quantity}x {it.product.name}
-              </span>
-              <span>
-                $
-                {(it.quantity * it.product.price).toLocaleString('es-AR')}
-              </span>
+              <span>{it.quantity}x {it.product.name}</span>
+              <span>${(it.quantity * it.product.price).toLocaleString('es-AR')}</span>
             </li>
           ))}
         </ul>
-        <div className="mt-2 flex justify-between border-t pt-2 text-xs text-slate-600">
+        <div className="mt-2 flex justify-between border-t border-brand-100 pt-2 text-xs text-brand-300">
           <span>Subtotal</span>
           <span>${total.toLocaleString('es-AR')}</span>
         </div>
-        <div className="flex justify-between text-xs text-slate-600">
+        <div className="flex justify-between text-xs text-brand-300">
           <span>Delivery (demo)</span>
           <span>${deliveryCost.toLocaleString('es-AR')}</span>
         </div>
-        <div className="flex justify-between pt-1 text-sm font-semibold">
+        <div className="flex justify-between pt-1 text-sm font-bold text-brand-800">
           <span>Total aprox.</span>
           <span>${grandTotal.toLocaleString('es-AR')}</span>
         </div>
       </div>
 
       {/* Tus datos */}
-      <div className="space-y-3 rounded-2xl border bg-white p-4 text-sm">
-        <p className="font-semibold text-slate-900">Tus datos</p>
+      <div className="space-y-3 rounded-2xl border border-brand-100 bg-white p-4 text-sm shadow-card">
+        <p className="font-semibold text-brand-800">Tus datos</p>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">
-            Nombre y apellido
-          </label>
+          <label className="text-xs font-medium text-brand-600">Nombre y apellido</label>
           <input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
+            className="w-full rounded-2xl border border-brand-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
           />
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">
-            Teléfono (WhatsApp)
-          </label>
+          <label className="text-xs font-medium text-brand-600">Teléfono (WhatsApp)</label>
           <input
             type="tel"
             required
             value={phone}
             disabled
-            className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
+            className="w-full rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-sm text-brand-300 outline-none"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">
-            Método de entrega
-          </label>
+        {/* Método de entrega */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-brand-600">Método de entrega</label>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setDeliveryType('delivery')}
-              className={`flex-1 rounded-2xl border px-3 py-2 text-xs font-medium ${
+              className={`flex-1 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                 deliveryType === 'delivery'
-                  ? 'border-slate-900 bg-slate-900 text-white'
-                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ? 'border-brand-600 bg-brand-600 text-white'
+                  : 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
               }`}
             >
               Delivery
@@ -421,10 +337,10 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={() => setDeliveryType('pickup')}
-              className={`flex-1 rounded-2xl border px-3 py-2 text-xs font-medium ${
+              className={`flex-1 rounded-2xl border px-3 py-2.5 text-xs font-semibold transition-colors ${
                 deliveryType === 'pickup'
-                  ? 'border-slate-900 bg-slate-900 text-white'
-                  : 'border-slate-200 bg-slate-50 text-slate-700'
+                  ? 'border-brand-600 bg-brand-600 text-white'
+                  : 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
               }`}
             >
               Retiro en local
@@ -434,32 +350,28 @@ export default function CheckoutPage() {
 
         {deliveryType === 'delivery' && (
           <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600">
-              Dirección
-            </label>
+            <label className="text-xs font-medium text-brand-600">Dirección</label>
             <input
               type="text"
               required
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
+              className="w-full rounded-2xl border border-brand-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
             />
           </div>
         )}
 
         {/* Medio de pago */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-600">
-            Medio de pago
-          </label>
-          <div className="flex flex-wrap gap-3">
+          <label className="text-xs font-medium text-brand-600">Medio de pago</label>
+          <div className="flex flex-wrap gap-2">
             {medioPagoList.map((mp) => (
               <label
                 key={mp.id}
-                className={`flex items-center rounded-full border px-3 py-1 text-xs ${
+                className={`flex cursor-pointer items-center rounded-full border px-3 py-1.5 text-xs transition-colors ${
                   selectedMedioPagoId === mp.id
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 bg-slate-50 text-slate-700'
+                    ? 'border-brand-600 bg-brand-600 text-white'
+                    : 'border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100'
                 }`}
               >
                 <input
@@ -468,26 +380,22 @@ export default function CheckoutPage() {
                   value={mp.id}
                   checked={selectedMedioPagoId === mp.id}
                   onChange={() => setSelectedMedioPagoId(mp.id)}
-                  className="mr-2"
+                  className="mr-2 accent-brand-600"
                 />
                 <span className="font-semibold">{mp.descripcion}</span>
               </label>
             ))}
             {medioPagoList.length === 0 && (
-              <p className="text-xs text-slate-500">
-                No hay medios de pago configurados.
-              </p>
+              <p className="text-xs text-brand-300">No hay medios de pago configurados.</p>
             )}
           </div>
         </div>
 
-        {/* Pago en efectivo */}
+        {/* Efectivo — mantiene yellow como señal semántica de alerta/info */}
         {isEfectivoSelected && (
           <div className="space-y-2 rounded-2xl border border-yellow-200 bg-yellow-50 p-3 text-xs">
-            <p className="font-semibold text-slate-800">
-              Pago en efectivo
-            </p>
-            <label className="text-[11px] font-medium text-slate-600">
+            <p className="font-semibold text-brand-800">Pago en efectivo</p>
+            <label className="text-[11px] font-medium text-brand-600">
               Monto que paga el cliente
             </label>
             <input
@@ -496,14 +404,13 @@ export default function CheckoutPage() {
               step="0.01"
               value={pagaEfectivo}
               onChange={(e) => setPagaEfectivo(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
+              className="w-full rounded-2xl border border-brand-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
             />
             {pagaEfectivo && (
-              <p className="text-[11px] text-slate-600">
+              <p className="text-[11px] text-brand-600">
                 Vuelto estimado:{' '}
                 {(() => {
-                  const num =
-                    Number(pagaEfectivo.replace(',', '.')) || 0;
+                  const num = Number(pagaEfectivo.replace(',', '.')) || 0;
                   const v = num - total;
                   return v > 0 ? `$${v.toFixed(2)}` : '$0.00';
                 })()}
@@ -513,11 +420,11 @@ export default function CheckoutPage() {
         )}
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-600">
+          <label className="text-xs font-medium text-brand-600">
             Comentarios extra (opcional)
           </label>
           <textarea
-            className="min-h-[80px] w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none ring-slate-900/10 focus:ring-2"
+            className="min-h-[80px] w-full rounded-2xl border border-brand-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
             value={extraNotes}
             onChange={(e) => setExtraNotes(e.target.value)}
             placeholder="Ej: timbrar fuerte, no poner mayonesa, etc."
@@ -528,7 +435,7 @@ export default function CheckoutPage() {
       <button
         type="submit"
         disabled={submitting}
-        className="mt-2 w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-2 w-full rounded-full bg-accent-500 px-4 py-3.5 text-sm font-semibold text-white shadow-accent hover:bg-accent-400 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? 'Enviando...' : 'Confirmar pedido'}
       </button>
