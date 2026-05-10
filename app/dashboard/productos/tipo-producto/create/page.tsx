@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { createTipoProducto, getTipoProductoById, updateTipoProducto } from '@/app/lib/tipoproducto.api';
@@ -66,7 +66,7 @@ export default function FormTipoProducto() {
             required
             value={formData.nombre}
             onChange={(e) => setFormData({ nombre: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-600"
             placeholder="Ej: Pizza, Bebida, Postre"
           />
         </div>
@@ -82,7 +82,7 @@ export default function FormTipoProducto() {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:opacity-50"
+            className="flex-1 bg-brand-600 text-white py-2 px-4 rounded-md hover:bg-brand-600 disabled:opacity-50"
           >
             {loading ? 'Guardando...' : id ? 'Actualizar' : 'Crear'}
           </button>

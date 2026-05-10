@@ -1,4 +1,4 @@
-import { getClienteId } from "@/app/lib/authService";
+﻿import { getClienteId } from "@/app/lib/authService";
 import { checkAperturaCaja, getPedidosByRegistroId } from "@/app/lib/operaciones.api";
 import { jwtDecode } from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
@@ -89,9 +89,9 @@ useEffect(() => {
           )}
         </div>
       ) : (
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-bold">Pedidos del Día</h2>
-          <p className="text-gray-600">Caja abierta el: {new Date(fechaApertura).toLocaleString()}</p>
+          <p className="text-sm text-brand-300">Caja abierta el: {new Date(fechaApertura).toLocaleString()}</p>
         </div>
       )}
 
@@ -100,7 +100,7 @@ useEffect(() => {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowPedidoForm(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-600"
             >
               Alta de Pedido
             </button>

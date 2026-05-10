@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
@@ -181,7 +181,7 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
                     type="checkbox"
                     checked={mod.selected || false}
                     onChange={() => handleModuloSelect(mod.id)}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-600"
                   />
                   <span className="font-semibold text-gray-800">{mod.descripcion}</span>
                 </label>
@@ -190,7 +190,7 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
                 <button
                   type="button"
                   onClick={() => handleModuloToggle(mod.id)}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-brand-600 hover:underline"
                 >
                   {mod.expanded ? 'Ocultar permisos ▲' : 'Mostrar permisos ▼'}
                 </button>
@@ -205,7 +205,7 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
                         type="checkbox"
                         checked={perm.selected || false}
                         onChange={() => handlePermisoSelect(mod.id, perm.id)}
-                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-600"
                       />
                       <span className="text-sm text-gray-700">{perm.descripcion}</span>
                     </label>
@@ -222,7 +222,7 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
           onClick={handleGuardar}
           disabled={saving}
           className={`px-4 py-2 rounded-lg shadow-sm text-white ${
-            saving ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+            saving ? 'bg-gray-400' : 'bg-brand-600 hover:bg-brand-600'
           }`}
         >
           {saving ? 'Guardando...' : 'Guardar Permisos'}

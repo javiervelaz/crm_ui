@@ -2,7 +2,7 @@
 'use client';
 import Header from '@/app/ui/Header';
 import Sidebar from '@/app/ui/Sidebar';
-import { inter, lusitana } from '@/app/ui/fonts';
+import { montserrat, outfit } from '@/app/ui/fonts';
 import '@/app/ui/global.css';
 import { jwtDecode } from 'jwt-decode';
 import React, { useEffect, useState } from 'react';
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="es">
-      <body className={`${inter.variable} ${lusitana.variable}`}>
+      <body className={`${montserrat.variable} ${outfit.variable}`}>
         {isPublicRoute ? (
           <div className="min-h-screen bg-slate-50">{children}</div>
         ) : (
@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             <div className="flex min-w-0 flex-col flex-1">
               <Header onMenuClick={() => setIsMobileSidebarOpen(true)} />
-              <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 bg-gray-100">
+              <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-6 bg-brand-50">
                 {children}
               </main>
             </div>

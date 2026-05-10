@@ -1,9 +1,8 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { getRegistroDiarioDetalle } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
-import { lusitana } from '@/app/ui/fonts';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -102,12 +101,12 @@ export default function DetalleCajaPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className={`${lusitana.className} text-2xl mb-2`}>
+          <h1 className={`font-display text-2xl mb-2`}>
             Detalle de Caja - {formatDate(detalle.registro.fecha)}
           </h1>
           <button
             onClick={() => router.back()}
-            className="text-blue-500 hover:text-blue-700 text-sm"
+            className="text-brand-600 hover:text-brand-700 text-sm"
           >
             ← Volver al reporte
           </button>
@@ -126,9 +125,9 @@ export default function DetalleCajaPage() {
 
       {/* Resumen General */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <div className="text-blue-800 font-semibold">Caja Inicial</div>
-          <div className="text-2xl text-blue-600">{formatCurrency(detalle.registro.caja_inicial)}</div>
+        <div className="bg-brand-50 p-4 rounded-lg">
+          <div className="text-brand-800 font-semibold">Caja Inicial</div>
+          <div className="text-2xl text-brand-600">{formatCurrency(detalle.registro.caja_inicial)}</div>
         </div>
         
         <div className="bg-green-50 p-4 rounded-lg">

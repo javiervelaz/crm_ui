@@ -1,4 +1,4 @@
-import { getClienteId } from '@/app/lib/authService';
+﻿import { getClienteId } from '@/app/lib/authService';
 import { getMedioPagoList } from '@/app/lib/mediopago.api';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { crearPedido } from '@/app/lib/operaciones.api';
@@ -503,13 +503,13 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
         />
       </div>
       {clienteDataEstadistica.cantidad_pedidos > 0 && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-semibold text-blue-800 mb-3">Historial del Cliente</h3>
+          <div className="mb-6 p-4 bg-brand-50 border border-brand-200 rounded-lg">
+            <h3 className="font-semibold text-brand-800 mb-3">Historial del Cliente</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* Total de pedidos */}
               <div className="text-center p-2 bg-white rounded shadow-sm">
-                <div className="text-2xl font-bold text-blue-600">{clienteDataEstadistica.cantidad_pedidos}</div>
-                <div className="text-xs text-blue-500">Pedidos totales</div>
+                <div className="text-2xl font-bold text-brand-600">{clienteDataEstadistica.cantidad_pedidos}</div>
+                <div className="text-xs text-brand-600">Pedidos totales</div>
               </div>
 
               {/* Total gastado */}
@@ -545,12 +545,12 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
             {/* Productos más comprados */}
             {clienteDataEstadistica.top_3_productos.length > 0 && (
               <div className="mt-4">
-                <h4 className="font-medium text-blue-700 mb-2">Productos frecuentes:</h4>
+                <h4 className="font-medium text-brand-700 mb-2">Productos frecuentes:</h4>
                 <div className="flex flex-wrap gap-2">
                   {clienteDataEstadistica.top_3_productos.map((producto, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                      className="inline-flex items-center px-2 py-1 bg-brand-100 text-brand-800 text-xs rounded-full"
                     >
                       {producto.producto_nombre} ({producto.cantidad_total} und)
                     </span>
@@ -573,7 +573,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
           onClick={() => setActiveTipoProducto(tipo.id)}
           className={`px-4 py-2 rounded-t-md ${
             activeTipoProducto === tipo.id
-              ? 'bg-blue-500 text-white font-semibold'
+              ? 'bg-brand-600 text-white font-semibold'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -761,7 +761,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
                 {/* Subtotal del producto */}
                 <div className="flex flex-col">
                   <label className="text-xs text-gray-600 mb-1">Subtotal</label>
-                  <span className="border px-2 py-1 rounded w-20 bg-blue-50 text-center text-sm font-semibold">
+                  <span className="border px-2 py-1 rounded w-20 bg-brand-50 text-center text-sm font-semibold">
                     ${calcularSubtotalProducto(prod).toFixed(2)}
                   </span>
                 </div>
@@ -797,7 +797,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
                 value={mp.id}
                 checked={pedido.medio_pago_id === mp.id}
                 onChange={handleMedioPagoChange}
-                className="form-radio text-blue-600"
+                className="form-radio text-brand-600"
               />
               <span className="ml-2 text-gray-700 font-semibold text-xs">{mp.descripcion}</span>
             </label>
@@ -869,7 +869,7 @@ const PedidoForm = ({ onClose, registroDiario, usuario_id }: ModalProps) => {
       <div className="flex justify-center">
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mr-2"
+          className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-600 mr-2"
         >
           Finalizar Pedido
         </button>

@@ -1,6 +1,5 @@
 "use client";
 
-import { lusitana } from '@/app/ui/fonts';
 import axios from 'axios';
 import { useRouter } from 'next/navigation'; // Cambia 'next/router' por 'next/navigation'
 import { FormEvent, useState } from 'react';
@@ -26,7 +25,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`${styles.container} ${lusitana.className}`}>
+    <div className={`${styles.container} font-display`}>
       <h1>Login</h1>
       <form onSubmit={handleLogin}>
       <div className={styles['form-group']}>

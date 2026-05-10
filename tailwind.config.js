@@ -14,8 +14,20 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans],
+        display: ['var(--font-display)', ...fontFamily.sans],
       },
       colors: {
+        brand: {
+          50:  '#F3EDF9',
+          100: '#E4D5F2',
+          200: '#C9ABE5',
+          300: '#817E9F',
+          400: '#8A2C70',
+          600: '#4B2D67',
+          700: '#3A2250',
+          800: '#261734',
+          900: '#1A0F24',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -40,6 +52,9 @@ module.exports = {
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
+          400: '#FFB860',
+          500: '#FF992D',
+          600: '#FC6153',
         },
         popover: {
           DEFAULT: 'hsl(var(--popover))',
@@ -49,6 +64,12 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+      },
+      boxShadow: {
+        soft:   '0 4px 24px rgba(15, 23, 42, 0.08)',
+        card:   '0 2px 12px rgba(15, 23, 42, 0.06)',
+        brand:  '0 8px 32px rgba(75, 45, 103, 0.35)',
+        accent: '0 8px 32px rgba(255, 153, 45, 0.35)',
       },
       borderRadius: {
         lg: 'var(--radius)',

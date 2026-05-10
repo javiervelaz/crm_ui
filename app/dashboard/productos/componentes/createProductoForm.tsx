@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { createProduct } from '@/app/lib/producto.api';
@@ -106,7 +106,7 @@ const CreateUserPage = () => {
   };
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 md:p-6">
       <h1 className="text-2xl mb-6">Crear nuevo producto</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -142,7 +142,7 @@ const CreateUserPage = () => {
             name="tipo_producto_id"
             value={productoDetails.tipo_producto_id || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-600"
             required
           >
             <option value="">Seleccionar tipo...</option>
@@ -162,7 +162,7 @@ const CreateUserPage = () => {
               name="permite_mitad"
               checked={productoDetails.permite_mitad || false}
               onChange={handleChange}
-              className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-200 focus:ring focus:ring-brand-100 focus:ring-opacity-50"
             />
             <span className="ml-2 text-sm font-medium text-gray-700">
               Permite venta por media unidad
@@ -203,7 +203,7 @@ const CreateUserPage = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? 'Guardando...' : 'Guardar'}
           </button>

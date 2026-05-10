@@ -1,11 +1,8 @@
-// app/ui/dashboard/usuarios/UsuarioTable.tsx
 'use client'
 
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { faEdit, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
 
 interface Usuario {
   id: number;
@@ -17,7 +14,7 @@ interface Usuario {
   user_type_id: number;
   user_type_codigo?: string;
   user_type_descripcion?: string;
-  cliente_id: BigInt
+  cliente_id: BigInt;
 }
 
 interface UsuarioTableProps {
@@ -26,126 +23,114 @@ interface UsuarioTableProps {
   onEdit: (id: number) => void;
 }
 
-export default function UsuarioTable({ usuarios, onEdit,onDelete }: UsuarioTableProps) {
+export default function UsuarioTable({ usuarios, onEdit, onDelete }: UsuarioTableProps) {
   useAuthCheck();
-  const router = useRouter();
-  const [sortField, setSortField] = useState<'nombre' | 'apellido'>('apellido');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-
-
-  const handleSort = (field: 'nombre' | 'apellido') => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortedUsuarios = [...usuarios].sort((a, b) => {
-    const aValue = a[sortField].toLowerCase();
-    const bValue = b[sortField].toLowerCase();
-    
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const SortIcon = ({ field }: { field: 'nombre' | 'apellido' }) => {
-    if (sortField !== field) return null;
+  if (usuarios.length === 0) {
     return (
-      <span className="ml-1">
-        {sortDirection === 'asc' ? '↑' : '↓'}
-      </span>
+      <div className="rounded-xl border border-brand-100 bg-white py-12 text-center shadow-card">
+        <p className="text-sm text-brand-300">No se encontraron usuarios</p>
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+    <div className="rounded-xl border border-brand-100 bg-white shadow-card overflow-hidden">
+
+      {/* Mobile: cards */}
+      <div className="md:hidden divide-y divide-brand-100">
+        {usuarios.map((usuario) => (
+          <div key={usuario.id} className="px-4 py-3 hover:bg-brand-50 transition-colors">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-brand-800 truncate">
+                  {usuario.apellido}, {usuario.nombre}
+                </p>
+                <p className="text-xs text-brand-400 truncate mt-0.5">{usuario.email}</p>
+                {usuario.telefono && (
+                  <p className="text-xs text-brand-400 mt-0.5">{usuario.telefono}</p>
+                )}
+                <span className="mt-1.5 inline-block rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
+                  {usuario.user_type_descripcion || `Tipo ${usuario.user_type_id}`}
+                </span>
+              </div>
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  onClick={() => onEdit(usuario.id)}
+                  className="h-8 w-8 flex items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+                  title="Editar"
+                >
+                  <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                </button>
+                <button
+                  onClick={() => onDelete(usuario.id, usuario.cliente_id)}
+                  className="h-8 w-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                  title="Eliminar"
+                >
+                  <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-brand-100">
+          <thead className="bg-brand-50">
             <tr>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('apellido')}
-              >
-                <div className="flex items-center">
-                  Apellido
-                  <SortIcon field="apellido" />
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('nombre')}
-              >
-                <div className="flex items-center">
-                  Nombre
-                  <SortIcon field="nombre" />
-                </div>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Teléfono
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tipo de usuario
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">Apellido</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">Nombre</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">Teléfono</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">Tipo</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">Acciones</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sortedUsuarios.map((usuario) => (
-              <tr key={usuario.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          <tbody className="bg-white divide-y divide-brand-100">
+            {usuarios.map((usuario) => (
+              <tr key={usuario.id} className="hover:bg-brand-50 transition-colors">
+                <td className="px-4 py-3 text-sm font-semibold text-brand-800 whitespace-nowrap">
                   {usuario.apellido}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-3 text-sm text-brand-800 whitespace-nowrap">
                   {usuario.nombre}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-3 text-sm text-brand-700 whitespace-nowrap">
                   {usuario.email}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-3 text-sm text-brand-700 whitespace-nowrap">
                   {usuario.telefono}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
                     {usuario.user_type_descripcion || `Tipo ${usuario.user_type_id}`}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  <button
-                    onClick={() => onEdit(usuario.id)}
-                    className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-100"
-                    title="Editar"
-                  >
-                    <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(usuario.id, usuario.cliente_id)}
-                    className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-100"
-                    title="Eliminar"
-                  >
-                    <FontAwesomeIcon icon={faTrashAlt} />
-                  </button>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onEdit(usuario.id)}
+                      className="h-8 w-8 flex items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+                      title="Editar"
+                    >
+                      <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(usuario.id, usuario.cliente_id)}
+                      className="h-8 w-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                      title="Eliminar"
+                    >
+                      <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {sortedUsuarios.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No se encontraron usuarios
-        </div>
-      )}
     </div>
   );
 }

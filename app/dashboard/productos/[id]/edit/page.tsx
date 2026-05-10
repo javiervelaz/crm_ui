@@ -80,93 +80,93 @@ const EditProductoPage = () => {
   };
 
   return (
-    <div className="w-full p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Editar Producto</h1>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Nombre</label>
-          <input
-            type="text"
-            name="nombre"
-            value={productoDetails.nombre || ''}
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Precio Unitario</label>
-          <input
-            type="number"
-            name="precio_unitario"
-            value={productoDetails.precio_unitario || ''}
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Tipo de Producto</label>
-          <select
-            name="tipo_producto_id"
-            value={productoDetails.tipo_producto_id || ''}
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
-          >
-            <option value="" disabled>
-              Seleccione un tipo de producto
-            </option>
-            {tipoProducto.map((tipo) => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="w-full">
+      <h1 className="mb-6 font-display text-2xl text-brand-800">Editar Producto</h1>
 
-        {/* Nuevo campo: Permite Mitad */}
-        <div className="mb-4">
-          <label className="flex items-center">
+      <div className="rounded-xl border border-brand-100 bg-white p-4 shadow-card">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-brand-700 mb-1">Nombre</label>
             <input
-              type="checkbox"
-              name="permite_mitad"
-              checked={productoDetails.permite_mitad || false}
+              type="text"
+              name="nombre"
+              value={productoDetails.nombre || ''}
               onChange={handleChange}
-              className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
-            <span className="ml-2 text-sm font-medium text-gray-700">
-              Permite venta por media unidad
-            </span>
-          </label>
-          <p className="mt-1 text-xs text-gray-500">
-            Si está marcado, este producto podrá ser vendido por la mitad de su precio unitario
-          </p>
-        </div>
-        <div className="mb-4">
-          {productoDetails.id ? (
-            <ProductoImagenesManager productoId={productoDetails.id} />
-          ) : (
-            <p className="text-xs text-gray-500">
-              Guardá el producto para poder administrar sus imágenes {productoDetails.id}.
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-700 mb-1">Precio Unitario</label>
+            <input
+              type="number"
+              name="precio_unitario"
+              value={productoDetails.precio_unitario || ''}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-700 mb-1">Tipo de Producto</label>
+            <select
+              name="tipo_producto_id"
+              value={productoDetails.tipo_producto_id || ''}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+            >
+              <option value="" disabled>Seleccione un tipo de producto</option>
+              {tipoProducto.map((tipo) => (
+                <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="permite_mitad"
+                checked={productoDetails.permite_mitad || false}
+                onChange={handleChange}
+                className="rounded border-brand-200 text-brand-600 focus:ring-brand-600/20"
+              />
+              <span className="text-sm font-medium text-brand-700">
+                Permite venta por media unidad
+              </span>
+            </label>
+            <p className="mt-1 text-xs text-brand-300 pl-6">
+              Si está marcado, este producto podrá ser vendido por la mitad de su precio unitario.
             </p>
-          )}
-        </div>
+          </div>
 
+          <div>
+            {productoDetails.id ? (
+              <ProductoImagenesManager productoId={productoDetails.id} />
+            ) : (
+              <p className="text-xs text-brand-300">
+                Guardá el producto para poder administrar sus imágenes.
+              </p>
+            )}
+          </div>
 
-        <div className="flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-          >
-            Guardar
-          </button>
-        </div>
-      </form>
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full sm:w-auto rounded-full border border-brand-200 px-6 py-2.5 text-sm font-semibold text-brand-600 hover:bg-brand-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="w-full sm:w-auto rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-brand hover:bg-brand-700 transition-colors"
+            >
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

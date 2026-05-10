@@ -1,6 +1,7 @@
 'use client';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useEffect, useState } from 'react';
 import { notifyAuthChanged } from '@/app/lib/authEvents';
@@ -63,39 +64,46 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
-      <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-brand-800">
+      <div className="bg-white shadow-brand rounded-xl p-8 w-full max-w-md">
         {/* Branding */}
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          🍕 CRM
-        </h1>
-        <p className="text-center text-gray-500 mb-6">Accedé a tu cuenta</p>
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/assets/Logos/COUNTER CRM/COUNTER CRM Logo horizontal violeta.png"
+            alt="Counter CRM"
+            width={180}
+            height={48}
+            className="object-contain"
+            priority
+          />
+        </div>
+        <p className="text-center text-brand-300 mb-6">Accedé a tu cuenta</p>
 
         {/* Formulario */}
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
+            <label className="block text-brand-800 font-medium mb-1">
               Usuario
             </label>
             <input
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-4 py-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:outline-none"
               placeholder="Ingresá tu usuario"
               required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
+            <label className="block text-brand-800 font-medium mb-1">
               Contraseña
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-4 py-2 border border-brand-200 rounded-lg focus:ring-2 focus:ring-brand-600 focus:outline-none"
               placeholder="Ingresá tu contraseña"
               required
             />
@@ -107,15 +115,15 @@ const LoginForm: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg shadow hover:bg-blue-700 transition"
+            className="w-full bg-brand-600 text-white font-semibold py-2 rounded-lg shadow-brand hover:bg-brand-700 transition"
           >
             Iniciar Sesión
           </button>
         </form>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          © {new Date().getFullYear()} @crm
+        <p className="text-center text-sm text-brand-300 mt-6">
+          © {new Date().getFullYear()} Counter CRM
         </p>
       </div>
     </div>
