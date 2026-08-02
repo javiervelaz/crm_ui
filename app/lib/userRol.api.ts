@@ -19,10 +19,12 @@ export const createUserRol = async (userRolDetails: any) => {
   };
 
   export const getUserRolById = async (Id: string) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/userrol/${Id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -36,10 +38,12 @@ export const createUserRol = async (userRolDetails: any) => {
   };
 
   export const updateUserRol = async (id: string, updatedUserRolDetails: any) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/userrol/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(updatedUserRolDetails),
     });
@@ -53,10 +57,12 @@ export const createUserRol = async (userRolDetails: any) => {
 
   export const getUserRolUserById = async (userId: string, cliente: BigInt )=> {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/userrol/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
   
@@ -79,10 +85,12 @@ export const createUserRol = async (userRolDetails: any) => {
   };
 
   export const deleteUserRol = async (Id: string, cliente: BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/userrol/${Id}/${cliente}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
     if (!response.ok) {

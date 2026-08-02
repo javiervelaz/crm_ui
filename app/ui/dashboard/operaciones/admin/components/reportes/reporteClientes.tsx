@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
 import MultiSelect from '@/components/ui/MultiSelect';
-import axios from 'axios';
+import apiClient from '@/app/lib/apiClient';
 import { addDays, format, subDays } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -122,7 +122,7 @@ export default function ReporteClientesPage() {
     };
     
     try {
-      const res = await axios.post(`${apiUrl}/reportes/clientes`, payload);
+      const res = await apiClient.post(`${apiUrl}/reportes/clientes`, payload);
       setClientes(res.data);
     } catch (err) {
       console.error('Error fetching client report:', err);

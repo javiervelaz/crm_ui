@@ -23,10 +23,12 @@ export const createUser = async (userDetails: any) => {
   };
   
   export const getUserById = async (userId: string, cliente: BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -93,10 +95,12 @@ export const createUser = async (userDetails: any) => {
 
   //User type
   export const getUserTypeById = async (userTypeId: string) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/type/${userTypeId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -112,10 +116,12 @@ export const createUser = async (userDetails: any) => {
 
   //User Rol
   export const getUserRol = async (userId: string, cliente : BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/rol/${userId}/${cliente}` , {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -129,10 +135,12 @@ export const createUser = async (userDetails: any) => {
   };
 
   export const getUserTypes = async () => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/tipo`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+         'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -146,10 +154,12 @@ export const createUser = async (userDetails: any) => {
   };
 
   export const getClienteEstadistica = async (id: number) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/estadistica/cliente/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío

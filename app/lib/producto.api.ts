@@ -89,10 +89,12 @@ export const getProductoList = async (cliente: BigInt) => {
   };
 
   export const getProductoById = async (Id: number | string | string[], cliente: BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto/${Id}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío

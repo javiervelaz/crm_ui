@@ -19,10 +19,12 @@ export const createMedioPago = async (data: any) => {
   };
 
   export const getMedioPagoById = async (Id: string) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/medioPago/${Id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -36,10 +38,12 @@ export const createMedioPago = async (data: any) => {
   };
 
   export const updateMedioPago = async (id: string, data: any) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/medioPago/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
@@ -53,10 +57,12 @@ export const createMedioPago = async (data: any) => {
 
   export const getMedioPagoList = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/medioPago/list`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
   
@@ -79,10 +85,12 @@ export const createMedioPago = async (data: any) => {
   };
 
   export const deleteMedioPago = async (Id: string) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/medioPago/${Id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
     if (!response.ok) {
