@@ -2,10 +2,12 @@ import { getClienteId } from "./authService";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export const getModulosByCliente = async (cliente_id: BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/modulo/list/${cliente_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
        // Si la respuesta es un 404, retorna un array vacío
@@ -23,10 +25,12 @@ export const getModulosByCliente = async (cliente_id: BigInt) => {
 
 export const getRolModulosPermisos = async (rolId: number) => {
   const clienteId = getClienteId();
+  const token = localStorage.getItem('token');
   const response = await fetch(`${apiUrl}/rol/${rolId}/${clienteId}/modulos-permisos`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
     },
   });
    // Si la respuesta es un 404, retorna un array vacío
@@ -41,10 +45,12 @@ export const getRolModulosPermisos = async (rolId: number) => {
 };
 
 export const getUserPermisosById = async (userId: number, cliente_id: BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente_id}/modulos-permisos`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
        // Si la respuesta es un 404, retorna un array vacío
@@ -59,10 +65,12 @@ export const getUserPermisosById = async (userId: number, cliente_id: BigInt) =>
 };
 
 export const getPermisosByModuloId = async (cliente_id: BigInt, id_modulo: number) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/modulo/${cliente_id}/${id_modulo}/permisos`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
        // Si la respuesta es un 404, retorna un array vacío

@@ -41,10 +41,12 @@ export const getTipoProductoList = async (cliente:BigInt) => {
   }
 
   export const getTipoProductoById = async (Id: number | string | string[]) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/tipo-producto/${Id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -74,10 +76,12 @@ export const getTipoProductoList = async (cliente:BigInt) => {
   };
 
   export const deleteTipoProducto = async (id: number | string | string[]) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/tipo-producto/${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
     if (!response.ok) {

@@ -253,12 +253,14 @@ export const abrirCaja = async (data: any) => {
 
   export async function getDetallePedido(pedidoId: number): Promise<PedidoItemDetalle[]> {
 
+  const token = localStorage.getItem('token');
   const res = await fetch(
     `${apiUrl}/operaciones/detalle-pedido/${pedidoId}`,
     {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       cache: 'no-store',
     },

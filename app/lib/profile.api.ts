@@ -21,10 +21,12 @@ export const createProfile = async (profileDetails: any) => {
   };
 
   export const getProfileById = async (Id: string) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/profile/${Id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -70,6 +72,7 @@ export const createProfile = async (profileDetails: any) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(updatedProfileDetails),
     });
@@ -81,10 +84,12 @@ export const createProfile = async (profileDetails: any) => {
 
   export const getClienteByTelefono  = async (telefono: string,cliente_id:bigint) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/users/cliente/${telefono}/${cliente_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
   

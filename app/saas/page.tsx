@@ -1,10 +1,11 @@
 // app/saas/page.tsx
 'use client';
 
-import { useRef, useState, FormEvent } from 'react';
+import { useRef, useState, FormEvent, Suspense } from 'react';
 import Image from 'next/image';
 import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
 import { useTiers } from '@/app/lib/useTiers';   // 👈 NUEVO
+import { useSearchParams } from 'next/navigation';
 
 type StatusState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -21,8 +22,12 @@ const formatPrice = (price: number | null | undefined) => {
   return `$ ${price.toLocaleString('es-AR')} / mes`;
 };
 
-export default function SaasLandingPage() {
-  const [selectedPlan, setSelectedPlan] = useState<PlanTier>('FREE');
+function SaasLandingPage() {
+  const searchParams = useSearchParams();
+  const planParam = (searchParams.get('plan') || 'FREE').toUpperCase() as PlanTier;
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>(
+    ['FREE', 'BASIC', 'PREMIUM', 'CUSTOM'].includes(planParam) ? planParam : 'FREE'
+  );
 
   const [comercioNombre, setComercioNombre] = useState('');
   const [cuit, setCuit] = useState('');
@@ -36,6 +41,8 @@ export default function SaasLandingPage() {
   const [status, setStatus] = useState<StatusState>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,46 +65,51 @@ export default function SaasLandingPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (!aceptaTerminos) {
+      setStatus('error');
+      setErrorMessage('Tenés que aceptar los términos y condiciones.');
+      return;
+    }
+
     setStatus('loading');
     setErrorMessage(null);
-    setSuccessMessage(null);
+    setFieldError(null);
 
     try {
-      var response = await registerSaasCliente({
+      const res = await registerSaasCliente({
         plan: selectedPlan,
-        comercioNombre,
-        cuit,
-        adminNombre,
-        adminApellido,
-        adminEmail,
-        adminDni,
-        telefono,
-        password,
+        comercioNombre, cuit, adminNombre, adminApellido,
+        adminEmail, adminDni, telefono, password,
+        aceptaTerminos,
       });
+
+      // Sesión inmediata: el usuario no vuelve a tipear credenciales
+      if (res.token) localStorage.setItem('token', res.token);
+
+      // Plan pago → checkout de MercadoPago
+      if (res.paymentUrl) {
+        window.location.href = res.paymentUrl;
+        return;
+      }
 
       setStatus('success');
       setSuccessMessage(
-        'Tu cuenta fue creada correctamente. Ya podés acceder al CRM con tu usuario.'
+        res.paymentWarning
+          ? `Tu cuenta está lista. ${res.paymentWarning}`
+          : '¡Listo! Te llevamos a tu panel...'
       );
 
-      setComercioNombre('');
-      setCuit('');
-      setAdminNombre('');
-      setAdminApellido('');
-      setAdminEmail('');
-      setAdminDni('');
-      setTelefono('');
-      setPassword('');
-
-      if (response.paymentUrl) {
-        window.location.href = response.paymentUrl;
-        return;
-      }
+      // Si no hay token (auto-login falló), al login; si hay, al dashboard
+      setTimeout(() => {
+        window.location.href = res.token ? '/dashboard' : '/';
+      }, 1200);
     } catch (err: any) {
       setStatus('error');
       setErrorMessage(err?.message || 'Error creando la cuenta.');
+      setFieldError(err?.field ?? null);
     }
-  };
+};
 
   return (
     <main className="min-h-screen bg-brand-50 text-brand-900">
@@ -506,15 +518,24 @@ export default function SaasLandingPage() {
               <p className="text-sm text-emerald-700">{successMessage}</p>
             )}
 
+            {/* Términos y condiciones */}
+            <label className="flex items-start gap-2 text-xs text-brand-300">
+              <input
+                type="checkbox"
+                checked={aceptaTerminos}
+                onChange={(e) => setAceptaTerminos(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-brand-200 text-brand-600 focus:ring-brand-600"
+              />
+              <span>
+                Acepto los términos y condiciones del servicio.
+              </span>
+            </label>
+
             {/* Submit */}
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-brand-300">
-                Al crear la cuenta aceptás los términos y condiciones del
-                servicio.
-              </p>
+            <div className="flex items-center justify-end">
               <button
                 type="submit"
-                disabled={status === 'loading'}
+                disabled={status === 'loading' || !aceptaTerminos}
                 className="inline-flex items-center rounded-full bg-brand-600 px-6 py-2 text-sm font-semibold text-white shadow-brand hover:bg-brand-700 disabled:opacity-60"
               >
                 {status === 'loading' ? 'Creando cuenta...' : 'Crear mi cuenta'}
@@ -606,3 +627,12 @@ function PlanCard({
     </div>
   );
 }
+
+export default function SaasLandingPageWithSuspense() {
+  return (
+    <Suspense fallback={null}>
+      <SaasLandingPage />
+    </Suspense>
+  );
+}
+
