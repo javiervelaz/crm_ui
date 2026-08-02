@@ -1,9 +1,10 @@
 // app/auth/pago/page.tsx
 'use client';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function PagoResultado() {
+function PagoResultado() {
   const status = useSearchParams().get('status');
   const loggedIn = typeof window !== 'undefined' && !!localStorage.getItem('token');
 
@@ -33,5 +34,13 @@ export default function PagoResultado() {
         {loggedIn ? 'Ir a mi panel' : 'Iniciar sesión'}
       </Link>
     </main>
+  );
+}
+
+export default function PagoResultadoPage() {
+  return (
+    <Suspense fallback={null}>
+      <PagoResultado />
+    </Suspense>
   );
 }
