@@ -1,10 +1,12 @@
 import { notifyError } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export const getRolList = async (cliente:BigInt) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/rol/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
