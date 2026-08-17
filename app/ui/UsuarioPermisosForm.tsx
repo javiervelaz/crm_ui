@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getModulosWithPermisos, getPermisosByModuloId, getUserPermisosById, saveUsuarioModulosPermisos } from '@/app/lib/permisos.api';
@@ -48,12 +49,9 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
             //console.log("MOD ",mod);
             // Obtener permisos asociados al módulo
             const permisos = await getPermisosByModuloId(cliente_id, mod.id);
-            console.log("perm asociados",permisos);
             // Verificar si el usuario ya tiene este módulo
             const userModule = userData.find((u: any) => u.modulo_id === mod.id);
-            console.log("userModule",userModule);
             const selected = !!userModule;
-            console.log("selected",selected);
             // Mapear permisos marcando los seleccionados
             const permisosWithSelection = permisos.map((perm: Permiso) => ({
               ...perm,
@@ -75,7 +73,7 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
 
         setModulos(formattedModules);
       } catch (error) {
-        console.error('Error al cargar módulos y permisos:', error);
+        logError('Error al cargar módulos y permisos:', error);
         notifyError('Error al cargar módulos y permisos.');
       } finally {
         setLoading(false);
@@ -141,14 +139,13 @@ export default function UsuarioPermisosForm({ userId }: UsuarioPermisosFormProps
             .filter((p) => p.selected)
             .map((p) => p.id),
         }));
-        console.log(payload);
       const result = await saveUsuarioModulosPermisos(userId,getClienteId(),payload)
       if(!result.error){
         notifySuccess('Permisos actualizados correctamente');
       }
       
     } catch (error) {
-      console.error('Error al guardar permisos:', error);
+      logError('Error al guardar permisos:', error);
       notifyError('Error al guardar los permisos del usuario');
     } finally {
       setSaving(false);

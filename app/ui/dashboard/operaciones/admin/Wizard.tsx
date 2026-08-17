@@ -45,7 +45,6 @@ const GastoWizard = ({ }) => {
         id,
         descripcion,
       }));
-      console.log("tiposLista final:", tiposLista);
 
       // Actualizar estado
       setTiposCategoria(tiposLista);
@@ -60,8 +59,6 @@ const GastoWizard = ({ }) => {
       setGastosPorCategoria(inicial);
     
       // Debug opcional
-      console.log("Tipos encontrados:", tiposLista);
-      console.log("Categorias agrupadas:", categoriasAgrupadas);
     };
 
     const fetchGastos = async () => {
@@ -114,7 +111,6 @@ const GastoWizard = ({ }) => {
         registro_diario_id: registroDiarioId,
         usuario_id: usuario_id,
       }));
-      console.log("payload ",payload)
       if (payload.length === 0) {
         notifyError('Debe ingresar al menos un gasto con descripción y monto.');
         return;

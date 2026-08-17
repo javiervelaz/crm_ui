@@ -1,3 +1,4 @@
+import { logError } from '@/app/lib/logger';
 import { getProductoList } from '@/app/lib/producto.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,7 +27,7 @@ export default function ReporteVentasPage() {
         console.log("productos",data) // Llamada a tu servicio que obtiene la lista de usuarios
         setProductos(data);
       } catch (err) {
-        console.error(err);
+        logError(err);
       } 
     };
     fetchProductos();
@@ -53,7 +54,7 @@ export default function ReporteVentasPage() {
      
       setVentas(response.data);
     } catch (err) {
-      console.error(err);
+      logError(err);
     }
   }, [fechaDesde, fechaHasta, selectedProductos, apiUrl]);
 

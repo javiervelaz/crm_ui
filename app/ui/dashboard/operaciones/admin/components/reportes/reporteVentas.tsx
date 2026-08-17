@@ -1,4 +1,5 @@
 ﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import { postProductoList } from '@/app/lib/producto.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,7 +37,7 @@ export default function ReporteVentasPage() {
         const data = await postProductoList(getClienteId());
         setProductos(data);
       } catch (err) {
-        console.error(err);
+        logError(err);
       } 
     };
     fetchProductos();
@@ -119,12 +120,11 @@ export default function ReporteVentasPage() {
 
   try {
     const response = await apiClient.post('/reportes/ventas', payload);
-    console.log("data", response.data);
 
     setVentas(response.data);
 
   } catch (err) {
-    console.error(err);
+    logError(err);
   }
 }, [fechaDesde, fechaHasta, selectedProductos]);
 

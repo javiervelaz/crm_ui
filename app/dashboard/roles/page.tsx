@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getRolList } from '@/app/lib/rol.api';
@@ -26,7 +27,7 @@ export default function RolesPage() {
       const data = await getRolList(clienteId);
       setRoles(data);
     } catch (error) {
-      console.error(error);
+      logError(error);
       notifyError('Error al obtener la lista de roles');
     } finally {
       setLoading(false);
@@ -45,7 +46,7 @@ export default function RolesPage() {
       notifySuccess('Rol eliminado correctamente');
       fetchRoles();
     } catch (error) {
-      console.error(error);
+      logError(error);
       notifyError('No se pudo eliminar el rol');
     }
   };

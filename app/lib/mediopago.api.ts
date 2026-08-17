@@ -1,3 +1,4 @@
+import { logError } from '@/app/lib/logger';
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export const createMedioPago = async (data: any) => {
@@ -78,7 +79,7 @@ export const createMedioPago = async (data: any) => {
   
       return await response.json();
     } catch (error) {
-      console.error('Error al obtener el medio de pago', error);
+      logError('Error al obtener el medio de pago', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }

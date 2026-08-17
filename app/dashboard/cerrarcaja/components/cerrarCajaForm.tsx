@@ -1,5 +1,6 @@
 "use client";
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { gatosMontoTotalDiario } from "@/app/lib/gasto";
 import {
@@ -47,7 +48,7 @@ const CerrarCajaForm = () => {
           setRegistroDiario(res.registro_diario_id);
         }
       } catch (error) {
-        console.error("Error al verificar la caja:", error);
+        logError("Error al verificar la caja:", error);
       }
     };
 
@@ -66,7 +67,7 @@ const CerrarCajaForm = () => {
         );
         setMontoFinal(Number(montoPedidos.sum) || 0);
       } catch (error) {
-        console.error("Error al obtener pedidos del día:", error);
+        logError("Error al obtener pedidos del día:", error);
         setMontoFinal(0);
       }
     };
@@ -81,7 +82,7 @@ const CerrarCajaForm = () => {
         const montoNumerico = parseFloat(monto);
         setGastoSueldos(isNaN(montoNumerico) ? 0 : montoNumerico);
       } catch (error) {
-        console.error("Error al obtener gastos de sueldo", error);
+        logError("Error al obtener gastos de sueldo", error);
         setGastoSueldos(0);
       }
     };
@@ -96,7 +97,7 @@ const CerrarCajaForm = () => {
         const montoNumerico = parseFloat(monto);
         setGastoFijo(isNaN(montoNumerico) ? 0 : montoNumerico);
       } catch (error) {
-        console.error("Error al obtener gastos fijos", error);
+        logError("Error al obtener gastos fijos", error);
         setGastoFijo(0);
       }
     };
@@ -111,7 +112,7 @@ const CerrarCajaForm = () => {
         const montoNumerico = parseFloat(monto);
         setGastoVariable(isNaN(montoNumerico) ? 0 : montoNumerico);
       } catch (error) {
-        console.error("Error al obtener gastos variables", error);
+        logError("Error al obtener gastos variables", error);
         setGastoVariable(0);
       }
     };
@@ -122,7 +123,7 @@ const CerrarCajaForm = () => {
         const montoNumerico = parseFloat(monto.sum) || 0;
         setMontoCajaInicial(isNaN(montoNumerico) ? 0 : montoNumerico);
       } catch (error) {
-        console.error("Error al obtener caja inicial", error);
+        logError("Error al obtener caja inicial", error);
         setMontoCajaInicial(0);
       }
     };
@@ -216,7 +217,6 @@ const CerrarCajaForm = () => {
         setIsRedirect(true);
       }
     } catch (error) {
-      console.log(error);
       setMensaje("Error al cerrar la caja. Por favor, intente de nuevo.");
     }
   };

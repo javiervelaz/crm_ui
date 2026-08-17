@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { getRegistroDiarioDetalle } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
@@ -55,13 +56,12 @@ export default function DetalleCajaPage() {
     try {
       setLoading(true);
       const data = await getRegistroDiarioDetalle(Number(id),getClienteId());
-      console.log(data)
       setDetalle(data);
       setError(null);
     } catch (err) {
       setError('Error al cargar el detalle de la caja');
       notifyError('Error al cargar el detalle');
-      console.error(err);
+      logError(err);
     } finally {
       setLoading(false);
     }

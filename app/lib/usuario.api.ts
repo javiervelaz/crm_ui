@@ -81,7 +81,6 @@ export const createUser = async (userDetails: any) => {
         'Authorization': `Bearer ${token}`,
       },
     });
-    console.log(response);
      // Si la respuesta es un 404, retorna un array vacío
     if (response.status === 404) {
       return [];

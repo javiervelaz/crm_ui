@@ -1,5 +1,6 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { notifySuccess,notifyError } from '@/app/lib/notificationService';
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
@@ -37,7 +38,6 @@ const EditUserPage = () => {
           // Obtener los detalles del perfil del usuario
           if (data.id) {
             const profile = await getProfileUserById(data.id,cliente);
-            console.log(profile)
             setProfileDetails(profile);
           }
           // Inicializar los roles seleccionados con los roles del usuario
@@ -53,7 +53,7 @@ const EditUserPage = () => {
             setSelectedRoles(rolesFormatted);
           }
         } catch (err) {
-          console.error(err);
+          logError(err);
         }
       };
 
@@ -62,7 +62,7 @@ const EditUserPage = () => {
           const data = await getRolList(getClienteId());
           setRolDetails(data);
         } catch (err) {
-          console.error(err);
+          logError(err);
         }
       };
 
@@ -141,7 +141,6 @@ const handleRoleCheckboxChange = (e, rol) => {
   
       // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
-      console.log(payload)
       if (!profile || profile.length === 0) {
         await createProfile({
           id_user: payload.id,
@@ -161,7 +160,6 @@ const handleRoleCheckboxChange = (e, rol) => {
       // ======================================================
   
       const existingUserRoles = await getUserRolUserById(payload.id, payload.cliente_id);
-      console.log("Roles actuales:", existingUserRoles);
   
       // Normalizar los valores a números
       const existingRoleIds = new Set(existingUserRoles.map(r => Number(r.id_rol)));
@@ -171,8 +169,6 @@ const handleRoleCheckboxChange = (e, rol) => {
       const rolesToAdd = [...selectedRoleIds].filter(id => !existingRoleIds.has(id));
       const rolesToDelete = [...existingRoleIds].filter(id => !selectedRoleIds.has(id));
   
-      console.log("Roles a agregar:", rolesToAdd);
-      console.log("Roles a eliminar:", rolesToDelete);
   
       // 🔸 Crear roles nuevos
       for (const id_rol of rolesToAdd) {
@@ -197,7 +193,7 @@ const handleRoleCheckboxChange = (e, rol) => {
       router.push('/dashboard/usuarios');
   
     } catch (e) {
-      console.error('Error en handleSubmit:', e);
+      logError('Error en handleSubmit:', e);
       setErrorMessage('Error: ' + e.message);
     }
   };

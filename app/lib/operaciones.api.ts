@@ -1,3 +1,4 @@
+import { logError } from '@/app/lib/logger';
 import { notifyError, notifySuccess } from './notificationService';
 import apiClient from "@/app/lib/apiClient";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -64,7 +65,6 @@ export const abrirCaja = async (data: any) => {
 
   export const crearPedido =  async (data: any) => {
     try {
-      console.log(data)
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/operaciones/crear-pedido`, {
         method: 'POST',
@@ -93,7 +93,6 @@ export const abrirCaja = async (data: any) => {
           'Content-Type': 'application/json',
         },
       });
-      console.log(response)
       // Si la respuesta es un 404, retorna un array vacío
       if (response.status === 404) {
         return [];
@@ -106,7 +105,7 @@ export const abrirCaja = async (data: any) => {
   
       return await response.data;
     } catch (error) {
-      console.error('Error al obtener el listado de pedidos', error);
+      logError('Error al obtener el listado de pedidos', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }
@@ -151,8 +150,6 @@ export const abrirCaja = async (data: any) => {
         // puede no ser JSON → lo ignoramos
       }
 
-      console.log("RESPONSE RAW:", response.status, response.statusText);
-      console.log("RESPONSE BODY:", errorBody);
 
       if (response.status === 403) {
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
@@ -190,7 +187,6 @@ export const abrirCaja = async (data: any) => {
 
   export const cerrarCaja =  async (data: any) => {
     try {
-      console.log(data)
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/cierre-caja` , {
         method: 'PUT',

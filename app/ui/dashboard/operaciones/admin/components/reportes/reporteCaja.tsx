@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { getRegistrosDiarios } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
@@ -41,7 +42,6 @@ export default function ReporteCajaPage() {
     try {
       setLoading(true);
       const data = await getRegistrosDiarios(filtroFecha,getClienteId());
-      console.log(data)
       // Calcular total al cierre para cada registro
       const registrosConTotal = data.map(registro => ({
         ...registro,
@@ -55,7 +55,7 @@ export default function ReporteCajaPage() {
     } catch (err) {
       setError('Error al cargar los registros diarios');
       notifyError('Error al cargar los registros de caja');
-      console.error(err);
+      logError(err);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useCart } from '../../CartContext';
@@ -36,7 +37,7 @@ export default function ProductDetailPage({ params }: Props) {
           setProduct(data);
         }
       } catch (err: any) {
-        console.error(err);
+        logError(err);
         if (!cancelled) {
           setError(err.message ?? 'Error al cargar producto');
         }

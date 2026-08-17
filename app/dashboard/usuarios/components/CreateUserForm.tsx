@@ -38,7 +38,6 @@ const CreateUserPage = () => {
       
       router.push('/dashboard/usuarios');
     } catch (error) {
-      console.log(error);
     }
   };
 

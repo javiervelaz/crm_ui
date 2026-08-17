@@ -33,12 +33,10 @@ const AbrirCajaForm = () => {
             caja_inicial: parseFloat(montoInicial),
             sucursal: tokenData.sucursal_id
           };
-          console.log(data)
           //await abrirCaja(cajaData);
           
           //router.push('/dashboard/usuarios');
         } catch (error) {
-          console.log(error);
         }
       };
   

@@ -21,7 +21,6 @@ const EditUserPage = () => {
   if (!userDetails) {
     return <div>Cargando...</div>;
   }
-  console.log(userDetails)
   return (
     <div>
       <h1>Editar Usuario</h1>

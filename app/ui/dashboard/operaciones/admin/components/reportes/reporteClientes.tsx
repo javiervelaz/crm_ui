@@ -1,4 +1,5 @@
 ﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
@@ -125,7 +126,7 @@ export default function ReporteClientesPage() {
       const res = await apiClient.post(`${apiUrl}/reportes/clientes`, payload);
       setClientes(res.data);
     } catch (err) {
-      console.error('Error fetching client report:', err);
+      logError('Error fetching client report:', err);
     }
   }, [fechaDesde, fechaHasta, selectedTiposCliente, apiUrl]);
 

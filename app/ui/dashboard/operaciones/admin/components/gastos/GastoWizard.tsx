@@ -1,5 +1,6 @@
 "use client";
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
@@ -73,7 +74,7 @@ export default function GastoWizard() {
         const tipoId = TIPO_POR_SOLAPA[activeTab as keyof typeof TIPO_POR_SOLAPA];
         setCategoriasFiltradas(categoriasData.filter(c => c.categoria_tipo_id === tipoId));
       } catch (error) {
-        console.error("Error cargando datos:", error);
+        logError("Error cargando datos:", error);
       }
     };
     fetchData();
@@ -124,7 +125,7 @@ export default function GastoWizard() {
       setGastosExistentes(nuevosGastos);
       setForm(prev => ({ ...prev, [tipo]: [] }));
     } catch (error) {
-      console.error('Error al guardar gastos:', error);
+      logError('Error al guardar gastos:', error);
       notifyError('Error al registrar los gastos');
     }
   };

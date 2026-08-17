@@ -1,15 +1,23 @@
-﻿'use client'
+'use client';
 
-import { getClienteId } from "@/app/lib/authService";
-import {
-  faEdit,
-  faSort,
-  faSortDown,
-  faSortUp,
-  faTrashAlt
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useState } from 'react';
+import { getClienteId } from '@/app/lib/authService';
+import ResponsiveTable, { Columna } from '@/components/ui/ResponsiveTable';
+import { Pencil, Trash2 } from 'lucide-react';
+
+/**
+ * REFERENCIA DE MIGRACIÓN a ResponsiveTable — tarea 4.3.
+ *
+ * De 181 líneas a ~70, y de paso:
+ *   - deja de desbordarse en teléfono (antes: overflow-x-auto y a scrollear)
+ *   - pasa de la paleta gray-* a brand-*
+ *   - íconos lucide en vez de FontAwesome
+ *   - estado vacío real en vez de tabla con el cuerpo en blanco
+ *   - sin el console.log(tipos) que corría en cada render
+ *
+ * Ojo: este archivo existe DUPLICADO en dashboard/tipo-salida/componentes y en
+ * dashboard/gasto/componentes. Unificar primero (tarea 3.3) y después migrar
+ * uno solo.
+ */
 
 interface TipoSalida {
   id: number;
@@ -18,164 +26,66 @@ interface TipoSalida {
   nombre: string;
 }
 
-interface ProductosTableProps {
+interface Props {
   tipoSalida: TipoSalida[];
-  onDelete: (id: number) => void;
-  onEdit: (id: number, cliente_id: BigInt) => void;
-  //onView: (id: number) => void;
+  onDelete: (id: number, clienteId: bigint) => void;
+  onEdit: (id: number, clienteId: bigint) => void;
+  onCrear?: () => void;
 }
 
-type SortField = 'nombre' | 'precio' | 'tipo' | 'permite_mitad';
-type SortDirection = 'asc' | 'desc';
+const iconBtn =
+  'flex h-9 w-9 items-center justify-center rounded-full transition-colors';
 
-export default function TipoSalidaTable({ tipoSalida, onDelete, onEdit }: ProductosTableProps) {
-  const [sortField, setSortField] = useState<SortField>('nombre');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filterTipo, setFilterTipo] = useState<string>('all');
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const sortedAndFilteredProductos = tipoSalida
-    .filter(tipoSalida => 
-      filterTipo === 'all' || tipoSalida.descripcion.toString() === filterTipo
-    )
-    .sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortField) {
-        case 'nombre':
-          aValue = a.nombre;
-          bValue = b.nombre;
-          break;
-        default:
-          aValue = a.nombre.toLowerCase();
-          bValue = b.nombre.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-  const getUniqueTipos = () => {
-    const tipos = new Set(tipoSalida.map(p => p.descripcion));
-    console.log(tipos);
-    return Array.from(tipos).map(id => ({
-      id,
-      nombre: tipoSalida.find(p => p.descripcion === id)?.descripcion || `Tipo ${id}`
-    }));
-  };
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <FontAwesomeIcon icon={faSort} className="ml-1 opacity-50" />;
-    return (
-      <FontAwesomeIcon 
-        icon={sortDirection === 'asc' ? faSortUp : faSortDown} 
-        className="ml-1" 
-      />
-    );
-  };
+export default function TipoSalidaTable({ tipoSalida, onDelete, onEdit, onCrear }: Props) {
+  const columnas: Columna<TipoSalida>[] = [
+    {
+      key: 'nombre',
+      header: 'Nombre',
+      mobile: 'primary',
+      sortValue: (t) => t.nombre.toLowerCase(),
+      render: (t) => <span className="font-semibold text-brand-800">{t.nombre}</span>,
+    },
+    {
+      key: 'categoria',
+      header: 'Categoría de gasto',
+      mobile: 'secondary',
+      sortValue: (t) => (t.descripcion || '').toLowerCase(),
+      render: (t) => (
+        <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+          {t.descripcion}
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      {/* Filtros */}
-      <div className="p-4 bg-gray-50 border-b">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <select
-            value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
+    <ResponsiveTable
+      datos={tipoSalida}
+      columnas={columnas}
+      rowKey={(t) => t.id}
+      vacio={{
+        titulo: 'Todavía no hay categorías de gasto',
+        mensaje: 'Creá la primera para poder clasificar los gastos que cargues.',
+        accion: onCrear ? { label: 'Crear categoría', onClick: onCrear } : undefined,
+      }}
+      acciones={(t) => (
+        <>
+          <button
+            onClick={() => onEdit(t.id, getClienteId())}
+            title="Editar"
+            className={iconBtn + ' bg-brand-50 text-brand-600 hover:bg-brand-100'}
           >
-            <option value="all">Todos los tipos</option>
-            {getUniqueTipos().map(tipo => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-           
-      {/* Tabla */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => handleSort('nombre')}
-              >
-                <div className="flex items-center">
-                  Nombre
-                  <SortIcon field="nombre" />
-                </div>
-              </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                
-              >
-                <div className="flex items-center">
-                  Tipo de salida
-                </div>
-              </th>
-             
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {sortedAndFilteredProductos.map((tipoSalida) => (
-              <tr key={tipoSalida.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{tipoSalida.nombre}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 font-mono">
-                    {tipoSalida.descripcion}
-                  </div>
-                </td>
-                
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                  
-                  <button
-                    onClick={() => onEdit(tipoSalida.id,getClienteId())}
-                    className="text-brand-600 hover:text-brand-900"
-                    title="Editar"
-                  >
-                    <FontAwesomeIcon icon={faEdit} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(tipoSalida.id,getClienteId())}
-                    className="text-red-600 hover:text-red-900"
-                    title="Eliminar"
-                  >
-                    <FontAwesomeIcon icon={faTrashAlt} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Paginación (implementar según necesidad) */}
-      <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-700">
-            Mostrando <span className="font-medium">{sortedAndFilteredProductos.length}</span> de{' '}
-            <span className="font-medium">{tipoSalida.length}</span> categoria gastos
-          </div>
-          {/* Aquí iría la paginación */}
-        </div>
-      </div>
-    </div>
+            <Pencil size={15} />
+          </button>
+          <button
+            onClick={() => onDelete(t.id, getClienteId())}
+            title="Eliminar"
+            className={iconBtn + ' bg-red-50 text-red-500 hover:bg-red-100'}
+          >
+            <Trash2 size={15} />
+          </button>
+        </>
+      )}
+    />
   );
 }
