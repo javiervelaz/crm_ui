@@ -17,7 +17,7 @@ const DashboardEmpleados = () => {
   const [cajaAbierta, setCajaAbierta] = useState(false);
   const [fechaApertura, setFechaApertura] = useState('');
   const [registroDiario, setRegistroDiario] =  useState<number | null>(null);
-  const [pedidos, setPedidos] = useState([]);
+  const [pedidos, setPedidos] = useState<any[]>([]);
   const [showPedidoForm, setShowPedidoForm] = useState(false);
   const [showAbrirCajaForm, setShowAbrirCajaForm] = useState(false);
   const [usuario, setUsuario] = useState<number | null>(null);

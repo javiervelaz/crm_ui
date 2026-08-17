@@ -26,7 +26,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const clienteId = Number(getClienteId());
+  const clienteId = getClienteId();
 
   useEffect(() => {
     const fetchAll = async () => {

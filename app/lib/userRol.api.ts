@@ -56,7 +56,7 @@ export const createUserRol = async (userRolDetails: any) => {
     return await response.json();
   };
 
-  export const getUserRolUserById = async (userId: string, cliente: BigInt )=> {
+  export const getUserRolUserById = async (userId: string, cliente: bigint | null )=> {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/userrol/user/${userId}/${cliente}`, {
@@ -85,7 +85,7 @@ export const createUserRol = async (userRolDetails: any) => {
     }
   };
 
-  export const deleteUserRol = async (Id: string, cliente: BigInt) => {
+  export const deleteUserRol = async (Id: string, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/userrol/${Id}/${cliente}`, {
       method: 'DELETE',

@@ -206,7 +206,7 @@ export function useCarritoPedido(registroDiario: number, usuarioId: number) {
     }
 
     try {
-      const cliente = await getClienteByTelefono(tel);
+      const cliente = await getClienteByTelefono(tel, getClienteId());
       if (!cliente?.telefono) return; // cliente nuevo: no pisamos lo tipeado
       setPedido((prev) => ({
         ...prev,

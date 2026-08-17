@@ -7,7 +7,7 @@ const EditUserPage = () => {
   const router = useRouter();
   const { id } = router.query;
 
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   useEffect(() => {
     if (id) {

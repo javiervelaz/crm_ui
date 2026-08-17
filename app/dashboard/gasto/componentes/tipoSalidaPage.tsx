@@ -59,7 +59,7 @@ export default function TipoSalidaPage() {
     router.push(`/dashboard/gasto/${id}/edit`);
   };
 
-  const handleDelete = async (id: number, cliente: bigint) => {
+  const handleDelete = async (id: number, cliente: bigint | null) => {
     if (!confirm('¿Eliminar esta categoría de gasto?')) return;
     try {
       await deleteCategoriaSalida(id, cliente);

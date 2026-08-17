@@ -1,6 +1,6 @@
 import { notifyError } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getRolList = async (cliente:BigInt) => {
+export const getRolList = async (cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/rol/list/${cliente}`, {
       method: 'GET',

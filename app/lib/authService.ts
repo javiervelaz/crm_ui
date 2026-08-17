@@ -5,7 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 interface DecodedToken {
   exp?: number;
   role?: { id_rol: number }[];
-  cliente_id?: BigInt;
+  cliente_id?: bigint;
   [key: string]: any;
 }
 
@@ -24,7 +24,7 @@ export function getDecodedToken(): DecodedToken | null {
   }
 }
 
-export function getClienteId(): BigInt | null {
+export function getClienteId(): bigint | null {
   const decoded = getDecodedToken();
   return decoded?.cliente_id ?? null;
 }

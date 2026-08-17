@@ -22,7 +22,7 @@ function emptyOn404(error: any) {
   throw error;
 }
 
-export const getTipoProductoList = async (cliente: bigint | string) => {
+export const getTipoProductoList = async (cliente: bigint | string | null) => {
   try {
     const { data } = await apiClient.get(`/tipo-producto/list/${cliente}`);
     return data;

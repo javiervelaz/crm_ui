@@ -19,7 +19,7 @@ export default function RolesPage() {
   const router = useRouter();
   const [roles, setRoles] = useState<Rol[]>([]);
   const [loading, setLoading] = useState(true);
-  const clienteId = Number(getClienteId());
+  const clienteId = getClienteId();
 
   const fetchRoles = async () => {
     try {
@@ -27,7 +27,7 @@ export default function RolesPage() {
       const data = await getRolList(clienteId);
       setRoles(data);
     } catch (error) {
-      logError(error);
+      logError('Error al obtener la lista de roles', error);
       notifyError('Error al obtener la lista de roles');
     } finally {
       setLoading(false);
@@ -46,7 +46,7 @@ export default function RolesPage() {
       notifySuccess('Rol eliminado correctamente');
       fetchRoles();
     } catch (error) {
-      logError(error);
+      logError('No se pudo eliminar el rol', error);
       notifyError('No se pudo eliminar el rol');
     }
   };

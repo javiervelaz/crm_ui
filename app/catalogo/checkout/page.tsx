@@ -250,7 +250,7 @@ export default function CheckoutPage() {
 
       clearCart();
     } catch (err: any) {
-      logError(err);
+      logError('Error al procesar el checkout', err);
       notifyError(err.message ?? 'No se pudo registrar el pedido.');
     } finally {
       setSubmitting(false);

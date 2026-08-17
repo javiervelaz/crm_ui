@@ -126,6 +126,10 @@ export default function ReporteGastosPage() {
       alert('No hay datos para exportar');
       return;
     }
+    if (!fechaDesde || !fechaHasta) {
+      alert('Seleccioná el rango de fechas');
+      return;
+    }
 
     const excelData = gastos.map(gasto => ({
       'Tipo/Categoría': tipoReporte === 'categoria_tipo' ? gasto.tipo_categoria : gasto.salida,

@@ -14,12 +14,13 @@ interface FormData {
   sueldos: Sueldo[];
   variables: Variable[];
   cajaInicial: Caja;
-  cajaFinal: Caja;
+  cajaFinal?: Caja;
 }
 
 interface Props {
   data: FormData;
-  registroDiarioId?: number;
+  gastosExistentes?: any[];
+  registroDiarioId?: number | null;
 }
 
 export default function ResumenGastos({ data, registroDiarioId }: Props) {

@@ -26,7 +26,7 @@ const CerrarCajaForm = () => {
   const [mensaje, setMensaje] = useState("");
   const [isRedirect, setIsRedirect] = useState(false);
   const [cajaAbierta, setCajaAbierta] = useState(false);
-  const [registroDiario, setRegistroDiario] = useState("");
+  const [registroDiario, setRegistroDiario] = useState<number | null>(null);
   const [montoGastoSueldo, setGastoSueldos] = useState(0);
   const [montoGastoFijo, setGastoFijo] = useState(0);
   const [montoGastoVariable, setGastoVariable] = useState(0);

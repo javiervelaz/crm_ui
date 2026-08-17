@@ -36,7 +36,7 @@ export const abrirCaja = async (data: any) => {
       }
       notifySuccess('caja loaded successfully');
       return await response.json();
-    } catch (error) {
+    } catch (error: any) {
       notifyError( '' + error.message);
       throw new Error('Falló la apertura de la caja');
     }
@@ -85,7 +85,7 @@ export const abrirCaja = async (data: any) => {
   }
 
 
-  export const getPedidosByRegistroId = async (Id: number, cliente: BigInt) => {
+  export const getPedidosByRegistroId = async (Id: number, cliente: bigint | null) => {
     try {
       const response = await apiClient(`${apiUrl}/operaciones/listar-pedidos/${Id}/${cliente}`, {
         method: 'GET',
@@ -99,7 +99,7 @@ export const abrirCaja = async (data: any) => {
       }
   
       // Si hay otro tipo de error, lanza una excepción
-      if (!response.status === 200) {
+      if (response.status !== 200) {
         throw new Error('Failed to fetch pedidos list');
       }
   
@@ -132,7 +132,7 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const deletePedido = async (id: number, cliente: bigint) => {
+  export const deletePedido = async (id: number, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
       const response = await fetch(
         `${apiUrl}/operaciones/borrar-pedido/${id}/${cliente}`, 
@@ -165,7 +165,7 @@ export const abrirCaja = async (data: any) => {
   };
 
 
-  export const pedidoMontoTotalDiario =  async (id: number, cliente: BigInt) => {
+  export const pedidoMontoTotalDiario =  async (id: number, cliente: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/pedido-monto-total/${id}/${cliente}`, {
@@ -226,7 +226,7 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const getCajaInicial =  async (id: number,cliente: BigInt) => {
+  export const getCajaInicial =  async (id: number,cliente: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/caja-inicial/${id}/${cliente}`, {

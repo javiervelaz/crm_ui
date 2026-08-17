@@ -28,8 +28,8 @@ interface TipoSalida {
 
 interface Props {
   tipoSalida: TipoSalida[];
-  onDelete: (id: number, clienteId: bigint) => void;
-  onEdit: (id: number, clienteId: bigint) => void;
+  onDelete: (id: number, clienteId: bigint | null) => void;
+  onEdit: (id: number, clienteId: bigint | null) => void;
   onCrear?: () => void;
 }
 

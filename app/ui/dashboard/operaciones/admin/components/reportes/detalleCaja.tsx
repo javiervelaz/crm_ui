@@ -61,7 +61,7 @@ export default function DetalleCajaPage() {
     } catch (err) {
       setError('Error al cargar el detalle de la caja');
       notifyError('Error al cargar el detalle');
-      logError(err);
+      logError('Error al cargar el detalle de la caja', err);
     } finally {
       setLoading(false);
     }

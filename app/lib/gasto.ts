@@ -1,5 +1,5 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getGastoCategorias = async (cliente: BigInt) => {
+export const getGastoCategorias = async (cliente: bigint | null) => {
     
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/categoria-salida/list/${cliente}`, {
@@ -19,7 +19,7 @@ export const getGastoCategorias = async (cliente: BigInt) => {
       return await response.json();
   };
 
-  export const getGastosPorRegistro = async (id:number, cliente: BigInt) => {
+  export const getGastosPorRegistro = async (id:number, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/salida-caja/list/${id}/${cliente}`, {
       method: 'GET',
@@ -92,7 +92,7 @@ export const getGastoCategorias = async (cliente: BigInt) => {
   };
 
 
-  export const gatosMontoTotalDiario =  async (id: number, data: any,cliente: BigInt) => {
+  export const gatosMontoTotalDiario =  async (id: number, data: any,cliente: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const payload = { "salida_categoria_id": data, "cliente_id" : cliente}
@@ -130,7 +130,7 @@ export const getGastoCategorias = async (cliente: BigInt) => {
     return await response.json();
   };
 
-  export const getCategoriaSalidaById = async (Id: number | string | string[], cliente : BigInt) => {
+  export const getCategoriaSalidaById = async (Id: number | string | string[], cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/categoria-salida/${Id}/${cliente}`, {
       method: 'GET',
@@ -149,7 +149,7 @@ export const getGastoCategorias = async (cliente: BigInt) => {
     return await response.json();
   };
 
-  export const deleteCategoriaSalida = async (id: number | string | string[], cliente:BigInt) => {
+  export const deleteCategoriaSalida = async (id: number | string | string[], cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/categoria-salida/${id}/${cliente}`, {
       method: 'DELETE',

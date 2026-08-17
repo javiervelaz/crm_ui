@@ -37,7 +37,7 @@ interface PedidoItemDetalle {
 
 interface Pedido {
   id: number;
-  status: boolean;
+  pedido_terminado: boolean;
   comanda_nro?: string;
   nombre?: string;
   telefono?: string;
@@ -88,7 +88,7 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
     if (!confirm('¿Finalizar el pedido?')) return;
     try {
       setPedidosLocal((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, status: nuevoStatus } : p))
+        prev.map((p) => (p.id === id ? { ...p, pedido_terminado: nuevoStatus } : p))
       );
       await terminarPedido(id, { cliente_id: getClienteId() });
       await fetchPedidos();
@@ -206,19 +206,19 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
                             <input
                               type="checkbox"
                               className="sr-only"
-                              checked={pedido.status || false}
+                              checked={pedido.pedido_terminado || false}
                               onChange={(e) => finalizar(pedido.id, e.target.checked)}
                             />
                             <div
                               className={
                                 'h-5 w-10 rounded-full p-1 transition-colors duration-300 ' +
-                                (pedido.status ? 'bg-green-500' : 'bg-brand-200')
+                                (pedido.pedido_terminado ? 'bg-green-500' : 'bg-brand-200')
                               }
                             >
                               <div
                                 className={
                                   'h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-300 ' +
-                                  (pedido.status ? 'translate-x-5' : 'translate-x-0')
+                                  (pedido.pedido_terminado ? 'translate-x-5' : 'translate-x-0')
                                 }
                               />
                             </div>

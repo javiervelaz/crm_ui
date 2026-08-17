@@ -1,7 +1,7 @@
 import { getClienteId } from "./authService";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getModulosByCliente = async (cliente_id: BigInt) => {
+export const getModulosByCliente = async (cliente_id: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/modulo/list/${cliente_id}`, {
         method: 'GET',
@@ -44,7 +44,7 @@ export const getRolModulosPermisos = async (rolId: number) => {
 
 };
 
-export const getUserPermisosById = async (userId: number, cliente_id: BigInt) => {
+export const getUserPermisosById = async (userId: number, cliente_id: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente_id}/modulos-permisos`, {
         method: 'GET',
@@ -64,7 +64,7 @@ export const getUserPermisosById = async (userId: number, cliente_id: BigInt) =>
 
 };
 
-export const getPermisosByModuloId = async (cliente_id: BigInt, id_modulo: number) => {
+export const getPermisosByModuloId = async (cliente_id: bigint | null, id_modulo: number) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/modulo/${cliente_id}/${id_modulo}/permisos`, {
         method: 'GET',
@@ -108,7 +108,7 @@ export const getPermisosByModuloId = async (cliente_id: BigInt, id_modulo: numbe
   };
 
 // ✅ Guardar los módulos y permisos asignados a un usuario
-export const saveUsuarioModulosPermisos  =  async (userId:Number,cliente_id:BigInt, data:any) => {
+export const saveUsuarioModulosPermisos  =  async (userId:Number,cliente_id: bigint | null, data:any) => {
   try {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente_id}/modulos-permisos`, {

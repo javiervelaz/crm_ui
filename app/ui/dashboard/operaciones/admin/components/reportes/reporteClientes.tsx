@@ -31,7 +31,7 @@ const tipoClienteOpciones = [
 export default function ReporteClientesPage() {
   const [fechaDesde, setFechaDesde] = useState<Date | undefined>(undefined);
   const [fechaHasta, setFechaHasta] = useState<Date | undefined>(undefined);
-  const [selectedTiposCliente, setSelectedTiposCliente] = useState([]);
+  const [selectedTiposCliente, setSelectedTiposCliente] = useState<any[]>([]);
   const [clientes, setClientes] = useState<ClienteReporte[]>([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -49,6 +49,10 @@ export default function ReporteClientesPage() {
   const exportToExcel = () => {
     if (clientes.length === 0) {
       alert('No hay datos para exportar');
+      return;
+    }
+    if (!fechaDesde || !fechaHasta) {
+      alert('Seleccioná el rango de fechas');
       return;
     }
 

@@ -37,7 +37,7 @@ export default function ProductDetailPage({ params }: Props) {
           setProduct(data);
         }
       } catch (err: any) {
-        logError(err);
+        logError('Error al cargar el producto', err);
         if (!cancelled) {
           setError(err.message ?? 'Error al cargar producto');
         }

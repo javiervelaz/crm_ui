@@ -19,7 +19,7 @@ interface DecodedToken {
 // Aseguramos el tipo de Pedido alineado con PedidosGrid
 interface Pedido {
   id: number;
-  status: boolean;
+  pedido_terminado: boolean;
   comanda_nro?: string;
   nombre?: string;
   telefono?: string;

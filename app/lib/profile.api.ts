@@ -40,7 +40,7 @@ export const createProfile = async (profileDetails: any) => {
     return await response.json();
   };
 
-  export const getProfileUserById = async (userId: string, cliente: BigInt) => {
+  export const getProfileUserById = async (userId: string, cliente: bigint | null) => {
     try {
       const response = await apiClient(`${apiUrl}/profile/user/${userId}/${cliente}`, {
         method: 'GET',
@@ -82,7 +82,7 @@ export const createProfile = async (profileDetails: any) => {
     return await response.json();
   };
 
-  export const getClienteByTelefono  = async (telefono: string,cliente_id:bigint) => {
+  export const getClienteByTelefono  = async (telefono: string,cliente_id: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/users/cliente/${telefono}/${cliente_id}`, {

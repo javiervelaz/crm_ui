@@ -4,7 +4,7 @@ interface Props {
   titulo: string;
   mensaje?: string;
   /** Ícono lucide. Default: Inbox. */
-  icono?: React.ComponentType<{ size?: number; className?: string }>;
+  icono?: React.ComponentType<{ size?: number | string; className?: string }>;
   accion?: { label: string; onClick: () => void };
 }
 

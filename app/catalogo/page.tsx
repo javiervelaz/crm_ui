@@ -41,7 +41,7 @@ export default function CatalogPage() {
           setProducts(data);
         }
       } catch (err: any) {
-        logError(err);
+        logError('Error al cargar productos del catálogo', err);
         if (!cancelled) {
           setError(err.message ?? 'Error al cargar productos');
         }

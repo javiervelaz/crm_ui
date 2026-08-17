@@ -40,7 +40,7 @@ export default function GastoWizard() {
   const [activeTab, setActiveTab] = useState("cajaInicial");
   const [categoriasCompletas, setCategoriasCompletas] = useState<any[]>([]);
   const [categoriasFiltradas, setCategoriasFiltradas] = useState<any[]>([]);
-  const [gastosExistentes, setGastosExistentes] = useState([]);
+  const [gastosExistentes, setGastosExistentes] = useState<any[]>([]);
   const { cajaAbierta, registroDiarioId } = useCajaAbierta();
   const router = useRouter();
 
@@ -72,7 +72,7 @@ export default function GastoWizard() {
           },
         }));
         const tipoId = TIPO_POR_SOLAPA[activeTab as keyof typeof TIPO_POR_SOLAPA];
-        setCategoriasFiltradas(categoriasData.filter(c => c.categoria_tipo_id === tipoId));
+        setCategoriasFiltradas(categoriasData.filter((c: any) => c.categoria_tipo_id === tipoId));
       } catch (error) {
         logError("Error cargando datos:", error);
       }
@@ -83,7 +83,7 @@ export default function GastoWizard() {
   useEffect(() => {
     if (categoriasCompletas.length > 0) {
       const tipoId = TIPO_POR_SOLAPA[activeTab as keyof typeof TIPO_POR_SOLAPA];
-      setCategoriasFiltradas(categoriasCompletas.filter(c => c.categoria_tipo_id === tipoId));
+      setCategoriasFiltradas(categoriasCompletas.filter((c: any) => c.categoria_tipo_id === tipoId));
     }
   }, [activeTab, categoriasCompletas]);
 
@@ -93,25 +93,25 @@ export default function GastoWizard() {
     if (!token) { notifyError('No hay sesión activa'); return; }
 
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ userId: number }>(token);
       const usuario_id = decoded.userId;
       const categoriaId = CATEGORIA_POR_TIPO[tipo];
 
       let payload: any[] = [];
       if (tipo === 'fijos') {
-        payload = form.fijos.filter(g => g.servicio && g.monto).map(g => ({
+        payload = form.fijos.filter((g: any) => g.servicio && g.monto).map((g: any) => ({
           descripcion: g.servicio, monto: g.monto,
           categoria_salida_id: categoriaId, registro_diario_id: registroDiarioId,
           usuario_id, cliente_id: getClienteId(),
         }));
       } else if (tipo === 'sueldos') {
-        payload = form.sueldos.filter(g => g.empleado && g.monto).map(g => ({
+        payload = form.sueldos.filter((g: any) => g.empleado && g.monto).map((g: any) => ({
           descripcion: g.empleado, monto: g.monto,
           categoria_salida_id: categoriaId, registro_diario_id: registroDiarioId,
           usuario_id, cliente_id: getClienteId(),
         }));
       } else if (tipo === 'variables') {
-        payload = form.variables.filter(g => g.concepto && g.monto).map(g => ({
+        payload = form.variables.filter((g: any) => g.concepto && g.monto).map((g: any) => ({
           descripcion: g.concepto, monto: g.monto,
           categoria_salida_id: categoriaId, registro_diario_id: registroDiarioId,
           usuario_id, cliente_id: getClienteId(),

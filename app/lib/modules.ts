@@ -139,7 +139,7 @@ export type ModuleKey = keyof typeof MODULES;
 export function menuModules(userModules: string[]): (ModuleDef & { key: string })[] {
   return userModules
     .filter((k): k is ModuleKey => k in MODULES)
-    .map((k) => ({ ...MODULES[k], key: k }))
+    .map((k) => ({ ...(MODULES[k] as ModuleDef), key: k }))
     .filter((m) => !m.hidden)
     .sort((a, b) => a.order - b.order);
 }

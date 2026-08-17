@@ -58,8 +58,8 @@ export default function UsuariosPage() {
         ]);
         
         // Enriquecer usuarios con información del tipo
-      const enrichedUsers = usersData.map(user => {
-        const userType = typesData.find(type => type.id === user.user_type_id);
+      const enrichedUsers = usersData.map((user: any) => {
+        const userType = typesData.find((type: any) => type.id === user.user_type_id);
         return {
           ...user,
           user_type_codigo: userType?.codigo,
@@ -98,8 +98,8 @@ export default function UsuariosPage() {
         ]);
         
         // Enriquecer usuarios con información del tipo
-        const enrichedUsers = usersData.map(user => {
-          const userType = typesData.find(type => type.id === user.user_type_id);
+        const enrichedUsers = usersData.map((user: any) => {
+          const userType = typesData.find((type: any) => type.id === user.user_type_id);
           return {
             ...user,
             user_type_codigo: userType?.codigo,
