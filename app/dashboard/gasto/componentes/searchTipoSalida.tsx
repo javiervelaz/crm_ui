@@ -1,23 +1,23 @@
-﻿'use client'
+'use client';
 
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Search } from 'lucide-react';
 
-interface SearchProps {
+interface Props {
   placeholder: string;
   onSearch: (query: string) => void;
 }
 
-export default function Search({ placeholder, onSearch }: SearchProps) {
+/** [2.5] FontAwesome → lucide. [4.4] input de 44px para uso táctil. */
+export default function SearchTipoSalida({ placeholder, onSearch }: Props) {
   return (
     <div className="relative flex-1">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+        <Search size={16} className="text-brand-300" />
       </div>
       <input
-        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-600 focus:border-brand-600"
+        type="search"
+        className="block h-11 w-full rounded-lg border border-brand-200 bg-white pl-10 pr-3 text-sm placeholder-brand-300 outline-none transition-colors focus:border-brand-600"
         placeholder={placeholder}
-        type="text"
         onChange={(e) => onSearch(e.target.value)}
       />
     </div>

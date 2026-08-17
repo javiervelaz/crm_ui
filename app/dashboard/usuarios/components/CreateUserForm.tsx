@@ -11,7 +11,7 @@ import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 const CreateUserPage = () => {
   const clienteId = getClienteId();
   useAuthCheck();
-  const [userDetails, setUserDetails] = useState({
+  const [userDetails, setUserDetails] = useState<any>({
     nombre:'',
     apellido: '',
     email: '',
@@ -20,7 +20,7 @@ const CreateUserPage = () => {
   });
   const router = useRouter();
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     setUserDetails({
       ...userDetails,
       [e.target.name]: e.target.value
@@ -38,7 +38,6 @@ const CreateUserPage = () => {
       
       router.push('/dashboard/usuarios');
     } catch (error) {
-      console.log(error);
     }
   };
 

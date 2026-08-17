@@ -4,6 +4,7 @@ import Header from '@/app/ui/Header';
 import Sidebar from '@/app/ui/Sidebar';
 import { montserrat, outfit } from '@/app/ui/fonts';
 import '@/app/ui/global.css';
+import PlanLimiteProvider from '@/components/ui/PlanLimiteProvider';
 import { jwtDecode } from 'jwt-decode';
 import React, { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
@@ -86,6 +87,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         )}
         <ToastContainer />
+        {/*
+          [4.2] Escucha el evento PLAN_LIMITE que emite apiClient en los 403 de
+          plan y abre el modal. Sin este montaje el evento se dispara al vacío:
+          no aparece nada y no hay redirect.
+          Va FUERA del if de isPublicRoute — un 403 de plan puede llegar desde
+          cualquier ruta.
+        */}
+        <PlanLimiteProvider />
       </body>
     </html>
   );

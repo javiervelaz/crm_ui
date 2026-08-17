@@ -1,9 +1,15 @@
 ﻿import { useState } from 'react';
 
-export default function DatePicker({ label, value, onChange }) {
+interface DatePickerProps {
+  label?: string;
+  value?: any;
+  onChange: (value: any) => void;
+}
+
+export default function DatePicker({ label, value, onChange }: DatePickerProps) {
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const handleDateChange = (e) => {
+  const handleDateChange = (e: any) => {
     onChange(e.target.value);
     setShowCalendar(false);
   };

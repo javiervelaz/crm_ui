@@ -1,7 +1,7 @@
 // app/lib/billing.api.ts
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-export async function createBillingCheckout(tierCode: 'BASIC' | 'PREMIUM') {
+export async function createBillingCheckout(tierCode: string) {
   if (!apiUrl) throw new Error('API URL no configurada');
 
   const token = localStorage.getItem('token');

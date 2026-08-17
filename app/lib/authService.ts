@@ -1,10 +1,11 @@
 // lib/auth.ts
+import { logError } from '@/app/lib/logger';
 import { jwtDecode } from 'jwt-decode';
 
 interface DecodedToken {
   exp?: number;
   role?: { id_rol: number }[];
-  cliente_id?: BigInt;
+  cliente_id?: bigint;
   [key: string]: any;
 }
 
@@ -18,12 +19,12 @@ export function getDecodedToken(): DecodedToken | null {
     const decoded: DecodedToken = jwtDecode(token);
     return decoded;
   } catch (error) {
-    console.error('Error decoding token:', error);
+    logError('Error decoding token:', error);
     return null;
   }
 }
 
-export function getClienteId(): BigInt | null {
+export function getClienteId(): bigint | null {
   const decoded = getDecodedToken();
   return decoded?.cliente_id ?? null;
 }

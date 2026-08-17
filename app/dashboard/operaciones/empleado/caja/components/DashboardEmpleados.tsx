@@ -1,4 +1,5 @@
 ﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import {
   checkAperturaCaja,
   getPedidosByRegistroId,
@@ -6,8 +7,8 @@ import {
 import { jwtDecode } from "jwt-decode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "./Modal";
-import PedidoForm from "./PedidoForm";
-import PedidosGrid from "./PedidosGrid";
+import PedidoForm from '@/app/features/pedidos/PedidoForm';
+import PedidosGrid from '@/app/features/pedidos/PedidosGrid';
 import AbrirCajaForm from "./abrirCajaForm";
 
 interface DecodedToken {
@@ -18,7 +19,7 @@ interface DecodedToken {
 // Aseguramos el tipo de Pedido alineado con PedidosGrid
 interface Pedido {
   id: number;
-  status: boolean;
+  pedido_terminado: boolean;
   comanda_nro?: string;
   nombre?: string;
   telefono?: string;
@@ -51,7 +52,7 @@ const DashboardEmpleados = () => {
           setRegistroDiario(res.registro_diario_id);
         }
       } catch (error) {
-        console.error("Error al verificar la caja:", error);
+        logError("Error al verificar la caja:", error);
       }
     };
 
@@ -70,7 +71,7 @@ const DashboardEmpleados = () => {
       setPedidos(response);
     
     } catch (error) {
-      console.error("Error al cargar pedidos:", error);
+      logError("Error al cargar pedidos:", error);
     } finally {
       setLoading(false);
     }
@@ -204,6 +205,7 @@ const DashboardEmpleados = () => {
             <Modal onClose={handlePedidoFormClose}>
               {registroDiario !== null && usuario !== null && (
                 <PedidoForm
+                  modo="empleado"
                   onClose={handlePedidoFormClose}
                   registroDiario={registroDiario}
                   usuario_id={usuario}

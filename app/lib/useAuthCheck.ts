@@ -1,120 +1,91 @@
 'use client';
 
+import { canAccess, defaultRouteFor } from '@/app/lib/modules';
+import { logError } from '@/app/lib/logger';
 import { jwtDecode } from 'jwt-decode';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+export type AuthStatus = 'checking' | 'ok' | 'denied' | 'anonymous';
+
+interface AuthState {
+  status: AuthStatus;
+  modules: string[];
+  /** A dónde mandar al usuario cuando 'denied'. null = no tiene ningún módulo. */
+  fallback: string | null;
+  /** Compatibilidad con las páginas que todavía leen { loading }. */
+  loading: boolean;
+}
+
 /**
- * Hook para validar el token JWT y controlar acceso por módulos.
- * - Redirige al login si no hay token o está expirado.
- * - Permite acceso solo si la ruta pertenece a los módulos del usuario.
+ * Verifica el JWT y el acceso por módulos.
+ *
+ * A partir de la tarea 2.2 este hook se llama UNA sola vez, en
+ * app/dashboard/layout.tsx. Las páginas hijas asumen sesión válida y no
+ * dibujan su propio skeleton de carga.
+ *
+ * Diferencia con la versión anterior: no redirige en silencio. Devuelve un
+ * status y deja que el layout decida qué mostrar — el usuario sin permiso ve
+ * una pantalla que le explica qué pasó, en vez de aparecer en otro módulo sin
+ * saber por qué.
  */
-export const useAuthCheck = () => {
+export const useAuthCheck = (): AuthState => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [modules, setModules] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<Omit<AuthState, 'loading'>>({
+    status: 'checking',
+    modules: [],
+    fallback: null,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
 
     if (!token) {
-      console.warn('⛔ No hay token, redirigiendo al login');
-      setLoading(false);
+      setState({ status: 'anonymous', modules: [], fallback: null });
       router.push('/');
       return;
     }
 
     try {
-      const decodedToken: any = jwtDecode(token);
-      const currentTime = Date.now() / 1000;
+      const decoded: { modules?: string[]; exp?: number } = jwtDecode(token);
 
-      // Verificar expiración
-      if (decodedToken.exp < currentTime) {
-        console.warn('⚠️ Token expirado');
+      if (!decoded.exp || decoded.exp < Date.now() / 1000) {
         localStorage.removeItem('token');
-        setLoading(false);
+        setState({ status: 'anonymous', modules: [], fallback: null });
         router.push('/');
         return;
       }
 
-      // Verificar módulos
-      const userModules: string[] = decodedToken.modules || [];
-      console.log(userModules);
-      if (userModules.length === 0) {
-        console.warn('⚠️ Usuario sin módulos asignados');
-        setLoading(false);
-        router.push('/');
+      const userModules = decoded.modules ?? [];
+      const fallback = defaultRouteFor(userModules);
+
+      if (userModules.length === 0 || !fallback) {
+        setState({ status: 'denied', modules: userModules, fallback: null });
         return;
       }
 
-      // Guardamos módulos en estado
-      setModules(userModules);
-
-      const publicRoutes = ['/', '/login'];
-      const normalizedPath = pathname.toLowerCase();
-      console.log("user modules", userModules);
-
-      // Si está en login y tiene token válido → redirigir al primer módulo
-      if (publicRoutes.includes(normalizedPath)) {
-        const defaultModule = userModules[3];
-        console.log(`➡️ Usuario autenticado, redirigiendo al módulo ${defaultModule}`);
-        router.push(`/dashboard/${defaultModule}`);
-        setLoading(false);
-        return;
-      }
-
-      // Rutas auxiliares fijas permitidas
-      const auxiliaryRoutes = [
-        '/dashboard/profile',
-        '/dashboard/settings',
-        '/dashboard/home',
-        '/dashboard/tipo-salida',
-        '/catalogo',
-        '/dashboard/operaciones/admin/reportes/caja',
-        '/dashboard/upgrade-plan',
-        '/dashboard/gasto',
-        '/dashboard/gasto/create'
-      ];
-
-      const auxiliaryPrefixRoutes = [
-        '/dashboard/tipo-producto',
-        '/dashboard/operaciones/admin/reportes',
-        '/dashboard/profile',
-        '/dashboard/gasto',
-        '/dashboard/tipo-salida'
-      ];
-
-      // Verificar acceso por módulo o ruta auxiliar
-      const cleanedPath = normalizedPath.replace(/\/+$/, ''); // eliminar slash final si existe
-
-      const hasAccess =
-        userModules.some((mod) =>
-          cleanedPath.startsWith(`/dashboard/${mod}`)
-        ) ||
-        auxiliaryRoutes.includes(cleanedPath) ||
-        auxiliaryPrefixRoutes.some((prefix) =>
-          cleanedPath.startsWith(prefix)
-        );
-        console.log('[ACCESS CHECK] current path:', cleanedPath);
-
-      if (!hasAccess) {
-        console.warn(`🚫 Acceso denegado a ${normalizedPath}`);
-        const fallback = `/dashboard/${userModules[0]}`;
+      // En login con token válido → al primer módulo válido.
+      if (pathname === '/' || pathname === '/login') {
         router.push(fallback);
+        return;
       }
 
-      setLoading(false);
+      setState({
+        status: canAccess(pathname, userModules) ? 'ok' : 'denied',
+        modules: userModules,
+        fallback,
+      });
     } catch (error) {
-      console.error('Error al decodificar el token:', error);
+      logError('Error al decodificar el token', error);
       localStorage.removeItem('token');
-      setLoading(false);
+      setState({ status: 'anonymous', modules: [], fallback: null });
       router.push('/');
     }
   }, [router, pathname]);
 
-  return { modules, loading };
+  return { ...state, loading: state.status === 'checking' };
 };
 
 export default useAuthCheck;

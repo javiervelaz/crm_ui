@@ -1,14 +1,8 @@
-'use client'
-import CreateTipoSalidaForm from '@/app/dashboard/tipo-salida/componentes/createTipoSalidaForm';
-import useAuthCheck from '@/app/lib/useAuthCheck';
+'use client';
 
-const CreateTipoSalidaPage = () => {
-  useAuthCheck();
-  return (
-    <div className="w-full p-4 md:p-6">
-      <CreateTipoSalidaForm />
-    </div>
-  );
-};
+import CategoriaGastoForm from '../componentes/CategoriaGastoForm';
 
-export default CreateTipoSalidaPage;
+/** [3.3] Antes importaba de tipo-salida/componentes/. Ahora usa el form único. */
+export default function Page() {
+  return <CategoriaGastoForm />;
+}

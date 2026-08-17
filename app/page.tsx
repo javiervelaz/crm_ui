@@ -1,6 +1,7 @@
 'use client';
 
-import { MODULE_PERMISSIONS } from '@/app/lib/modulePermissions';
+import { logError, logWarn } from '@/app/lib/logger';
+import { defaultRouteFor } from '@/app/lib/modules';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
 import LoginForm from '@/app/ui/LoginForm';
 import { jwtDecode } from 'jwt-decode';
@@ -24,7 +25,7 @@ export default function Page() {
       
         const currentTime = Date.now() / 1000;
         if (decodedToken.exp < currentTime) {
-          console.warn('Token expirado');
+          logWarn('Token expirado');
           localStorage.removeItem('token');
           return;
         }
@@ -33,15 +34,12 @@ export default function Page() {
 
         if (modules.length > 0) {
           // 🔹 Buscar el primer módulo válido definido en modulePermissions
-          const firstValidModule = modules.find((m) => MODULE_PERMISSIONS[m]);
-          const defaultRoute =
-            (firstValidModule && MODULE_PERMISSIONS[firstValidModule]?.menu.href) ||
-            '/dashboard';
+          const defaultRoute = defaultRouteFor(modules) ?? '/dashboard';
 
           router.push(defaultRoute);
         }
       } catch (error) {
-        console.error('Error decoding token:', error);
+        logError('Error decoding token:', error);
         localStorage.removeItem('token');
       }
     }

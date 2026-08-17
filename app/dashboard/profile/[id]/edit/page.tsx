@@ -1,5 +1,6 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { notifySuccess,notifyError } from '@/app/lib/notificationService';
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
@@ -11,13 +12,14 @@ import { useEffect, useState } from 'react';
 
 const EditUserPage = () => {
   const router = useRouter();
-  const { id } = useParams(); // Obtener el parámetro 'id' de la URL
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id; // Obtener el parámetro 'id' de la URL
 
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
   const [userTypeDescription, setUserTypeDescription] = useState('');
-  const [profileDetails, setProfileDetails] = useState({});
-  const [rolDetails, setRolDetails] = useState([]);
-  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [profileDetails, setProfileDetails] = useState<any>({});
+  const [rolDetails, setRolDetails] = useState<any[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -37,14 +39,13 @@ const EditUserPage = () => {
           // Obtener los detalles del perfil del usuario
           if (data.id) {
             const profile = await getProfileUserById(data.id,cliente);
-            console.log(profile)
             setProfileDetails(profile);
           }
           // Inicializar los roles seleccionados con los roles del usuario
           const userRols = await getUserRol(data.id,cliente);
           if (userRols) {
             // Mapeamos los roles obtenidos de la base de datos y los inicializamos en el estado
-            const rolesFormatted = userRols.map((rol) => ({
+            const rolesFormatted = userRols.map((rol: any) => ({
               descripcion: rol.descripcion,
               id: rol.id_rol, // Asegúrate de usar `id` para mantener la consistencia con el handler de checkbox
               id_user: rol.id_user,
@@ -53,7 +54,7 @@ const EditUserPage = () => {
             setSelectedRoles(rolesFormatted);
           }
         } catch (err) {
-          console.error(err);
+          logError('Error al cargar datos del usuario', err);
         }
       };
 
@@ -62,7 +63,7 @@ const EditUserPage = () => {
           const data = await getRolList(getClienteId());
           setRolDetails(data);
         } catch (err) {
-          console.error(err);
+          logError('Error al cargar roles', err);
         }
       };
 
@@ -72,25 +73,25 @@ const EditUserPage = () => {
   }, [id]);
 
   // Manejar cambios en los detalles del usuario
-  const handleUserDetailChange = (e) => {
+  const handleUserDetailChange = (e: any) => {
     const { name, value } = e.target;
-    setUserDetails((prevDetails) => ({
+    setUserDetails((prevDetails: any) => ({
       ...prevDetails,
       [name]: value,
     }));
   };
 
   // Manejar cambios en los detalles del perfil
-  const handleProfileDetailChange = (e) => {
+  const handleProfileDetailChange = (e: any) => {
     const { name, value } = e.target;
-    setProfileDetails((prevDetails) => ({
+    setProfileDetails((prevDetails: any) => ({
       ...prevDetails,
       [name]: value,
     }));
   };
 
   // Manejar cambios en los roles seleccionados con casillas de verificación
-const handleRoleCheckboxChange = (e, rol) => {
+const handleRoleCheckboxChange = (e: any, rol: any) => {
   //console.log(rol);
   if (e.target.checked) {
     // Añadir rol seleccionado
@@ -103,8 +104,8 @@ const handleRoleCheckboxChange = (e, rol) => {
 
 
   // Manejar cambios en los roles seleccionados
-  const handleRoleChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(option => ({
+  const handleRoleChange = (e: any) => {
+    const selectedOptions = Array.from(e.target.selectedOptions).map((option: any) => ({
       descripcion: option.text,
       id: option.id, 
     }));
@@ -141,7 +142,6 @@ const handleRoleCheckboxChange = (e, rol) => {
   
       // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
-      console.log(payload)
       if (!profile || profile.length === 0) {
         await createProfile({
           id_user: payload.id,
@@ -161,18 +161,15 @@ const handleRoleCheckboxChange = (e, rol) => {
       // ======================================================
   
       const existingUserRoles = await getUserRolUserById(payload.id, payload.cliente_id);
-      console.log("Roles actuales:", existingUserRoles);
   
       // Normalizar los valores a números
-      const existingRoleIds = new Set(existingUserRoles.map(r => Number(r.id_rol)));
-      const selectedRoleIds = new Set(payload.roles.map(r => Number(r.id)));
+      const existingRoleIds = new Set(existingUserRoles.map((r: any) => Number(r.id_rol)));
+      const selectedRoleIds = new Set(payload.roles.map((r: any) => Number(r.id)));
   
       // Calcular diferencias
       const rolesToAdd = [...selectedRoleIds].filter(id => !existingRoleIds.has(id));
       const rolesToDelete = [...existingRoleIds].filter(id => !selectedRoleIds.has(id));
   
-      console.log("Roles a agregar:", rolesToAdd);
-      console.log("Roles a eliminar:", rolesToDelete);
   
       // 🔸 Crear roles nuevos
       for (const id_rol of rolesToAdd) {
@@ -185,7 +182,7 @@ const handleRoleCheckboxChange = (e, rol) => {
   
       // 🔸 Eliminar roles removidos
       for (const id_rol of rolesToDelete) {
-        const roleToDelete = existingUserRoles.find(r => Number(r.id_rol) === id_rol);
+        const roleToDelete = existingUserRoles.find((r: any) => Number(r.id_rol) === id_rol);
         if (roleToDelete) {
           await deleteUserRol(roleToDelete.id,getClienteId());
         }
@@ -196,8 +193,8 @@ const handleRoleCheckboxChange = (e, rol) => {
       notifySuccess('Usuario actualizado correctamente.');
       router.push('/dashboard/usuarios');
   
-    } catch (e) {
-      console.error('Error en handleSubmit:', e);
+    } catch (e: any) {
+      logError('Error en handleSubmit:', e);
       setErrorMessage('Error: ' + e.message);
     }
   };
@@ -210,7 +207,7 @@ const handleRoleCheckboxChange = (e, rol) => {
     password:string;
     dni:string;
     telefono:string;
-    legajo : number;
+    legajo: string;
     fecha_ingreso:string;
   }>({
     nombre: '',
@@ -219,7 +216,7 @@ const handleRoleCheckboxChange = (e, rol) => {
     password:'',
     dni:'',
     telefono:'',
-    legajo : 0,
+    legajo: '',
     fecha_ingreso:'',
   });
 
@@ -232,7 +229,7 @@ const handleRoleCheckboxChange = (e, rol) => {
       password:'',
       dni:'',
       telefono:'',
-      legajo : 0,
+      legajo: '',
       fecha_ingreso:'',
     };
 
@@ -281,7 +278,7 @@ const handleRoleCheckboxChange = (e, rol) => {
     return <div>Cargando...</div>;
   }
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: any) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     const year = date.getFullYear();

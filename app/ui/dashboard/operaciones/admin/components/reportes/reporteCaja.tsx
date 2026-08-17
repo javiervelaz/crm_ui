@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { getRegistrosDiarios } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
@@ -23,7 +24,7 @@ interface RegistroDiario {
   caja_cerrada: boolean;
   created_at: string;
   updated_at: string;
-  total_cierre?: number; // Calculado: (caja_inicial + ventas_efectivo) - (retiros_total + gastos_total)
+  total_cierre?: number | null; // Calculado: (caja_inicial + ventas_efectivo) - (retiros_total + gastos_total)
 }
 
 export default function ReporteCajaPage() {
@@ -41,12 +42,11 @@ export default function ReporteCajaPage() {
     try {
       setLoading(true);
       const data = await getRegistrosDiarios(filtroFecha,getClienteId());
-      console.log(data)
       // Calcular total al cierre para cada registro
-      const registrosConTotal = data.map(registro => ({
+      const registrosConTotal = data.map((registro: any) => ({
         ...registro,
-        total_cierre: registro.caja_cerrada ? 
-          Number((registro.caja_final )).toFixed(2) : 
+        total_cierre: registro.caja_cerrada ?
+          Number(registro.caja_final) :
           null
       }));
       
@@ -55,7 +55,7 @@ export default function ReporteCajaPage() {
     } catch (err) {
       setError('Error al cargar los registros diarios');
       notifyError('Error al cargar los registros de caja');
-      console.error(err);
+      logError('Error al cargar los registros diarios', err);
     } finally {
       setLoading(false);
     }
@@ -65,13 +65,13 @@ export default function ReporteCajaPage() {
     router.push(`/dashboard/reportes/reportes/caja/${registroId}/detalle`);
   };
 
-  const getColorTotal = (total: number | null) => {
-    if (total === null) return 'text-gray-600';
+  const getColorTotal = (total: number | null | undefined) => {
+    if (total === null || total === undefined) return 'text-gray-600';
     return total >= 0 ? 'text-green-600' : 'text-red-600';
   };
 
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null) return '-';
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined) return '-';
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS'
