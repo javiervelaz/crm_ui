@@ -4,6 +4,7 @@ import { logError } from '@/app/lib/logger';
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getModulosByCliente, getPermisosByModuloId, getRolModulosPermisos, saveRolModulosPermisos } from '@/app/lib/permisos.api';
+import { getRolById } from '@/app/lib/rol.api';
 import { useEffect, useState } from 'react';
 
 interface Permiso {
@@ -65,7 +66,13 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
         );
 
         // ⛔️ Si el rol NO es admin, ocultar el módulo "plan"
-        const isAdminRole = rolData?.some((rm: any) => rm.modulo_codigo === 'plan');
+        // Antes esto se inferia de si el rol YA tenía el módulo "plan" asignado,
+        // lo que crea un círculo vicioso: si a un rol admin le faltaba "plan"
+        // (p. ej. tenants creados antes de que ese módulo existiera), nunca
+        // aparecía en esta pantalla como opción para asignárselo. Ahora se
+        // decide por el nombre real del rol.
+        const rol = await getRolById(Number(rolId), clienteId);
+        const isAdminRole = rol?.descripcion === 'admin';
         if (!isAdminRole) {
           setModulos(modulesWithPerms.filter((m) => m.codigo !== 'plan'));
         } else {

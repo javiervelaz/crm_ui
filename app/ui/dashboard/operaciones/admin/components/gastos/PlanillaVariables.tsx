@@ -39,7 +39,7 @@ export default function PlanillaVariables({ data = [], onUpdate, categorias = []
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-bold text-brand-800">Gastos Insumos</h2>
+      <h2 className="mb-4 text-lg font-bold text-brand-800">Gastos Variables</h2>
 
       {/* Mobile: cards */}
       <div className="md:hidden space-y-3">

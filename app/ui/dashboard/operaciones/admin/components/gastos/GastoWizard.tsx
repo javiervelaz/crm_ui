@@ -19,7 +19,7 @@ const tabs = [
   { id: "cajaInicial", label: "Caja Inicial" },
   { id: "fijos",       label: "Fijos" },
   { id: "sueldos",     label: "Sueldos" },
-  { id: "variables",   label: "Insumos" },
+  { id: "variables",   label: "Variables" },
   { id: "resumen",     label: "Resumen" },
 ];
 

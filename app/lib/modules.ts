@@ -23,6 +23,7 @@ import {
  * Campos:
  *   order        posición en el menú
  *   label        etiqueta visible (sustantivo, no verbo)
+ *   description  frase corta para el tooltip del ítem (components/ui/AppTooltip)
  *   icon         ícono lucide
  *   href         ruta de aterrizaje del módulo
  *   routes       rutas que el módulo habilita (string exacto o RegExp)
@@ -34,6 +35,7 @@ import {
 export interface ModuleDef {
   order: number;
   label: string;
+  description?: string;
   icon: React.ComponentType<{ size?: number | string; className?: string }>;
   href: string;
   routes?: (string | RegExp)[];
@@ -46,6 +48,7 @@ export const MODULES = {
   operaciones: {
     order: 1,
     label: 'Pedidos',
+    description: 'Pedidos y flujo de operaciones diarias',
     icon: ShoppingCart,
     href: '/dashboard/operaciones',
     prefix: true,
@@ -53,6 +56,7 @@ export const MODULES = {
   productos: {
     order: 2,
     label: 'Productos',
+    description: 'Catálogo, precios y stock de productos',
     icon: Package, // antes: Pizza — herencia de pizzeria-ui
     href: '/dashboard/productos',
     prefix: true,
@@ -60,13 +64,16 @@ export const MODULES = {
   roles: {
     order: 3,
     label: 'Roles',
+    description: 'Roles y permisos por módulo',
     icon: ShieldCheck,
     href: '/dashboard/roles',
     prefix: true, // faltaba por completo en MODULE_PERMISSIONS
+    hidden: true, // se accede desde el menú de configuración del admin (Header)
   },
   gasto: {
     order: 4,
     label: 'Gastos',
+    description: 'Registrá y controlá los gastos del negocio',
     icon: DollarSign,
     href: '/dashboard/gasto',
     prefix: true,
@@ -74,6 +81,7 @@ export const MODULES = {
   flujo: {
     order: 5,
     label: 'Flujo de caja',
+    description: 'Ingresos y egresos de caja',
     icon: Wallet,
     href: '/dashboard/flujo',
     prefix: true,
@@ -81,6 +89,7 @@ export const MODULES = {
   cerrarcaja: {
     order: 6,
     label: 'Cierre de caja',
+    description: 'Cerrá la caja y conciliá el efectivo del día',
     icon: Wallet,
     href: '/dashboard/cerrarcaja',
     prefix: true, // faltaba en MODULE_PERMISSIONS
@@ -88,6 +97,7 @@ export const MODULES = {
   reportes: {
     order: 7,
     label: 'Reportes',
+    description: 'Estadísticas de ventas, gastos y caja',
     icon: BarChart3,
     href: '/dashboard/reportes',
     prefix: true,
@@ -95,22 +105,27 @@ export const MODULES = {
   usuarios: {
     order: 8,
     label: 'Usuarios',
+    description: 'Alta, edición y permisos de usuarios',
     icon: Users,
     href: '/dashboard/usuarios',
     prefix: true,
+    hidden: true, // se accede desde el menú de configuración del admin (Header)
   },
   plan: {
     order: 9,
     label: 'Plan',
+    description: 'Tu plan contratado y límites de uso',
     icon: CreditCard,
     href: '/dashboard/plan',
     prefix: true, // faltaba en MODULE_PERMISSIONS
+    hidden: true, // se accede desde el menú de configuración del admin (Header)
   },
 
   // --- Auxiliares: accesibles siempre, fuera del menú ---
   profile: {
     order: 90,
     label: 'Mi perfil',
+    description: 'Editar tus datos personales',
     icon: Users,
     href: '/dashboard/profile',
     prefix: true,
@@ -120,6 +135,7 @@ export const MODULES = {
   'upgrade-plan': {
     order: 91,
     label: 'Mejorar plan',
+    description: 'Mejorá tu plan para desbloquear más funciones',
     icon: CreditCard,
     href: '/dashboard/upgrade-plan',
     prefix: true,
@@ -136,7 +152,9 @@ export const MODULES = {
 export type ModuleKey = keyof typeof MODULES;
 
 /** Módulos del token, ordenados y filtrados a los que existen en el registro. */
-export function menuModules(userModules: string[]): (ModuleDef & { key: string })[] {
+export function menuModules(
+  userModules: string[],
+): (ModuleDef & { key: string })[] {
   return userModules
     .filter((k): k is ModuleKey => k in MODULES)
     .map((k) => ({ ...(MODULES[k] as ModuleDef), key: k }))
@@ -158,7 +176,8 @@ export function canAccess(pathname: string, userModules: string[]): boolean {
   // Módulos siempre abiertos (perfil, upgrade de plan)
   for (const def of Object.values(MODULES) as ModuleDef[]) {
     if (!def.alwaysOpen) continue;
-    if (path === def.href || (def.prefix && path.startsWith(def.href + '/'))) return true;
+    if (path === def.href || (def.prefix && path.startsWith(def.href + '/')))
+      return true;
   }
 
   return userModules.some((key) => {
@@ -167,7 +186,7 @@ export function canAccess(pathname: string, userModules: string[]): boolean {
     if (path === def.href) return true;
     if (def.prefix && path.startsWith(def.href + '/')) return true;
     return (def.routes ?? []).some((r) =>
-      typeof r === 'string' ? path === r.toLowerCase() : r.test(path)
+      typeof r === 'string' ? path === r.toLowerCase() : r.test(path),
     );
   });
 }

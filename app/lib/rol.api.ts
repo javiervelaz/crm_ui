@@ -19,3 +19,22 @@ export const getRolList = async (cliente: bigint | null) => {
     }
     return await response.json();
   };
+
+export const getRolById = async (id: number, cliente: bigint | null) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/rol/${id}/${cliente}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      notifyError('Failed to load rol');
+      throw new Error('Failed to fetch rol');
+    }
+    return await response.json();
+  };

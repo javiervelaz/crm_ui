@@ -42,24 +42,28 @@ export const createProfile = async (profileDetails: any) => {
 
   export const getProfileUserById = async (userId: string, cliente: bigint | null) => {
     try {
+      
+      const token = localStorage.getItem('token');
       const response = await apiClient(`${apiUrl}/profile/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
-  
-      // Si la respuesta es un 404, retorna un array vacío
-      if (response.status === 404) {
-        return [];
-      }
+      
       // Si hay otro tipo de error, lanza una excepción
       if (response.status !== 200) {
         throw new Error('Failed to fetch user');
       }
-  
+
       return await response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // apiClient (axios) rechaza la promesa en cualquier status fuera de 2xx,
+      // por lo que un 404 llega acá, no al chequeo de response.status de arriba.
+      if (error?.response?.status === 404) {
+        return [];
+      }
       logError('Error al obtener el perfil del usuario:', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
