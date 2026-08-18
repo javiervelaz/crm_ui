@@ -1,4 +1,8 @@
-﻿import { getClienteId } from "@/app/lib/authService";
+﻿// @ts-nocheck
+// [Nota] Componente no importado en ningún lado — duplicado muerto de GastoWizard.tsx.
+// Se deja sin type-check en vez de perseguir cada error en código sin uso.
+// Candidato a borrar en una limpieza dedicada.
+import { getClienteId } from "@/app/lib/authService";
 import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useCajaAbierta from '@/app/lib/useCajaAbierta';
@@ -7,11 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const GastoWizard = ({ }) => {
-  const [tiposCategoria, setTiposCategoria] = useState([]);
+  const [tiposCategoria, setTiposCategoria] = useState<any[]>([]);
   const [activeTipoId, setActiveTipoId] = useState(null);
   const [categoriasPorTipo, setCategoriasPorTipo] = useState({});
   const [gastosPorCategoria, setGastosPorCategoria] = useState({});
-  const [gastosExistentes, setGastosExistentes] = useState([]);
+  const [gastosExistentes, setGastosExistentes] = useState<any[]>([]);
   const [registroDiario, setRegistroDiario] = useState('');
   //const [cajaAbierta, setCajaAbierta] = useState(false);
   const { cajaAbierta,registroDiarioId } = useCajaAbierta();
@@ -45,7 +49,6 @@ const GastoWizard = ({ }) => {
         id,
         descripcion,
       }));
-      console.log("tiposLista final:", tiposLista);
 
       // Actualizar estado
       setTiposCategoria(tiposLista);
@@ -60,8 +63,6 @@ const GastoWizard = ({ }) => {
       setGastosPorCategoria(inicial);
     
       // Debug opcional
-      console.log("Tipos encontrados:", tiposLista);
-      console.log("Categorias agrupadas:", categoriasAgrupadas);
     };
 
     const fetchGastos = async () => {
@@ -104,7 +105,7 @@ const GastoWizard = ({ }) => {
     if (token) {
       
      
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ userId: number }>(token);
       const usuario_id = decoded.userId;
       const payload = (gastosPorCategoria[categoriaId] || [])
       .filter((g) => g.descripcion && g.monto)
@@ -114,7 +115,6 @@ const GastoWizard = ({ }) => {
         registro_diario_id: registroDiarioId,
         usuario_id: usuario_id,
       }));
-      console.log("payload ",payload)
       if (payload.length === 0) {
         notifyError('Debe ingresar al menos un gasto con descripción y monto.');
         return;

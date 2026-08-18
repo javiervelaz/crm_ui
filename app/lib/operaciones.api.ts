@@ -1,3 +1,4 @@
+import { logError } from '@/app/lib/logger';
 import { notifyError, notifySuccess } from './notificationService';
 import apiClient from "@/app/lib/apiClient";
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -35,7 +36,7 @@ export const abrirCaja = async (data: any) => {
       }
       notifySuccess('caja loaded successfully');
       return await response.json();
-    } catch (error) {
+    } catch (error: any) {
       notifyError( '' + error.message);
       throw new Error('Falló la apertura de la caja');
     }
@@ -64,7 +65,6 @@ export const abrirCaja = async (data: any) => {
 
   export const crearPedido =  async (data: any) => {
     try {
-      console.log(data)
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/operaciones/crear-pedido`, {
         method: 'POST',
@@ -85,7 +85,7 @@ export const abrirCaja = async (data: any) => {
   }
 
 
-  export const getPedidosByRegistroId = async (Id: number, cliente: BigInt) => {
+  export const getPedidosByRegistroId = async (Id: number, cliente: bigint | null) => {
     try {
       const response = await apiClient(`${apiUrl}/operaciones/listar-pedidos/${Id}/${cliente}`, {
         method: 'GET',
@@ -93,20 +93,19 @@ export const abrirCaja = async (data: any) => {
           'Content-Type': 'application/json',
         },
       });
-      console.log(response)
       // Si la respuesta es un 404, retorna un array vacío
       if (response.status === 404) {
         return [];
       }
   
       // Si hay otro tipo de error, lanza una excepción
-      if (!response.status === 200) {
+      if (response.status !== 200) {
         throw new Error('Failed to fetch pedidos list');
       }
   
       return await response.data;
     } catch (error) {
-      console.error('Error al obtener el listado de pedidos', error);
+      logError('Error al obtener el listado de pedidos', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }
@@ -133,7 +132,7 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const deletePedido = async (id: number, cliente: bigint) => {
+  export const deletePedido = async (id: number, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
       const response = await fetch(
         `${apiUrl}/operaciones/borrar-pedido/${id}/${cliente}`, 
@@ -151,8 +150,6 @@ export const abrirCaja = async (data: any) => {
         // puede no ser JSON → lo ignoramos
       }
 
-      console.log("RESPONSE RAW:", response.status, response.statusText);
-      console.log("RESPONSE BODY:", errorBody);
 
       if (response.status === 403) {
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
@@ -168,7 +165,7 @@ export const abrirCaja = async (data: any) => {
   };
 
 
-  export const pedidoMontoTotalDiario =  async (id: number, cliente: BigInt) => {
+  export const pedidoMontoTotalDiario =  async (id: number, cliente: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/pedido-monto-total/${id}/${cliente}`, {
@@ -190,7 +187,6 @@ export const abrirCaja = async (data: any) => {
 
   export const cerrarCaja =  async (data: any) => {
     try {
-      console.log(data)
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/cierre-caja` , {
         method: 'PUT',
@@ -230,7 +226,7 @@ export const abrirCaja = async (data: any) => {
     } 
   }
 
-  export const getCajaInicial =  async (id: number,cliente: BigInt) => {
+  export const getCajaInicial =  async (id: number,cliente: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const response =await fetch(`${apiUrl}/operaciones/caja-inicial/${id}/${cliente}`, {

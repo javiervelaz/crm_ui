@@ -1,3 +1,4 @@
+import { logError } from '@/app/lib/logger';
 import apiClient from './apiClient';
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -39,28 +40,31 @@ export const createProfile = async (profileDetails: any) => {
     return await response.json();
   };
 
-  export const getProfileUserById = async (userId: string, cliente: BigInt) => {
+  export const getProfileUserById = async (userId: string, cliente: bigint | null) => {
     try {
+      
+      const token = localStorage.getItem('token');
       const response = await apiClient(`${apiUrl}/profile/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
-  
-      // Si la respuesta es un 404, retorna un array vacío
-      if (response.status === 404) {
-        return [];
-      }
-      console.log(response)
+      
       // Si hay otro tipo de error, lanza una excepción
       if (response.status !== 200) {
         throw new Error('Failed to fetch user');
       }
-  
+
       return await response.data;
-    } catch (error) {
-      console.error('Error al obtener el perfil del usuario:', error);
+    } catch (error: any) {
+      // apiClient (axios) rechaza la promesa en cualquier status fuera de 2xx,
+      // por lo que un 404 llega acá, no al chequeo de response.status de arriba.
+      if (error?.response?.status === 404) {
+        return [];
+      }
+      logError('Error al obtener el perfil del usuario:', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }
@@ -82,7 +86,7 @@ export const createProfile = async (profileDetails: any) => {
     return await response.json();
   };
 
-  export const getClienteByTelefono  = async (telefono: string,cliente_id:bigint) => {
+  export const getClienteByTelefono  = async (telefono: string,cliente_id: bigint | null) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/users/cliente/${telefono}/${cliente_id}`, {
@@ -105,7 +109,7 @@ export const createProfile = async (profileDetails: any) => {
   
       return await response.json();
     } catch (error) {
-      console.error('Error al obtener el perfil del usuario:', error);
+      logError('Error al obtener el perfil del usuario:', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }

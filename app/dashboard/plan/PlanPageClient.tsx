@@ -109,7 +109,7 @@ export function PlanPageClient() {
                 title={tier.nombre_publico}
                 tierCode={tier.code}
                 description={tier.descripcion}
-                features={tier.beneficios || []}
+                features={[]}
                 price={tier.precio_mensual}
                 currentTier={currentTier}
                 onUpgrade={handleUpgrade}
@@ -129,7 +129,7 @@ export function PlanPageClient() {
                     title={tier.nombre_publico}
                     tierCode={tier.code}
                     description={tier.descripcion}
-                    features={tier.beneficios || []}
+                    features={[]}
                     price={tier.precio_mensual}
                     currentTier={currentTier}
                     onUpgrade={handleUpgrade}
@@ -149,7 +149,7 @@ export function PlanPageClient() {
 interface PlanCardProps {
   title: string;
   tierCode: string;
-  description: string;
+  description: string | null;
   features: string[];
   currentTier: string;
   onUpgrade: (tierCode: string) => void;

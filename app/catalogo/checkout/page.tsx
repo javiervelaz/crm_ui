@@ -1,5 +1,6 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../CartContext';
@@ -249,7 +250,7 @@ export default function CheckoutPage() {
 
       clearCart();
     } catch (err: any) {
-      console.error(err);
+      logError('Error al procesar el checkout', err);
       notifyError(err.message ?? 'No se pudo registrar el pedido.');
     } finally {
       setSubmitting(false);

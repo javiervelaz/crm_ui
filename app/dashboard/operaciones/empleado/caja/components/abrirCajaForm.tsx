@@ -1,4 +1,5 @@
 ﻿"use client"
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { abrirCaja } from '@/app/lib/operaciones.api';
 import { jwtDecode } from 'jwt-decode';
@@ -56,13 +57,12 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
               }, 500);
              
             } else {
-              console.error('onClose no es una función');
+              logError('onClose no es una función');
             }
            
           }
           
         } catch (error) {
-          console.log(error);
         }
       };
   

@@ -22,7 +22,7 @@ export const createUser = async (userDetails: any) => {
     return await response.json();
   };
   
-  export const getUserById = async (userId: string, cliente: BigInt) => {
+  export const getUserById = async (userId: string, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente}`, {
       method: 'GET',
@@ -57,7 +57,7 @@ export const createUser = async (userDetails: any) => {
     return await response.json();
   };
   
-  export const deleteUser = async (userId: number, cliente: BigInt) => {
+  export const deleteUser = async (userId: number, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente}`, {
       method: 'DELETE',
@@ -72,7 +72,7 @@ export const createUser = async (userDetails: any) => {
     return await response.json();
   };
   
-  export const getUserList = async (cliente :  BigInt) => {
+  export const getUserList = async (cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await apiClient(`${apiUrl}/users/list/${cliente}`, {
       method: 'GET',
@@ -81,13 +81,12 @@ export const createUser = async (userDetails: any) => {
         'Authorization': `Bearer ${token}`,
       },
     });
-    console.log(response);
      // Si la respuesta es un 404, retorna un array vacío
     if (response.status === 404) {
       return [];
     }
    
-    if (!response.status === 200) {
+    if (response.status !== 200) {
       throw new Error('Failed to fetch user list');
     }
     return await response.data;
@@ -115,7 +114,7 @@ export const createUser = async (userDetails: any) => {
   
 
   //User Rol
-  export const getUserRol = async (userId: string, cliente : BigInt) => {
+  export const getUserRol = async (userId: string, cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/rol/${userId}/${cliente}` , {
       method: 'GET',

@@ -1,4 +1,5 @@
 ﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import { postProductoList } from '@/app/lib/producto.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,10 +14,10 @@ import * as XLSX from 'xlsx';
 export default function ReporteVentasPage() {
   const [fechaDesde, setFechaDesde] = useState<Date | undefined>(undefined);
   const [fechaHasta, setFechaHasta] = useState<Date | undefined>(undefined);
-  const [productos, setProductos] = useState([]);
-  const [selectedProductos, setSelectedProductos] = useState([]);
-  const [ventas, setVentas] = useState([]);
-  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [productos, setProductos] = useState<any[]>([]);
+  const [selectedProductos, setSelectedProductos] = useState<any[]>([]);
+  const [ventas, setVentas] = useState<any[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<any[]>([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   // 🔹 Inicializar fechas con los últimos 7 días
@@ -36,7 +37,7 @@ export default function ReporteVentasPage() {
         const data = await postProductoList(getClienteId());
         setProductos(data);
       } catch (err) {
-        console.error(err);
+        logError('Error al cargar productos', err);
       } 
     };
     fetchProductos();
@@ -44,8 +45,12 @@ export default function ReporteVentasPage() {
 
    // 🔹 Función para exportar a Excel
    const exportToExcel = () => {
-    if (!ventas && ventas?.length === 0) {
+    if (!ventas || ventas.length === 0) {
       alert('No hay datos para exportar');
+      return;
+    }
+    if (!fechaDesde || !fechaHasta) {
+      alert('Seleccioná el rango de fechas');
       return;
     }
 
@@ -119,12 +124,11 @@ export default function ReporteVentasPage() {
 
   try {
     const response = await apiClient.post('/reportes/ventas', payload);
-    console.log("data", response.data);
 
     setVentas(response.data);
 
   } catch (err) {
-    console.error(err);
+    logError('Error al cargar ventas', err);
   }
 }, [fechaDesde, fechaHasta, selectedProductos]);
 
@@ -225,7 +229,7 @@ export default function ReporteVentasPage() {
           <BarChart data={ventas}>
             <XAxis dataKey={(entry) => format(new Date(entry.fecha), 'MM-dd')} />
             <YAxis />
-            <Tooltip formatter={(value) => `$${parseFloat(value).toFixed(2)}`} />
+            <Tooltip formatter={(value) => `$${Number(value).toFixed(2)}`} />
             <Bar dataKey="total_vendido" fill="#3b82f6" />
           </BarChart>
         </ResponsiveContainer>

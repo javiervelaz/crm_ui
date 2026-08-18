@@ -1,6 +1,7 @@
 // app/catalogo/catalogApi.ts
 'use client';
 
+import { logError, logWarn } from '@/app/lib/logger';
 import type { CatalogProduct } from './types';
 import { getApiBaseUrl, getMicrositeClienteId } from './catalogConfig';
 import { useHandoffSession } from './HandoffSessionContext';
@@ -28,7 +29,6 @@ function mapBackendProductToCatalogProduct(raw: any): CatalogProduct {
 
 export async function fetchCatalogProducts(session:any): Promise<CatalogProduct[]> {
  
-  console.log("session",session)
   const clienteId = session.clienteId ?? getMicrositeClienteId();
 
   const res = await fetch(
@@ -43,14 +43,14 @@ export async function fetchCatalogProducts(session:any): Promise<CatalogProduct[
   );
 
   if (!res.ok) {
-    console.error('Error al obtener productos del catálogo', res.status);
+    logError('Error al obtener productos del catálogo', res.status);
     throw new Error('No se pudieron cargar los productos');
   }
 
   const data = await res.json();
 
   if (!Array.isArray(data)) {
-    console.warn('Respuesta inesperada de /producto/list:', data);
+    logWarn('Respuesta inesperada de /producto/list:', data);
     return [];
   }
 
@@ -77,7 +77,7 @@ export async function fetchProductById(
     if (res.status === 404) {
       return null;
     }
-    console.error('Error al obtener producto por id', res.status);
+    logError('Error al obtener producto por id', res.status);
     throw new Error('No se pudo cargar el producto');
   }
 

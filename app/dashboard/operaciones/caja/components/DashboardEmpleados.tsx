@@ -1,11 +1,11 @@
 ﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import { checkAperturaCaja, getPedidosByRegistroId } from "@/app/lib/operaciones.api";
 import { jwtDecode } from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
-import { getCurrentDate } from "../../../../../lib/utils";
 import Modal from './Modal';
-import PedidoForm from './PedidoForm';
-import PedidosGrid from './PedidosGrid';
+import PedidoForm from '@/app/features/pedidos/PedidoForm';
+import PedidosGrid from '@/app/features/pedidos/PedidosGrid';
 import AbrirCajaForm from "./abrirCajaForm";
 
 interface DecodedToken {
@@ -17,7 +17,7 @@ const DashboardEmpleados = () => {
   const [cajaAbierta, setCajaAbierta] = useState(false);
   const [fechaApertura, setFechaApertura] = useState('');
   const [registroDiario, setRegistroDiario] =  useState<number | null>(null);
-  const [pedidos, setPedidos] = useState([]);
+  const [pedidos, setPedidos] = useState<any[]>([]);
   const [showPedidoForm, setShowPedidoForm] = useState(false);
   const [showAbrirCajaForm, setShowAbrirCajaForm] = useState(false);
   const [usuario, setUsuario] = useState<number | null>(null);
@@ -27,14 +27,13 @@ useEffect(() => {
     try {
         const data = {cliente_id:getClienteId()} as any;
         const res = await checkAperturaCaja(data);
-        console.log("res:",res);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
           setRegistroDiario(res.registro_diario_id);
         }
     } catch (error) {
-      console.error('Error al verificar la caja:', error);
+      logError('Error al verificar la caja:', error);
     }
   };
 
@@ -49,7 +48,7 @@ useEffect(() => {
       const response = await getPedidosByRegistroId(registroDiario,getClienteId());
       setPedidos(response);
     } catch (error) {
-      console.error('Error al cargar pedidos:', error);
+      logError('Error al cargar pedidos:', error);
     }
   }, [registroDiario]); // Solo se recrea cuando registroDiario cambia
 
@@ -111,7 +110,7 @@ useEffect(() => {
           {showPedidoForm && (
             <Modal onClose={handlePedidoFormClose}>
               {registroDiario !== null  && usuario !== null && (
-                <PedidoForm onClose={handlePedidoFormClose} registroDiario={registroDiario} usuario_id={usuario}  />
+                <PedidoForm  modo="caja" onClose={handlePedidoFormClose} registroDiario={registroDiario} usuario_id={usuario}  />
               )}
                 </Modal>
           )}

@@ -1,11 +1,9 @@
-﻿'use client'
+'use client';
 
-
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
-
+/** [2.5] FontAwesome → lucide. Lleva al listado de tipos de producto. */
 export const CreateTipoProductoButton = () => {
   const router = useRouter();
 
@@ -16,9 +14,9 @@ export const CreateTipoProductoButton = () => {
   return (
     <button
       onClick={handleCreateUsers}
-      className="bg-brand-600 text-white px-4 py-2 rounded-md"
+      className="flex items-center rounded-md bg-brand-600 px-4 py-2 text-white"
     >
-      <FontAwesomeIcon icon={faPlus} className="mr-2" /> Categoria
+      <Plus size={16} className="mr-2" /> Categoria
     </button>
   );
 };

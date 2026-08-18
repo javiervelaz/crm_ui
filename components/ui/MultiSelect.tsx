@@ -1,17 +1,23 @@
 import Select from 'react-select';
 
-const MultiSelect = ({ selectedRoles, onChange, rolesList }) => {
-  const options = rolesList.map(role => ({
+interface MultiSelectProps {
+  selectedRoles: any[];
+  onChange: (roles: any[]) => void;
+  rolesList: any[];
+}
+
+const MultiSelect = ({ selectedRoles, onChange, rolesList }: MultiSelectProps) => {
+  const options = rolesList.map((role: any) => ({
     value: role.id,
     label: role.nombre
   }));
 
-  const selectedOptions = options.filter(option =>
-    selectedRoles.some(role => role.id === option.value)
+  const selectedOptions = options.filter((option: any) =>
+    selectedRoles.some((role: any) => role.id === option.value)
   );
 
-  const handleChange = selectedOptions => {
-    const updatedRoles = selectedOptions.map(option => ({
+  const handleChange = (selectedOptions: any) => {
+    const updatedRoles = selectedOptions.map((option: any) => ({
       id: option.value,
       nombre: option.label
     }));

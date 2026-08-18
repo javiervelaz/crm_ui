@@ -1,5 +1,6 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getApiBaseUrl } from './catalogConfig';
 
 const API_BASE_URL = getApiBaseUrl();
@@ -32,7 +33,6 @@ export async function validateHandoffToken(
     }
 
     const data = await res.json();
-    console.log("data",data)
     if (!data.valid) {
       return null;
     }
@@ -47,7 +47,7 @@ export async function validateHandoffToken(
       exp: data.exp ?? null,
     };
   } catch (err) {
-    console.error('Error validating handoff token', err);
+    logError('Error validating handoff token', err);
     return null;
   }
 }

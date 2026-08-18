@@ -1,4 +1,5 @@
 ﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
@@ -30,7 +31,7 @@ const tipoClienteOpciones = [
 export default function ReporteClientesPage() {
   const [fechaDesde, setFechaDesde] = useState<Date | undefined>(undefined);
   const [fechaHasta, setFechaHasta] = useState<Date | undefined>(undefined);
-  const [selectedTiposCliente, setSelectedTiposCliente] = useState([]);
+  const [selectedTiposCliente, setSelectedTiposCliente] = useState<any[]>([]);
   const [clientes, setClientes] = useState<ClienteReporte[]>([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -48,6 +49,10 @@ export default function ReporteClientesPage() {
   const exportToExcel = () => {
     if (clientes.length === 0) {
       alert('No hay datos para exportar');
+      return;
+    }
+    if (!fechaDesde || !fechaHasta) {
+      alert('Seleccioná el rango de fechas');
       return;
     }
 
@@ -125,7 +130,7 @@ export default function ReporteClientesPage() {
       const res = await apiClient.post(`${apiUrl}/reportes/clientes`, payload);
       setClientes(res.data);
     } catch (err) {
-      console.error('Error fetching client report:', err);
+      logError('Error fetching client report:', err);
     }
   }, [fechaDesde, fechaHasta, selectedTiposCliente, apiUrl]);
 

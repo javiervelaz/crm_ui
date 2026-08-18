@@ -4,10 +4,12 @@ import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useClientePlan } from '@/app/lib/useClientePlan';
+import AdminSettingsMenu from '@/app/ui/AdminSettingsMenu';
 
 interface DecodedToken {
+  userId: string | number;
   username: string;
-  role: string;
+  role: string[];
 }
 
 type HeaderProps = {
@@ -16,6 +18,8 @@ type HeaderProps = {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [userName, setUserName] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | number | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const router = useRouter();
@@ -45,13 +49,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
         setUserName(decodedToken.username);
+        setUserId(decodedToken.userId);
+        setIsAdmin(Array.isArray(decodedToken.role) && decodedToken.role.includes('admin'));
         setIsLoggedIn(true);
       } catch {
         setUserName(null);
+        setUserId(null);
+        setIsAdmin(false);
         setIsLoggedIn(false);
       }
     } else {
       setUserName(null);
+      setUserId(null);
+      setIsAdmin(false);
       setIsLoggedIn(false);
     }
   };
@@ -86,11 +96,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <span className="font-semibold text-brand-800 whitespace-nowrap hidden sm:inline">
             {userName}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span className="hidden md:inline">Plan:</span>
-            <span className="font-medium">{loading ? '...' : (plan?.tierNombre ?? '-')}</span>
-          </span>
+          {isAdmin && userId != null && <AdminSettingsMenu userId={userId} />}
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="hidden md:inline">Plan:</span>
+              <span className="font-medium">{loading ? '...' : (plan?.tierNombre ?? '-')}</span>
+            </span>
+          )}
         </div>
       )}
     </header>

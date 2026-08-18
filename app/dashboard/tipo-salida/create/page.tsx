@@ -1,14 +1,5 @@
-'use client'
-import CreateTipoSalidaForm from '@/app/dashboard/tipo-salida/componentes/createTipoSalidaForm';
-import useAuthCheck from '@/app/lib/useAuthCheck';
+import { redirect } from 'next/navigation';
 
-const CreateTipoSalidaPage = () => {
-  useAuthCheck();
-  return (
-    <div className="w-full p-6">
-      <CreateTipoSalidaForm />
-    </div>
-  );
-};
-
-export default CreateTipoSalidaPage;
+export default function Page() {
+  redirect('/dashboard/gasto/create');
+}

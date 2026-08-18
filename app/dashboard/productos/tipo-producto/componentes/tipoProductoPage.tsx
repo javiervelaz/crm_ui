@@ -1,14 +1,26 @@
-﻿'use client'
+'use client';
 
-import { getClienteId } from "@/app/lib/authService";
+import { getClienteId } from '@/app/lib/authService';
 import { deleteTipoProducto, getTipoProductoList } from '@/app/lib/tipoproducto.api';
-import useAuthCheck from '@/app/lib/useAuthCheck';
+import { logError } from '@/app/lib/logger';
+import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
-import { faEdit, faPlus, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ErrorState from '@/components/ui/ErrorState';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import Search from './searchTipoProducto';
+import { useCallback, useEffect, useState } from 'react';
+import SearchTipoProducto from './searchTipoProducto';
+import TipoProductoTable from './TipoProductoTable';
+
+/**
+ * Tipos de producto — versión canónica (3.3).
+ *
+ * Cambios respecto de la copia que estaba viva en tipo-producto/componentes/:
+ *   [3.3] Es la única. La otra se borra y su ruta queda como redirect.
+ *   [2.2] Sin useAuthCheck() — el guard está en dashboard/layout.tsx.
+ *   [4.1] ErrorState en vez de tragarse el error con un console.error.
+ *   [4.3] TipoProductoTable migrada a ResponsiveTable.
+ *   Eliminar recarga la lista en vez de filtrar el estado local.
+ */
 
 interface TipoProducto {
   id: number;
@@ -16,105 +28,74 @@ interface TipoProducto {
 }
 
 export default function TipoProductoPage() {
-  useAuthCheck();
   const [tipos, setTipos] = useState<TipoProducto[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [error, setError] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchTipos();
-  }, []);
-
-  const fetchTipos = async () => {
+  const fetchTipos = useCallback(async () => {
     try {
+      setError(false);
+      setLoading(true);
       const data = await getTipoProductoList(getClienteId());
-      setTipos(data);
+      setTipos(data ?? []);
     } catch (err) {
-      console.error('Error cargando tipos de producto:', err);
+      logError('Error al cargar tipos de producto', err);
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTipos();
+  }, [fetchTipos]);
 
   const handleEdit = (id: number) => {
     router.push(`/dashboard/productos/tipo-producto/${id}/edit`);
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('¿Estás seguro de eliminar este tipo de producto?')) {
-      try {
-        await deleteTipoProducto(id);
-        setTipos(tipos.filter(tipo => tipo.id !== id));
-      } catch (error) {
-        console.error('Error eliminando tipo de producto:', error);
-      }
+    if (!confirm('¿Eliminar este tipo de producto?')) return;
+    try {
+      await deleteTipoProducto(id);
+      notifySuccess('Tipo de producto eliminado');
+      fetchTipos();
+    } catch (err) {
+      logError('Error al eliminar el tipo de producto', err);
+      notifyError('No se pudo eliminar el tipo de producto');
     }
   };
 
-  const filteredTipos = tipos.filter(tipo => 
-    tipo.nombre.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtrados = tipos.filter((t) => t.nombre.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="w-full p-4 md:p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className={`font-display text-2xl`}>Tipos de Producto</h1>
+      <h1 className="mb-4 font-display text-2xl text-brand-800">Tipos de producto</h1>
+
+      <div className="mb-6 mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mt-8">
+        <SearchTipoProducto placeholder="Buscar tipo de producto..." onSearch={setQuery} />
         <button
+          type="button"
           onClick={() => router.push('/dashboard/productos/tipo-producto/create')}
-          className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-600 flex items-center"
+          className="min-h-[44px] shrink-0 rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white shadow-brand transition-colors hover:bg-brand-700"
         >
-          <FontAwesomeIcon icon={faPlus} className="mr-2" />
-          Crear Tipo
+          Nuevo tipo
         </button>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
-        <Search placeholder="Buscar tipo..." onSearch={setQuery} />
-      </div>
-
       {loading ? (
-        <TableSkeleton />
+        <TableSkeleton rows={5} cols={1} withFilter={false} />
+      ) : error ? (
+        <ErrorState onRetry={fetchTipos} />
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nombre
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTipos.map((tipo) => (
-                <tr key={tipo.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {tipo.nombre}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => handleEdit(tipo.id)}
-                      className="text-brand-600 hover:text-brand-900"
-                      title="Editar"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(tipo.id)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Eliminar"
-                    >
-                      <FontAwesomeIcon icon={faTrashAlt} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TipoProductoTable
+          tipos={filtrados}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onCrear={() => router.push('/dashboard/productos/tipo-producto/create')}
+        />
       )}
     </div>
   );

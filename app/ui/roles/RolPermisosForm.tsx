@@ -1,8 +1,10 @@
 ﻿'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getModulosByCliente, getPermisosByModuloId, getRolModulosPermisos, saveRolModulosPermisos } from '@/app/lib/permisos.api';
+import { getRolById } from '@/app/lib/rol.api';
 import { useEffect, useState } from 'react';
 
 interface Permiso {
@@ -25,7 +27,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const clienteId = Number(getClienteId());
+  const clienteId = getClienteId();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -38,7 +40,6 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
         // 2) Permisos ya asignados al rol
         const rolData = await getRolModulosPermisos(Number(rolId));
         // rolData: [{ modulo_id, modulo_descripcion, modulo_codigo, permisos: [{id, descripcion, codigo}] }]
-        console.log("rol existente", rolData);
         // Para cada módulo obtenemos sus permisos y marcamos los seleccionados
         const modulesWithPerms: Modulo[] = await Promise.all(
           allModules.map(async (m) => {
@@ -65,7 +66,13 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
         );
 
         // ⛔️ Si el rol NO es admin, ocultar el módulo "plan"
-        const isAdminRole = rolData?.some((rm: any) => rm.modulo_codigo === 'plan');
+        // Antes esto se inferia de si el rol YA tenía el módulo "plan" asignado,
+        // lo que crea un círculo vicioso: si a un rol admin le faltaba "plan"
+        // (p. ej. tenants creados antes de que ese módulo existiera), nunca
+        // aparecía en esta pantalla como opción para asignárselo. Ahora se
+        // decide por el nombre real del rol.
+        const rol = await getRolById(Number(rolId), clienteId);
+        const isAdminRole = rol?.descripcion === 'admin';
         if (!isAdminRole) {
           setModulos(modulesWithPerms.filter((m) => m.codigo !== 'plan'));
         } else {
@@ -73,7 +80,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
         }
 
       } catch (error) {
-        console.error('Error cargando datos de roles/modulos/permiso:', error);
+        logError('Error cargando datos de roles/modulos/permiso:', error);
         notifyError('Error al cargar datos de permisos del rol.');
       } finally {
         setLoading(false);
@@ -122,11 +129,10 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
           modulo_id: m.id,
           permisos: m.permisos?.filter((p) => p.selected).map((p) => p.id) || []
         }));
-        console.log("pay",payload);
       await saveRolModulosPermisos(Number(rolId), payload);
       notifySuccess('Permisos del rol actualizados correctamente');
     } catch (error: any) {
-      console.error('Error guardando permisos del rol:', error);
+      logError('Error guardando permisos del rol:', error);
       notifyError(error?.message || 'Error al guardar permisos');
     } finally {
       setSaving(false);

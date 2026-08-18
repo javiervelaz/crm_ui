@@ -1,5 +1,6 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { useEffect, useMemo, useState } from 'react';
 import type { CatalogProduct } from './types';
 import { fetchCatalogProducts } from './catalogApi';
@@ -40,7 +41,7 @@ export default function CatalogPage() {
           setProducts(data);
         }
       } catch (err: any) {
-        console.error(err);
+        logError('Error al cargar productos del catálogo', err);
         if (!cancelled) {
           setError(err.message ?? 'Error al cargar productos');
         }

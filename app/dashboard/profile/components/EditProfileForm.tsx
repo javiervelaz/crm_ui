@@ -7,7 +7,7 @@ const EditUserPage = () => {
   const router = useRouter();
   const { id } = router.query;
 
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
@@ -21,7 +21,6 @@ const EditUserPage = () => {
   if (!userDetails) {
     return <div>Cargando...</div>;
   }
-  console.log(userDetails)
   return (
     <div>
       <h1>Editar Usuario</h1>

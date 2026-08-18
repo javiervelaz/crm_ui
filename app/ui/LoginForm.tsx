@@ -11,23 +11,24 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 interface DecodedToken {
   userId: string;
-  roles: number[]; // Cambiado a un array de roles
+  role: string[]; // el backend manda los nombres de rol (ej. 'admin', 'empleado'), no ids
 }
 
 // Definir prioridad y rutas para cada rol
-const ROLE_PRIORITY = {
+const ROLE_PRIORITY: Record<string, number> = {
   admin: 1,
   empleado: 2,
 };
 
-const ROLE_ROUTES = {
-  1: '/dashboard/operaciones/admin',
-  2: '/dashboard/operaciones/empleado',
+const ROLE_ROUTES: Record<string, string> = {
+  admin: '/dashboard/operaciones/admin',
+  empleado: '/dashboard/operaciones/empleado',
 };
 
-const getRedirectionRoute = (roles: { id: number; id_rol: number; id_user: number }[]): string => {
-  const roleIds = roles.map(role => role.id_rol);
-  const sortedRoles = roleIds.sort((a, b) => ROLE_PRIORITY[a] - ROLE_PRIORITY[b]);
+const getRedirectionRoute = (roles: string[]): string => {
+  const sortedRoles = [...roles].sort(
+    (a, b) => (ROLE_PRIORITY[a] ?? Infinity) - (ROLE_PRIORITY[b] ?? Infinity),
+  );
   return ROLE_ROUTES[sortedRoles[0]] || '/dashboard/operaciones/empleado';
 };
 

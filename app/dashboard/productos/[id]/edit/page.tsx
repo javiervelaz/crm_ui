@@ -10,8 +10,8 @@ import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 
 const EditProductoPage = () => {
   const { id } = useParams();
-  const [tipoProducto, setTipoProd] = useState([]); // Almacena los tipos de productos
-  const [productoDetails, setProductoDetails] = useState({
+  const [tipoProducto, setTipoProd] = useState<any[]>([]); // Almacena los tipos de productos
+  const [productoDetails, setProductoDetails] = useState<any>({
     nombre: '',
     precio_unitario: null,
     tipo_producto_id: null,
@@ -55,13 +55,13 @@ const EditProductoPage = () => {
       console.log(id, productoDetails);
       await updateProducto(id, productoDetails);
       router.push('/dashboard/productos');
-    } catch (error) {
+    } catch (error: any) {
        notifyError(error.message);
       console.log(error);
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setProductoDetails({
       ...productoDetails,
@@ -74,7 +74,8 @@ const EditProductoPage = () => {
       nombre: '',
       precio_unitario: null,
       tipo_producto_id: null,
-      permite_mitad: false
+      permite_mitad: false,
+      cliente_id: getClienteId(),
     });
     router.push('/dashboard/productos');
   };

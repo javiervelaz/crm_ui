@@ -62,7 +62,7 @@ async function getRegistroDiarioIdOrThrow(
 
   const data: CheckCajaResponse | false = await res.json();
 
-  if (!data || data === false || !data.caja_abierta) {
+  if (!data || !data.caja_abierta) {
     throw new Error(
       'No hay caja abierta para hoy. Abrí la caja desde el CRM antes de tomar pedidos del micrositio.',
     );

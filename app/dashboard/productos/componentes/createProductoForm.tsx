@@ -12,7 +12,7 @@ import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 
 const CreateUserPage = () => {
   useAuthCheck();
-  const [productoDetails, setUserDetails] = useState({
+  const [productoDetails, setUserDetails] = useState<any>({
     nombre: '',
     precio_unitario: null,
     tipo_producto_id: null,
@@ -22,7 +22,7 @@ const CreateUserPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const [tipoProducto, setTipoProd] = useState([]); // Almacena los tipos de productos
+  const [tipoProducto, setTipoProd] = useState<any[]>([]); // Almacena los tipos de productos
   
   useEffect(() => {
       const fetchTipoProduto = async () => {
@@ -37,7 +37,7 @@ const CreateUserPage = () => {
       fetchTipoProduto();
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setUserDetails({
       ...productoDetails,
@@ -86,7 +86,7 @@ const CreateUserPage = () => {
 
     // 3) Redirigir al listado
     router.push('/dashboard/productos');
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
     notifyError(error.message);
   } finally {
