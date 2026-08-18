@@ -89,7 +89,7 @@ export default function ResumenGastos({ data, registroDiarioId }: Props) {
           <p className="text-xl font-bold text-brand-800">${fmt(montoGastoSueldo)}</p>
         </div>
         <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Insumos</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Variables</p>
           <p className="text-xl font-bold text-brand-800">${fmt(montoGastoVariable)}</p>
         </div>
       </div>

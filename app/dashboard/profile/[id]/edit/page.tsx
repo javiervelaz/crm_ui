@@ -113,6 +113,7 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
   };
 
   const handleSubmit = async () => {
+    
     if (!validarCampos()) {
       setErrorMessage('Debe seleccionar rellenar los campos obligatorios.');
       return;
@@ -127,7 +128,6 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
       roles: selectedRoles,
       profile: profileDetails,
     };
-  
     try {
       // 🔹 Verificar si el usuario existe
       const user = await getUserById(payload.id, payload.cliente_id);
@@ -139,10 +139,11 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
           user_type_id: payload.user_type_id,
         });
       }
-  
+      
       // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
-      if (!profile || profile.length === 0) {
+      if (profile || profile.length === 0) {
+        console.log("hola88")
         await createProfile({
           id_user: payload.id,
           dni: payload.profile.dni,
@@ -155,7 +156,7 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
       } else {
         await updateProfile(profile.id, payload.profile);
       }
-  
+      
       // ======================================================
       // 🔹 SINCRONIZACIÓN DE ROLES (versión robusta)
       // ======================================================
@@ -197,6 +198,7 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
       logError('Error en handleSubmit:', e);
       setErrorMessage('Error: ' + e.message);
     }
+    console.log(9999)
   };
 
 

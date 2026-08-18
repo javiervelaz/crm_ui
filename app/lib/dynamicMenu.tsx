@@ -2,6 +2,7 @@
 
 import { menuModules } from '@/app/lib/modules';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
+import AppTooltip from '@/components/ui/AppTooltip';
 import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -48,22 +49,24 @@ export default function DynamicMenu() {
   return (
     <nav className="flex flex-1 flex-col overflow-y-auto">
       <ul className="flex flex-col gap-2 p-4">
-        {items.map(({ key, href, label, icon: Icon }) => {
+        {items.map(({ key, href, label, description, icon: Icon }) => {
           const isActive = pathname.startsWith(href);
           return (
             <li key={key}>
-              <Link
-                href={href}
-                aria-current={isActive ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 transition-colors ${
-                  isActive
-                    ? 'bg-brand-600 text-white'
-                    : 'text-white/70 hover:bg-brand-700 hover:text-white'
-                }`}
-              >
-                <Icon size={18} />
-                <span>{label}</span>
-              </Link>
+              <AppTooltip text={description ?? label} side="right">
+                <Link
+                  href={href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 transition-colors ${
+                    isActive
+                      ? 'bg-brand-600 text-white'
+                      : 'text-white/70 hover:bg-brand-700 hover:text-white'
+                  }`}
+                >
+                  <Icon size={18} />
+                  <span>{label}</span>
+                </Link>
+              </AppTooltip>
             </li>
           );
         })}
