@@ -5,9 +5,10 @@ import { useRef, useState, FormEvent, Suspense } from 'react';
 import Image from 'next/image';
 import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
 import { useTiers } from '@/app/lib/useTiers';   // 👈 NUEVO
+import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
 import { useSearchParams } from 'next/navigation';
 
-type StatusState = 'idle' | 'loading' | 'success' | 'error';
+type StatusState = 'idle' | 'loading' | 'verificar' | 'error';
 
 const PLAN_LABELS: Record<PlanTier, string> = {
   FREE: 'Free',
@@ -42,6 +43,7 @@ function SaasLandingPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
+  const [emailVerificacion, setEmailVerificacion] = useState('');
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   const formRef = useRef<HTMLDivElement | null>(null);
@@ -84,32 +86,56 @@ function SaasLandingPage() {
         aceptaTerminos,
       });
 
-      // Sesión inmediata: el usuario no vuelve a tipear credenciales
-      if (res.token) localStorage.setItem('token', res.token);
+      // Sin sesión inmediata: la cuenta nace en PENDIENTE_VERIFICACION y el
+      // login la rechaza hasta que el usuario haga clic en el mail.
 
-      // Plan pago → checkout de MercadoPago
+      // Plan pago → checkout de MercadoPago. El aviso de verificación se lo
+      // damos a la vuelta, en /auth/pago.
       if (res.paymentUrl) {
         window.location.href = res.paymentUrl;
         return;
       }
 
-      setStatus('success');
-      setSuccessMessage(
-        res.paymentWarning
-          ? `Tu cuenta está lista. ${res.paymentWarning}`
-          : '¡Listo! Te llevamos a tu panel...'
-      );
+      setEmailVerificacion(res.emailVerificacion || adminEmail);
+      setSuccessMessage(res.paymentWarning ?? null);
+      setStatus('verificar');
 
-      // Si no hay token (auto-login falló), al login; si hay, al dashboard
-      setTimeout(() => {
-        window.location.href = res.token ? '/dashboard' : '/';
-      }, 1200);
+      // Sin redirect por timeout: mandarlo al login cuando todavía no puede
+      // loguear es una trampa.
     } catch (err: any) {
       setStatus('error');
       setErrorMessage(err?.message || 'Error creando la cuenta.');
       setFieldError(err?.field ?? null);
     }
 };
+
+  if (status === 'verificar') {
+    return (
+      <main className="flex min-h-screen flex-col bg-brand-50 text-brand-900">
+        <header className="bg-brand-800 px-6 py-4">
+          <div className="mx-auto max-w-5xl">
+            <Image
+              src="/assets/Logos/COUNTER CRM/COUNTER CRM Logo horizontal claro.png"
+              alt="Counter CRM"
+              width={160}
+              height={40}
+              className="object-contain"
+              priority
+            />
+          </div>
+        </header>
+
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-6 py-12">
+          <VerificacionPendiente email={emailVerificacion} conAvisoBloqueo />
+          {successMessage && (
+            <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {successMessage}
+            </p>
+          )}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-brand-50 text-brand-900">
@@ -513,9 +539,6 @@ function SaasLandingPage() {
             {/* Mensajes */}
             {status === 'error' && errorMessage && (
               <p className="text-sm text-red-600">{errorMessage}</p>
-            )}
-            {status === 'success' && successMessage && (
-              <p className="text-sm text-emerald-700">{successMessage}</p>
             )}
 
             {/* Términos y condiciones */}
