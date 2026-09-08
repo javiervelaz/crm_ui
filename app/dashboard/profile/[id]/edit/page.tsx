@@ -18,6 +18,7 @@ const EditUserPage = () => {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [userTypeDescription, setUserTypeDescription] = useState('');
   const [profileDetails, setProfileDetails] = useState<any>({});
+  const [profileExists, setProfileExists] = useState(false);
   const [rolDetails, setRolDetails] = useState<any[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
@@ -39,7 +40,8 @@ const EditUserPage = () => {
           // Obtener los detalles del perfil del usuario
           if (data.id) {
             const profile = await getProfileUserById(data.id,cliente);
-            setProfileDetails(profile);
+            setProfileDetails(profile || {});
+            setProfileExists(!!(profile && Object.keys(profile).length > 0));
           }
           // Inicializar los roles seleccionados con los roles del usuario
           const userRols = await getUserRol(data.id,cliente);
@@ -142,8 +144,8 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
       
       // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
-      if (profile || profile.length === 0) {
-        console.log("hola88")
+      const profileYaExiste = profile && Object.keys(profile).length > 0;
+      if (!profileYaExiste) {
         await createProfile({
           id_user: payload.id,
           dni: payload.profile.dni,
@@ -154,7 +156,13 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
           cliente_id: payload.cliente_id,
         });
       } else {
-        await updateProfile(profile.id, payload.profile);
+        // En edición sólo mandamos la contraseña si el usuario tipeó una nueva.
+        const { password, ...restProfile } = payload.profile || {};
+        const profilePayload =
+          typeof password === 'string' && password.trim() !== ''
+            ? { ...restProfile, password }
+            : restProfile;
+        await updateProfile(profile.id, profilePayload);
       }
       
       // ======================================================
@@ -250,7 +258,7 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
       newErrors.email = 'El email es obligatorio';
       isValid = false;
     }
-    if (!profileDetails.password || profileDetails.password.trim() === '') {
+    if (!profileExists && (!profileDetails.password || profileDetails.password.trim() === '')) {
       newErrors.password = 'El password es obligatorio';
       isValid = false;
     }
@@ -373,6 +381,8 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
               <input
                 type="password"
                 name="password"
+                autoComplete="new-password"
+                placeholder="Dejar en blanco para no cambiar"
                 value={profileDetails.password || ''}
                 onChange={handleProfileDetailChange}
                 onBlur={() => {
