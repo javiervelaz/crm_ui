@@ -51,6 +51,16 @@ const EditProductoPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // bugs 30/31: precio requerido (distinguiendo 0 de vacío) y mayor a 0
+    const precio = productoDetails.precio_unitario;
+    if (precio === null || precio === undefined || (precio as any) === '') {
+      notifyError('El precio es requerido');
+      return;
+    }
+    if (Number.isNaN(Number(precio)) || Number(precio) <= 0) {
+      notifyError('El precio debe ser mayor a 0');
+      return;
+    }
     try {
       console.log(id, productoDetails);
       await updateProducto(id, productoDetails);
@@ -102,7 +112,9 @@ const EditProductoPage = () => {
             <input
               type="number"
               name="precio_unitario"
-              value={productoDetails.precio_unitario || ''}
+              min="0.01"
+              step="0.01"
+              value={productoDetails.precio_unitario ?? ''}
               onChange={handleChange}
               className="w-full rounded-lg border border-brand-200 px-3 py-2 text-sm text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
             />
