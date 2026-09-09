@@ -60,6 +60,9 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
   const [detalle, setDetalle] = useState<Record<number, PedidoItemDetalle[]>>({});
   const [cargandoId, setCargandoId] = useState<number | null>(null);
   const [errorId, setErrorId] = useState<number | null>(null);
+  // bug 37: confirmación propia (no window.confirm, que bloquea) + guard anti doble-submit
+  const [confirmDialog, setConfirmDialog] = useState<{ tipo: 'finalizar' | 'cancelar'; id: number; nuevoStatus?: boolean } | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   const abiertos = mode === 'abiertos';
   const colSpan = abiertos ? 8 : 6;
@@ -83,31 +86,37 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
     }
   };
 
-  const finalizar = async (id: number, nuevoStatus: boolean) => {
+  const finalizar = (id: number, nuevoStatus: boolean) => {
     if (!abiertos) return;
-    if (!confirm('¿Finalizar el pedido?')) return;
-    try {
-      setPedidosLocal((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, pedido_terminado: nuevoStatus } : p))
-      );
-      await terminarPedido(id, { cliente_id: getClienteId() });
-      await fetchPedidos();
-    } catch (error: any) {
-      logError('Error al actualizar el estado del pedido', error);
-      notifyError(error?.message ?? 'No se pudo finalizar el pedido');
-      await fetchPedidos(); // revierte el optimismo
-    }
+    setConfirmDialog({ tipo: 'finalizar', id, nuevoStatus });
   };
 
-  const cancelar = async (id: number) => {
+  const cancelar = (id: number) => {
     if (!abiertos) return;
-    if (!confirm('¿Cancelar el pedido?')) return;
+    setConfirmDialog({ tipo: 'cancelar', id });
+  };
+
+  const ejecutarConfirmado = async () => {
+    if (!confirmDialog || processing) return;
+    const { tipo, id, nuevoStatus } = confirmDialog;
+    setProcessing(true);
     try {
-      await deletePedido(id, getClienteId());
+      if (tipo === 'finalizar') {
+        setPedidosLocal((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, pedido_terminado: nuevoStatus ?? true } : p))
+        );
+        await terminarPedido(id, { cliente_id: getClienteId() });
+      } else {
+        await deletePedido(id, getClienteId());
+      }
       await fetchPedidos();
     } catch (error: any) {
-      logError('Error eliminando pedido', error);
-      notifyError(error?.message ?? 'No se pudo cancelar el pedido');
+      logError('Error en acción de pedido', error);
+      notifyError(error?.message ?? 'No se pudo completar la acción');
+      await fetchPedidos();
+    } finally {
+      setProcessing(false);
+      setConfirmDialog(null);
     }
   };
 
@@ -306,6 +315,41 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
           </div>
         ))}
       </div>
+      {confirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="mb-2 text-lg font-semibold text-brand-800">
+              {confirmDialog.tipo === 'finalizar' ? 'Finalizar pedido' : 'Cancelar pedido'}
+            </h3>
+            <p className="mb-5 text-sm text-brand-600">
+              {confirmDialog.tipo === 'finalizar'
+                ? '¿Confirmás que querés finalizar este pedido?'
+                : '¿Confirmás que querés cancelar este pedido?'}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={processing}
+                onClick={() => setConfirmDialog(null)}
+                className="rounded-md border border-brand-200 px-4 py-2 text-sm text-brand-700 hover:bg-brand-50 disabled:opacity-50"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                disabled={processing}
+                onClick={ejecutarConfirmado}
+                className={
+                  'rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ' +
+                  (confirmDialog.tipo === 'finalizar' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700')
+                }
+              >
+                {processing ? 'Procesando…' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

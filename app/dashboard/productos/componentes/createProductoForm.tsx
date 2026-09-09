@@ -48,6 +48,17 @@ const CreateUserPage = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
 
+  // bugs 30/31: precio requerido (distinguiendo 0 de vacío) y mayor a 0
+  const precio = productoDetails.precio_unitario;
+  if (precio === null || precio === undefined || (precio as any) === '') {
+    notifyError('El precio es requerido');
+    return;
+  }
+  if (Number.isNaN(Number(precio)) || Number(precio) <= 0) {
+    notifyError('El precio debe ser mayor a 0');
+    return;
+  }
+
   try {
     setSubmitting(true);
 
@@ -128,7 +139,9 @@ const CreateUserPage = () => {
           <input
             type="number"
             name="precio_unitario"
-            value={productoDetails.precio_unitario || ''}
+            min="0.01"
+            step="0.01"
+            value={productoDetails.precio_unitario ?? ''}
             onChange={handleChange}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
           />

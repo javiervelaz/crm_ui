@@ -128,7 +128,7 @@ export const getProductoList = async (cliente: bigint | null) => {
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
     }
     if (!response.ok) {
-      throw new Error('Failed to update producto');
+      throw new Error(errorBody?.error || errorBody?.message || 'No se pudo actualizar el producto');
     }
     return await response.json();
   };
