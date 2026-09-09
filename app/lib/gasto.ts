@@ -163,4 +163,38 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
     }
     return await response.json();
   };
-  
+
+  // bug 38: eliminar un gasto (salida_caja) del día
+  export const eliminarGasto = async (id: number, cliente: bigint | null) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/salida-caja/${id}/${cliente}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      let msg = 'No se pudo eliminar el gasto';
+      try { const e = await response.json(); msg = e?.error || e?.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    return await response.json();
+  };
+
+  // bug 39: registros diarios por período (dia | semana | mes) para ver flujo histórico
+  export const getRegistrosDiarios = async (filtro: string, cliente: bigint | null) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${filtro}/${cliente}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (response.status === 404) return [];
+    if (!response.ok) {
+      throw new Error('No se pudieron cargar los registros diarios');
+    }
+    return await response.json();
+  };
