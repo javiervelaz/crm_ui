@@ -2,6 +2,7 @@
 
 import { menuModules } from '@/app/lib/modules';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
+import { useClientePlan } from '@/app/lib/useClientePlan';
 import AppTooltip from '@/components/ui/AppTooltip';
 import { LogOut } from 'lucide-react';
 import Link from 'next/link';
@@ -15,6 +16,7 @@ export default function DynamicMenu() {
   // TODO(2.2): el guard vive en app/dashboard/layout.tsx.
   // Borrar esta línea Y el bloque if (loading) return <skeleton/> de abajo.
   const { modules, loading } = useAuthCheck();
+  const { plan } = useClientePlan();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -28,7 +30,11 @@ export default function DynamicMenu() {
     );
   }
 
-  const items = menuModules(modules ?? []);
+  let items = menuModules(modules ?? []);
+  // bug 33: ocultar Reportes si el plan no lo incluye (el backend igual gatea)
+  if (plan && plan.features?.canUseReports === false) {
+    items = items.filter((m) => m.key !== 'reportes');
+  }
 
   if (items.length === 0) {
     return (
