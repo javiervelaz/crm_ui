@@ -34,6 +34,17 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setMensaje('');
+        // bug 34: validar monto inicial (requerido, no negativo)
+        const montoNum = parseFloat(montoInicial);
+        if (montoInicial === '' || Number.isNaN(montoNum)) {
+          setMensaje('Ingresá el monto inicial de caja.');
+          return;
+        }
+        if (montoNum < 0) {
+          setMensaje('El monto inicial no puede ser negativo.');
+          return;
+        }
         try {
           const client_id = getClienteId();
           const token = localStorage.getItem('token');
@@ -62,7 +73,8 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
            
           }
           
-        } catch (error) {
+        } catch (error: any) {
+          setMensaje(error?.message || 'No se pudo abrir la caja.');
         }
       };
   
@@ -75,6 +87,8 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
               <label className="block text-gray-700">Monto Inicial:</label>
               <input
                 type="number"
+                min="0"
+                step="0.01"
                 value={montoInicial}
                 onChange={(e) => setMontoInicial(e.target.value)}
                 className="w-full px-3 py-2 border rounded"
