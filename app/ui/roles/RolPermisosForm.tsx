@@ -27,6 +27,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const clienteId = getClienteId();
 
   useEffect(() => {
@@ -122,6 +123,7 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
   const handleGuardar = async () => {
     try {
       setSaving(true);
+      setErrorMsg(null);
       // Construir payload
       const payload = modulos
         .filter((m) => m.selected)
@@ -133,7 +135,9 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
       notifySuccess('Permisos del rol actualizados correctamente');
     } catch (error: any) {
       logError('Error guardando permisos del rol:', error);
-      notifyError(error?.message || 'Error al guardar permisos');
+      const msg = error?.message || 'Error al guardar permisos';
+      setErrorMsg(msg);
+      notifyError(msg);
     } finally {
       setSaving(false);
     }
@@ -174,6 +178,12 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
           </div>
         ))}
       </div>
+
+      {errorMsg && (
+        <div role="alert" className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMsg}
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 mt-4">
         <button onClick={handleGuardar} disabled={saving} className={`px-4 py-2 rounded text-white ${saving ? 'bg-gray-400' : 'bg-brand-600 hover:bg-brand-700'}`}>

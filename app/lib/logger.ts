@@ -12,7 +12,7 @@ export const log = (...args: unknown[]): void => {
 };
 
 export const logWarn = (...args: unknown[]): void => {
-  if (isDev) logWarn(...args);
+  if (isDev) console.warn(...args);
 };
 
 /**
@@ -21,7 +21,7 @@ export const logWarn = (...args: unknown[]): void => {
  */
 export const logError = (message: string, error?: unknown): void => {
   if (isDev) {
-    logError(message, error);
+    console.error(message, error);
     return;
   }
   // TODO(fase 1.3): reportar a servicio de monitoreo.

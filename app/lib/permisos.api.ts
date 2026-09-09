@@ -85,26 +85,22 @@ export const getPermisosByModuloId = async (cliente_id: bigint | null, id_modulo
   };
 
   export const saveRolModulosPermisos = async (rolId: number, payload: any) => {
-    try {
-      const clienteId = getClienteId();
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/rol/${rolId}/${clienteId}/modulos-permisos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
-      }
-      return await response.json();
-    } catch (error) {
-      throw new Error('Falló setear permisos');
-    } 
-
+    const clienteId = getClienteId();
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/rol/${rolId}/${clienteId}/modulos-permisos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      let msg = 'No se pudieron guardar los permisos del rol';
+      try { const e = await response.json(); msg = e?.error || e?.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    return await response.json();
   };
 
 // ✅ Guardar los módulos y permisos asignados a un usuario
@@ -120,11 +116,12 @@ export const saveUsuarioModulosPermisos  =  async (userId:Number,cliente_id: big
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-      throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+      let msg = 'No se pudieron guardar los permisos del usuario';
+      try { const e = await response.json(); msg = e?.error || e?.message || msg; } catch {}
+      throw new Error(msg);
     }
     return await response.json();
-  } catch (error) {
-    throw new Error('Falló setear permisos');
-  } 
+  } catch (error: any) {
+    throw new Error(error?.message || 'No se pudieron guardar los permisos del usuario');
+  }
 }

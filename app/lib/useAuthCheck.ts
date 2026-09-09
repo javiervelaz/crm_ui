@@ -67,7 +67,14 @@ export const useAuthCheck = (): AuthState => {
       }
 
       // En login con token válido → al primer módulo válido.
-      if (pathname === '/' || pathname === '/login') {
+      // Incluye /dashboard (overview): no está mapeado a ningún módulo, así que
+      // sin este redirect el admin caía en "No tenés acceso" (bug 21).
+      if (
+        pathname === '/' ||
+        pathname === '/login' ||
+        pathname === '/dashboard' ||
+        pathname === '/dashboard/'
+      ) {
         router.push(fallback);
         return;
       }

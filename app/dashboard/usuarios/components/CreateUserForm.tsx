@@ -28,16 +28,25 @@ const CreateUserPage = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!validarCampos()) {
-      notifyError('Debe seleccionar rellenar los campos obligatorios.');
+      notifyError('Debe rellenar los campos obligatorios.');
       return;
     }
-    e.preventDefault();
     try {
-      await createUser(userDetails);
-      
-      router.push('/dashboard/usuarios');
+      const created = await createUser(userDetails);
+      // Bug 7 (USR-02): un usuario recién creado no tiene contraseña ni rol, así
+      // que no puede ingresar ni tiene módulos. Lo mandamos directo a Editar para
+      // completar contraseña y asignar el rol (que le da los módulos).
+      if (created?.id) {
+        notifySuccess('Usuario creado. Completá la contraseña y asigná un rol para que pueda ingresar.');
+        router.push(`/dashboard/profile/${created.id}/edit`);
+      } else {
+        notifySuccess('Usuario creado.');
+        router.push('/dashboard/usuarios');
+      }
     } catch (error) {
+      notifyError('No se pudo crear el usuario.');
     }
   };
 

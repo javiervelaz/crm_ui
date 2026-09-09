@@ -38,3 +38,38 @@ export const getRolById = async (id: number, cliente: bigint | null) => {
     }
     return await response.json();
   };
+export const createRol = async (descripcion: string, cliente: bigint | null) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${apiUrl}/rol`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ descripcion, cliente_id: cliente }),
+  });
+  if (!response.ok) {
+    let msg = 'No se pudo crear el rol';
+    try { const e = await response.json(); if (e?.error) msg = e.error; } catch {}
+    notifyError(msg);
+    throw new Error(msg);
+  }
+  return await response.json();
+};
+
+export const deleteRol = async (id: number, cliente: bigint | null) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${apiUrl}/rol/${id}/${cliente}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    let msg = 'No se pudo eliminar el rol';
+    try { const e = await response.json(); if (e?.error) msg = e.error; } catch {}
+    throw new Error(msg);
+  }
+  return await response.json();
+};
