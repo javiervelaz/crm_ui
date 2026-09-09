@@ -18,7 +18,7 @@ export const createUser = async (userDetails: any) => {
       notifyError( 'Failed to load user');
       throw new Error('Failed to create user');
     }
-    notifySuccess('Users loaded successfully');
+    
     return await response.json();
   };
   

@@ -3,7 +3,7 @@
 import { logError } from '@/app/lib/logger';
 import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
-import { getRolList } from '@/app/lib/rol.api';
+import { getRolList, deleteRol } from '@/app/lib/rol.api';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
 import { PlusCircle, Shield, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,7 @@ export default function RolesPage() {
   const router = useRouter();
   const [roles, setRoles] = useState<Rol[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const clienteId = getClienteId();
 
   const fetchRoles = async () => {
@@ -42,12 +43,15 @@ export default function RolesPage() {
     if (!confirm('¿Seguro que deseas eliminar este rol?')) return;
 
     try {
-      //await deleteRol(id, clienteId);
+      setErrorMsg(null);
+      await deleteRol(id, clienteId);
       notifySuccess('Rol eliminado correctamente');
       fetchRoles();
-    } catch (error) {
+    } catch (error: any) {
       logError('No se pudo eliminar el rol', error);
-      notifyError('No se pudo eliminar el rol');
+      const msg = error?.message || 'No se pudo eliminar el rol';
+      setErrorMsg(msg);
+      notifyError(msg);
     }
   };
 
@@ -61,13 +65,18 @@ export default function RolesPage() {
         <h1 className="text-2xl font-semibold text-gray-800">Gestión de Roles</h1>
         <button
           onClick={() => router.push('/dashboard/roles/create')}
-          disabled
           className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700 self-start sm:self-auto"
         >
           <PlusCircle size={18} />
           Nuevo Rol
         </button>
       </div>
+
+      {errorMsg && (
+        <div role="alert" className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMsg}
+        </div>
+      )}
 
       {loading ? (
         <TableSkeleton />
