@@ -355,6 +355,7 @@ function SaasLandingPage() {
               ]}
               plan="BASIC"
               selected={selectedPlan === 'BASIC'}
+              disabled
               onSelect={handleSelectPlan}
             />
 
@@ -370,6 +371,7 @@ function SaasLandingPage() {
               ]}
               plan="PREMIUM"
               selected={selectedPlan === 'PREMIUM'}
+              disabled
               onSelect={handleSelectPlan}
             />
             {/* CUSTOM */}
@@ -384,6 +386,7 @@ function SaasLandingPage() {
               ]}
               plan="CUSTOM"
               selected={selectedPlan === 'CUSTOM'}
+              disabled
               onSelect={handleSelectPlan}
             />
           </div>
@@ -605,6 +608,7 @@ interface PlanCardProps {
   plan: PlanTier;
   selected: boolean;
   highlight?: boolean;
+  disabled?: boolean;
   onSelect: (plan: PlanTier) => void;
 }
 
@@ -616,16 +620,24 @@ function PlanCard({
   plan,
   selected,
   highlight,
+  disabled,
   onSelect,
 }: PlanCardProps) {
   return (
     <div
-      className={`flex flex-col justify-between rounded-2xl border px-4 py-5 text-sm shadow-sm ${
+      className={`relative flex flex-col justify-between rounded-2xl border px-4 py-5 text-sm shadow-sm ${
         highlight
           ? 'border-accent-500 bg-brand-700/60'
           : 'border-brand-700 bg-brand-800/40'
-      } ${selected ? 'ring-2 ring-accent-500' : ''}`}
+      } ${selected ? 'ring-2 ring-accent-500' : ''} ${
+        disabled ? 'opacity-60' : ''
+      }`}
     >
+      {disabled && (
+        <span className="absolute right-4 top-4 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/70">
+          Próximamente
+        </span>
+      )}
       <div className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-white/60">
           {title}
@@ -643,7 +655,8 @@ function PlanCard({
       </div>
       <button
         onClick={() => onSelect(plan)}
-        className="mt-4 rounded-full bg-white px-4 py-2 text-xs font-semibold text-brand-800 hover:bg-brand-50 transition"
+        disabled={disabled}
+        className="mt-4 rounded-full bg-white px-4 py-2 text-xs font-semibold text-brand-800 hover:bg-brand-50 transition disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-brand-800/60 disabled:hover:bg-white/40"
       >
         Elegir {title}
       </button>
