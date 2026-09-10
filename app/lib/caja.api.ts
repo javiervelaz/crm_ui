@@ -14,7 +14,7 @@ export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'di
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load tipo categoria list');
+        throw new Error('No se pudo cargar la lista de tipos de categoría');
       }
       return await response.json();
 

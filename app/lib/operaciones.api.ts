@@ -32,9 +32,9 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
-      notifySuccess('caja loaded successfully');
+      notifySuccess('Operación realizada correctamente');
       return await response.json();
     } catch (error: any) {
       notifyError( '' + error.message);
@@ -55,7 +55,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -76,7 +76,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -100,7 +100,7 @@ export const abrirCaja = async (data: any) => {
   
       // Si hay otro tipo de error, lanza una excepción
       if (response.status !== 200) {
-        throw new Error('Failed to fetch pedidos list');
+        throw new Error('No se pudo obtener la lista de pedidos');
       }
   
       return await response.data;
@@ -124,7 +124,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -177,7 +177,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -198,7 +198,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -218,7 +218,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -238,7 +238,7 @@ export const abrirCaja = async (data: any) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {

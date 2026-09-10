@@ -14,8 +14,8 @@ export const getRolList = async (cliente: bigint | null) => {
         return [];
       }
     if (!response.ok) {
-        notifyError( 'Failed to load rol');
-        throw new Error('Failed to fetch rol list');
+        notifyError( 'No se pudo cargar el rol');
+        throw new Error('No se pudo obtener la lista de roles');
     }
     return await response.json();
   };
@@ -33,8 +33,8 @@ export const getRolById = async (id: number, cliente: bigint | null) => {
       return null;
     }
     if (!response.ok) {
-      notifyError('Failed to load rol');
-      throw new Error('Failed to fetch rol');
+      notifyError('No se pudo cargar el rol');
+      throw new Error('No se pudo obtener el rol');
     }
     return await response.json();
   };

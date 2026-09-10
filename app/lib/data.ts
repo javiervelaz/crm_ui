@@ -28,7 +28,7 @@ export async function fetchRevenue() {
     return data.rows;
   } catch (error) {
     logError('Database Error:', error);
-    throw new Error('Failed to fetch revenue data.');
+    throw new Error('No se pudo obtener los datos de ingresos');
   }
 }
 
@@ -49,7 +49,7 @@ export async function fetchLatestInvoices() {
     return latestInvoices;
   } catch (error) {
     logError('Database Error:', error);
-    throw new Error('Failed to fetch the latest invoices.');
+    throw new Error('No se pudo obtener las últimas facturas');
   }
 }
 
@@ -85,7 +85,7 @@ export async function fetchCardData() {
     };
   } catch (error) {
     logError('Database Error:', error);
-    throw new Error('Failed to fetch card data.');
+    throw new Error('No se pudo obtener los datos');
   }
 }
 
@@ -121,7 +121,7 @@ export async function fetchFilteredInvoices(
     return invoices.rows;
   } catch (error) {
     logError('Database Error:', error);
-    throw new Error('Failed to fetch invoices.');
+    throw new Error('No se pudo obtener las facturas');
   }
 }
 
@@ -143,7 +143,7 @@ export async function fetchInvoicesPages(query: string) {
     return totalPages;
   } catch (error) {
     logError('Database Error:', error);
-    throw new Error('Failed to fetch total number of invoices.');
+    throw new Error('No se pudo obtener el total de facturas');
   }
 }
 
@@ -169,7 +169,7 @@ export async function fetchInvoiceById(id: string) {
     return invoice[0];
   } catch (error) {
     logError('Database Error:', error);
-    throw new Error('Failed to fetch invoice.');
+    throw new Error('No se pudo obtener la factura');
   }
 }
 
@@ -188,7 +188,7 @@ export async function fetchCustomers() {
     return customers;
   } catch (err) {
     logError('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
+    throw new Error('No se pudo obtener los clientes');
   }
 }
 
@@ -222,7 +222,7 @@ export async function fetchFilteredCustomers(query: string) {
     return customers;
   } catch (err) {
     logError('Database Error:', err);
-    throw new Error('Failed to fetch customer table.');
+    throw new Error('No se pudo obtener la tabla de clientes');
   }
 }
 
@@ -232,7 +232,7 @@ export async function getUser(email: string) {
     const user = await sql`SELECT * FROM users WHERE email=${email}`;
     return user.rows[0] as User;
   } catch (error) {
-    logError('Failed to fetch user:', error);
-    throw new Error('Failed to fetch user.');
+    logError('No se pudo obtener el usuario', error);
+    throw new Error('No se pudo obtener el usuario');
   }
 }

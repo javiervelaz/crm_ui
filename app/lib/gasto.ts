@@ -14,7 +14,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load producto list');
+        throw new Error('No se pudo cargar la lista de productos');
       }
       return await response.json();
   };
@@ -33,7 +33,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load producto list');
+        throw new Error('No se pudo cargar la lista de productos');
       }
       return await response.json();
   };
@@ -52,7 +52,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load tipo categoria list');
+        throw new Error('No se pudo cargar la lista de tipos de categoría');
       }
       return await response.json();
   };
@@ -69,7 +69,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
     });
     if (!response.ok) {
      
-      throw new Error('Failed to create medio pago');
+      throw new Error('No se pudo crear el medio de pago');
     }
     return await response.json();
   };
@@ -86,7 +86,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
     });
     if (!response.ok) {
      
-      throw new Error('Failed to create medio pago');
+      throw new Error('No se pudo crear el medio de pago');
     }
     return await response.json();
   };
@@ -106,7 +106,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
       });
       if (!response.ok) {
         const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+        throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       return await response.json();
     } catch (error) {
@@ -125,7 +125,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error('Failed to update tipo salida');
+      throw new Error('No se pudo actualizar el tipo de salida');
     }
     return await response.json();
   };
@@ -144,7 +144,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch tipo salida');
+      throw new Error('No se pudo obtener el tipo de salida');
     }
     return await response.json();
   };
@@ -159,7 +159,7 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
       },
     });
     if (!response.ok) {
-      throw new Error('Failed to delete  categoria salida');
+      throw new Error('No se pudo eliminar categoria salida');
     }
     return await response.json();
   };
