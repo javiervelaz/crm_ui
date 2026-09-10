@@ -82,11 +82,17 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
             <div className="mb-4">
               <label className="block text-gray-700">Monto Inicial:</label>
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 value={montoInicial}
-                onChange={(e) => setMontoInicial(e.target.value)}
+                onChange={(e) => {
+                  // bug 36: normalizar -> solo dígitos y un punto, sin ceros a la izquierda
+                  let v = e.target.value.replace(/[^\d.]/g, '');
+                  const parts = v.split('.');
+                  v = parts.shift() + (parts.length ? '.' + parts.join('') : '');
+                  v = v.replace(/^0+(?=\d)/, '');
+                  setMontoInicial(v);
+                }}
                 className="w-full px-3 py-2 border rounded"
                 required
               />

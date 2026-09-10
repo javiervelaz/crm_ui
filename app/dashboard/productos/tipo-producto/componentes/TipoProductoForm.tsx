@@ -48,6 +48,15 @@ export default function TipoProductoForm({ id }: { id?: number }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (enviando) return; // sin doble submit
+    const nombreLimpio = nombre.trim();
+    if (!nombreLimpio) {
+      notifyError('El nombre es obligatorio');
+      return;
+    }
+    if (nombreLimpio.length > 100) {
+      notifyError('El nombre no puede superar los 100 caracteres');
+      return;
+    }
     setEnviando(true);
 
     // [multi-tenant] cliente_id va en el payload por explicitud y paridad con
@@ -64,9 +73,9 @@ export default function TipoProductoForm({ id }: { id?: number }) {
         notifySuccess('Tipo de producto creado');
       }
       router.push(LISTA);
-    } catch (err) {
+    } catch (err: any) {
       logError('Error guardando el tipo de producto', err);
-      notifyError('No se pudo guardar el tipo de producto');
+      notifyError(err?.response?.data?.error || err?.message || 'No se pudo guardar el tipo de producto');
     } finally {
       setEnviando(false);
     }
@@ -89,7 +98,7 @@ export default function TipoProductoForm({ id }: { id?: number }) {
           <input
             id="nombre"
             type="text"
-            required
+            maxLength={100}
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             className={campo}
