@@ -50,6 +50,9 @@ const DashboardEmpleados = () => {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
           setRegistroDiario(res.registro_diario_id);
+        } else {
+          setCajaAbierta(false);
+          setRegistroDiario(null);
         }
       } catch (error) {
         logError("Error al verificar la caja:", error);
@@ -57,6 +60,10 @@ const DashboardEmpleados = () => {
     };
 
     verificarCaja();
+    // bug 22: revalidar caja al abrir/cerrar sin recargar la pagina
+    const handler = () => verificarCaja();
+    window.addEventListener('caja-changed', handler);
+    return () => window.removeEventListener('caja-changed', handler);
   }, []);
 
   // 2) fetchPedidos por registro_diario (día actual)

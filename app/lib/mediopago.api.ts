@@ -12,10 +12,10 @@ export const createMedioPago = async (data: any) => {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      notifyError( 'Failed to load medio pago');
-      throw new Error('Failed to create medio pago');
+      notifyError( 'No se pudo cargar el medio de pago');
+      throw new Error('No se pudo crear el medio de pago');
     }
-    notifySuccess('medio pago loaded successfully');
+    notifySuccess('Operación realizada correctamente');
     return await response.json();
   };
 
@@ -33,7 +33,7 @@ export const createMedioPago = async (data: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch medio pago');
+      throw new Error('No se pudo obtener el medio de pago');
     }
     return await response.json();
   };
@@ -49,8 +49,8 @@ export const createMedioPago = async (data: any) => {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      notifyError( 'Failed to update Role');
-      throw new Error('Failed to update role');
+      notifyError( 'No se pudo actualizar el rol');
+      throw new Error('No se pudo actualizar el rol');
     }
     notifySuccess('Role updated successfully');
     return await response.json();
@@ -74,7 +74,7 @@ export const createMedioPago = async (data: any) => {
   
       // Si hay otro tipo de error, lanza una excepción
       if (!response.ok) {
-        throw new Error('Failed to fetch user');
+        throw new Error('No se pudo obtener el usuario');
       }
   
       return await response.json();
@@ -95,7 +95,7 @@ export const createMedioPago = async (data: any) => {
       },
     });
     if (!response.ok) {
-      throw new Error('Failed to delete medio pago');
+      throw new Error('No se pudo eliminar el medio de pago');
     }
     return await response.json();
   };

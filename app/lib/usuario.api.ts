@@ -15,8 +15,8 @@ export const createUser = async (userDetails: any) => {
       body: JSON.stringify(userDetails),
     });
     if (!response.ok) {
-      notifyError( 'Failed to load user');
-      throw new Error('Failed to create user');
+      notifyError( 'No se pudo cargar el usuario');
+      throw new Error('No se pudo crear el usuario');
     }
     
     return await response.json();
@@ -36,7 +36,7 @@ export const createUser = async (userDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user');
+      throw new Error('No se pudo obtener el usuario');
     }
     return await response.json();
   };
@@ -52,7 +52,7 @@ export const createUser = async (userDetails: any) => {
       body: JSON.stringify(updatedDetails),
     });
     if (!response.ok) {
-      throw new Error('Failed to update user');
+      throw new Error('No se pudo actualizar el usuario');
     }
     return await response.json();
   };
@@ -67,7 +67,7 @@ export const createUser = async (userDetails: any) => {
       },
     });
     if (!response.ok) {
-      throw new Error('Failed to delete user');
+      throw new Error('No se pudo eliminar el usuario');
     }
     return await response.json();
   };
@@ -87,7 +87,7 @@ export const createUser = async (userDetails: any) => {
     }
    
     if (response.status !== 200) {
-      throw new Error('Failed to fetch user list');
+      throw new Error('No se pudo obtener la lista de usuarios');
     }
     return await response.data;
   };
@@ -107,7 +107,7 @@ export const createUser = async (userDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user');
+      throw new Error('No se pudo obtener el usuario');
     }
     return await response.json();
   };
@@ -128,7 +128,7 @@ export const createUser = async (userDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user rol');
+      throw new Error('No se pudo obtener el rol del usuario');
     }
     return await response.json();
   };
@@ -147,7 +147,7 @@ export const createUser = async (userDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user list');
+      throw new Error('No se pudo obtener la lista de usuarios');
     }
     return await response.json();
   };
@@ -166,7 +166,7 @@ export const createUser = async (userDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch cliente estadistica');
+      throw new Error('No se pudo obtener las estadísticas del cliente');
     }
     return await response.json();
   };

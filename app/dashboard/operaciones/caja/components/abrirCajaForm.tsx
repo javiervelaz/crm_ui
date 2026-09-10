@@ -59,13 +59,10 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
             };
            
             await abrirCaja(data);
+            // bug 22: refrescar el estado de caja sin recargar la página
+            window.dispatchEvent(new Event('caja-changed'));
             if (typeof onClose === 'function') {
-              onClose();  // Verifica si onClose es una función antes de llamarla
-              setTimeout(() => {
-                window.location.href = '/dashboard/operaciones/empleado';
-                window.location.reload();
-              }, 500);
-             
+              onClose();
             } else {
               logError('onClose no es una función');
             }

@@ -24,7 +24,7 @@ export const getProductoList = async (cliente: bigint | null) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load producto list');
+        throw new Error('No se pudo cargar la lista de productos');
       }
       return await response.json();
   };
@@ -53,7 +53,7 @@ export const getProductoList = async (cliente: bigint | null) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load producto list');
+        throw new Error('No se pudo cargar la lista de productos');
       }
       return await response.json();
   };
@@ -82,9 +82,9 @@ export const getProductoList = async (cliente: bigint | null) => {
 
     if (!response.ok) {
       const messageBackend = errorBody?.error || errorBody?.message;
-      throw new Error(messageBackend ||'Failed to create producto');
+      throw new Error(messageBackend ||'No se pudo crear el producto');
     }
-    notifySuccess('producto loaded successfully');
+    notifySuccess('Operación realizada correctamente');
     return await response.json();
   };
 
@@ -102,7 +102,7 @@ export const getProductoList = async (cliente: bigint | null) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch producto');
+      throw new Error('No se pudo obtener el producto');
     }
     return await response.json();
   };
@@ -153,7 +153,7 @@ export const getProductoList = async (cliente: bigint | null) => {
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
     }
     if (!response.ok) {
-      throw new Error('Failed to delete  producto');
+      throw new Error('No se pudo eliminar el producto');
     }
     return await response.json();
   };

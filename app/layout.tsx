@@ -95,7 +95,7 @@ export default function RootLayout({
               </div>
             </div>
           )}
-          <ToastContainer />
+          <ToastContainer position="top-right" autoClose={3000} limit={3} newestOnTop closeOnClick pauseOnFocusLoss={false} theme="colored" />
           {/*
           [4.2] Escucha el evento PLAN_LIMITE que emite apiClient en los 403 de
           plan y abre el modal. Sin este montaje el evento se dispara al vacío:
