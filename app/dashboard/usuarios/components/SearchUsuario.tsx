@@ -27,7 +27,7 @@ const SearchUsuario: React.FC<SearchUsuarioProps> = ({ placeholder, onSearch }) 
         onClick={handleSearch}
         className="bg-brand-600 text-white px-4 py-2 rounded-r"
       >
-        Buscar por apellido
+        Buscar
       </button>
     </div>
   );

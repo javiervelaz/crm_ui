@@ -144,7 +144,7 @@ const DashboardEmpleados = () => {
               <p className="text-xs text-gray-500">
                 Caja abierta el:{" "}
                 <span className="font-medium">
-                  {new Date(fechaApertura).toLocaleString()}
+                  {fechaApertura ? new Date(String(fechaApertura).slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR') : ''}
                 </span>
               </p>
             </div>
