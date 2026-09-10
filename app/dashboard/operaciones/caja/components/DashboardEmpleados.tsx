@@ -97,7 +97,7 @@ useEffect(() => {
       ) : (
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-bold">Pedidos del Día</h2>
-          <p className="text-sm text-brand-300">Caja abierta el: {new Date(fechaApertura).toLocaleString()}</p>
+          <p className="text-sm text-brand-300">Caja abierta el: {fechaApertura ? new Date(String(fechaApertura).slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR') : ''}</p>
         </div>
       )}
 
