@@ -15,7 +15,7 @@ export const getModulosByCliente = async (cliente_id: bigint | null) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch tipo salida');
+        throw new Error('No se pudo obtener el tipo de salida');
       }
       return await response.json();
 
@@ -38,7 +38,7 @@ export const getRolModulosPermisos = async (rolId: number) => {
     return [];
   }
   if (!response.ok) {
-    throw new Error('Failed to fetch modulo permiso');
+    throw new Error('No se pudo obtener los módulos/permisos');
   }
   return await response.json();
 
@@ -58,7 +58,7 @@ export const getUserPermisosById = async (userId: number, cliente_id: bigint | n
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch tipo salida');
+        throw new Error('No se pudo obtener el tipo de salida');
       }
       return await response.json();
 
@@ -78,7 +78,7 @@ export const getPermisosByModuloId = async (cliente_id: bigint | null, id_modulo
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch tipo salida');
+        throw new Error('No se pudo obtener el tipo de salida');
       }
       return await response.json();
 

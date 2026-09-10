@@ -95,6 +95,9 @@ const CreateUserPage = () => {
      if (!userDetails.email || userDetails.email.trim() === '') {
       newErrors.email = 'El email es obligatorio';
       isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userDetails.email.trim())) {
+      newErrors.email = 'El email no es válido';
+      isValid = false;
     }
 
     setErrors(newErrors);

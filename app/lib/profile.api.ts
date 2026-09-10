@@ -14,10 +14,10 @@ export const createProfile = async (profileDetails: any) => {
     });
     
     if (!response.ok) {
-      notifyError( 'Failed to load profile');
-      throw new Error('Failed to create profile');
+      notifyError( 'No se pudo cargar el perfil');
+      throw new Error('No se pudo crear el perfil');
     }
-    notifySuccess('profile loaded successfully');
+    notifySuccess('Operación realizada correctamente');
     return await response.json();
   };
 
@@ -35,7 +35,7 @@ export const createProfile = async (profileDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user');
+      throw new Error('No se pudo obtener el usuario');
     }
     return await response.json();
   };
@@ -54,7 +54,7 @@ export const createProfile = async (profileDetails: any) => {
       
       // Si hay otro tipo de error, lanza una excepción
       if (response.status !== 200) {
-        throw new Error('Failed to fetch user');
+        throw new Error('No se pudo obtener el usuario');
       }
 
       return await response.data;
@@ -81,7 +81,7 @@ export const createProfile = async (profileDetails: any) => {
       body: JSON.stringify(updatedProfileDetails),
     });
     if (!response.ok) {
-      throw new Error('Failed to update profile');
+      throw new Error('No se pudo actualizar el perfil');
     }
     return await response.json();
   };
@@ -104,7 +104,7 @@ export const createProfile = async (profileDetails: any) => {
   
       // Si hay otro tipo de error, lanza una excepción
       if (!response.ok) {
-        throw new Error('Failed to fetch user');
+        throw new Error('No se pudo obtener el usuario');
       }
   
       return await response.json();

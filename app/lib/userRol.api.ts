@@ -12,10 +12,10 @@ export const createUserRol = async (userRolDetails: any) => {
       body: JSON.stringify(userRolDetails),
     });
     if (!response.ok) {
-      notifyError( 'Failed to load profile');
-      throw new Error('Failed to create profile');
+      notifyError( 'No se pudo cargar el perfil');
+      throw new Error('No se pudo crear el perfil');
     }
-    notifySuccess('profile loaded successfully');
+    notifySuccess('Operación realizada correctamente');
     return await response.json();
   };
 
@@ -33,7 +33,7 @@ export const createUserRol = async (userRolDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user rol');
+      throw new Error('No se pudo obtener el rol del usuario');
     }
     return await response.json();
   };
@@ -49,8 +49,8 @@ export const createUserRol = async (userRolDetails: any) => {
       body: JSON.stringify(updatedUserRolDetails),
     });
     if (!response.ok) {
-      notifyError( 'Failed to update Role');
-      throw new Error('Failed to update role');
+      notifyError( 'No se pudo actualizar el rol');
+      throw new Error('No se pudo actualizar el rol');
     }
     notifySuccess('Role updated successfully');
     return await response.json();
@@ -74,7 +74,7 @@ export const createUserRol = async (userRolDetails: any) => {
   
       // Si hay otro tipo de error, lanza una excepción
       if (!response.ok) {
-        throw new Error('Failed to fetch user');
+        throw new Error('No se pudo obtener el usuario');
       }
   
       return await response.json();
@@ -95,7 +95,7 @@ export const createUserRol = async (userRolDetails: any) => {
       },
     });
     if (!response.ok) {
-      throw new Error('Failed to delete user');
+      throw new Error('No se pudo eliminar el usuario');
     }
     return await response.json();
   };
