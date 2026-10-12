@@ -1,0 +1,2716 @@
+From 9460f21019ba23f8ced67a8f926120a51983fe07 Mon Sep 17 00:00:00 2001
+From: Javier Velaz <javiervelaz1980@gmail.com>
+Date: Mon, 12 Oct 2026 18:35:19 +0000
+Subject: [PATCH] =?UTF-8?q?feat(core-modulos-ui):=20men=C3=BA=20y=20aterri?=
+ =?UTF-8?q?zaje=20por=20m=C3=B3dulos=20+=20rubro=20en=20el=20alta?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Login (LoginForm y /auth): aterrizaje con landingRoute(). Gastronomía
+  conserva el panel de operaciones por rol; un tenant sin 'operaciones'
+  (academia) va al primer módulo de su menú en vez de "No tenés acceso".
+  /auth mandaba a /dashboard/orders, una ruta inexistente.
+- Header: el menú de configuración muestra sólo usuarios/roles/plan si el
+  usuario tiene esos módulos (settingsModules()). Arregla la key del map.
+- Alta (/saas): selector "Rubro del negocio" desde GET /api/rubros, con
+  ?rubro= para preseleccionar desde la landing de cada vertical. Default
+  gastronomía, así el funnel actual no cambia.
+- Tests: Vitest (npm test). 28 tests de menú, guard de rutas, aterrizaje,
+  rubro inicial y envío del rubro en el alta.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014RFddfgFoRADGhYSqcdhLn
+---
+ app/auth/page.tsx            |   10 +-
+ app/lib/modules.ts           |   45 +
+ app/lib/rubros.ts            |   27 +
+ app/lib/saas.api.ts          |    3 +
+ app/lib/useRubros.ts         |   35 +
+ app/saas/page.tsx            |   62 +-
+ app/ui/AdminSettingsMenu.tsx |   23 +-
+ app/ui/Header.tsx            |    7 +-
+ app/ui/LoginForm.tsx         |   33 +-
+ package-lock.json            | 1716 ++++++++++++++++++++++++++++++++--
+ package.json                 |    4 +-
+ tests/modules.test.ts        |  116 +++
+ tests/rubros.test.ts         |   87 ++
+ vitest.config.mts            |   14 +
+ 14 files changed, 2091 insertions(+), 91 deletions(-)
+ create mode 100644 app/lib/rubros.ts
+ create mode 100644 app/lib/useRubros.ts
+ create mode 100644 tests/modules.test.ts
+ create mode 100644 tests/rubros.test.ts
+ create mode 100644 vitest.config.mts
+
+diff --git a/app/auth/page.tsx b/app/auth/page.tsx
+index 90e2b6c..04b7e3e 100644
+--- a/app/auth/page.tsx
++++ b/app/auth/page.tsx
+@@ -1,10 +1,12 @@
+ "use client";
+ 
+ import axios from 'axios';
++import { jwtDecode } from 'jwt-decode';
+ import { useRouter } from 'next/navigation'; // Cambia 'next/router' por 'next/navigation'
+ import { FormEvent, useState } from 'react';
+ import styles from './page.module.css';
+ import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
++import { landingRoute } from '@/app/lib/modules';
+ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+ 
+ const LoginPage = () => {
+@@ -21,8 +23,12 @@ const LoginPage = () => {
+ 
+     try {
+       const response = await axios.post(`${apiUrl}/auth/login`, { email, password });
+-      localStorage.setItem('token', response.data.token);
+-      router.push('/dashboard/orders');
++      const token: string = response.data.token;
++      localStorage.setItem('token', token);
++      window.dispatchEvent(new Event('storage'));
++      // Antes iba a '/dashboard/orders', una ruta que no existe.
++      const { role, modules } = jwtDecode<{ role?: string[]; modules?: string[] }>(token);
++      router.push(landingRoute(role, modules));
+     } catch (err: any) {
+       const status = err?.response?.status;
+       const code = err?.response?.data?.code;
+diff --git a/app/lib/modules.ts b/app/lib/modules.ts
+index 348be1c..dbb1e73 100644
+--- a/app/lib/modules.ts
++++ b/app/lib/modules.ts
+@@ -190,3 +190,48 @@ export function canAccess(pathname: string, userModules: string[]): boolean {
+     );
+   });
+ }
++
++/**
++ * Aterrizaje post-login.
++ *
++ * Gastronomía conserva su comportamiento: el admin cae en el panel de
++ * operaciones y el empleado en su caja. Pero esas rutas existen sólo si el
++ * tenant tiene el módulo 'operaciones'; un tenant de otro rubro (academia)
++ * no lo tiene y aterrizaba en "No tenés acceso". En ese caso va al primer
++ * módulo de su menú.
++ */
++const ROLE_LANDING: Record<string, string> = {
++  admin: '/dashboard/operaciones/admin',
++  empleado: '/dashboard/operaciones/empleado',
++};
++const ROLE_PRIORITY = ['admin', 'empleado'];
++
++export function landingRoute(
++  roles: string[] | undefined,
++  userModules: string[] | undefined,
++): string {
++  const mods = userModules ?? [];
++  const conocidos = (roles ?? [])
++    .filter((r) => r in ROLE_LANDING)
++    .sort((a, b) => ROLE_PRIORITY.indexOf(a) - ROLE_PRIORITY.indexOf(b));
++  // Sin rol conocido, el comportamiento histórico era la caja del empleado.
++  const porRol = ROLE_LANDING[conocidos[0]] ?? ROLE_LANDING.empleado;
++
++  if (canAccess(porRol, mods)) return porRol;
++  return defaultRouteFor(mods) ?? '/dashboard';
++}
++
++/**
++ * Accesos del menú de configuración del header (AdminSettingsMenu) que el
++ * usuario efectivamente tiene. Si Counter le desactiva uno al tenant, el
++ * acceso desaparece en vez de llevar a "No tenés acceso".
++ */
++const SETTINGS_KEYS = ['usuarios', 'roles', 'plan'] as const;
++export type SettingsKey = (typeof SETTINGS_KEYS)[number];
++
++export function settingsModules(
++  userModules: string[] | undefined,
++): SettingsKey[] {
++  const mods = userModules ?? [];
++  return SETTINGS_KEYS.filter((k) => mods.includes(k));
++}
+diff --git a/app/lib/rubros.ts b/app/lib/rubros.ts
+new file mode 100644
+index 0000000..8ed171e
+--- /dev/null
++++ b/app/lib/rubros.ts
+@@ -0,0 +1,27 @@
++// app/lib/rubros.ts
++//
++// Rubro del negocio: define qué módulos recibe el tenant en el alta
++// (ver crm_api/migrations/009_rubros.sql). Funciones puras, sin React.
++
++export interface Rubro {
++  codigo: string;
++  nombre: string;
++}
++
++/** Comportamiento histórico del alta: todo tenant era gastronómico. */
++export const RUBRO_DEFAULT = 'gastronomia';
++
++/**
++ * Rubro preseleccionado en el formulario de alta.
++ *
++ * 1. El de la URL (?rubro=educacion), si existe en el catálogo: así la
++ *    landing de cada vertical llega con su rubro marcado.
++ * 2. Si no, gastronomía, para que el funnel actual no cambie.
++ * 3. Si el catálogo no trae gastronomía, el primero disponible.
++ */
++export function rubroInicial(param: string | null | undefined, rubros: Rubro[]): string {
++  const pedido = (param ?? '').trim().toLowerCase();
++  if (pedido && rubros.some((r) => r.codigo === pedido)) return pedido;
++  if (rubros.some((r) => r.codigo === RUBRO_DEFAULT)) return RUBRO_DEFAULT;
++  return rubros[0]?.codigo ?? '';
++}
+diff --git a/app/lib/saas.api.ts b/app/lib/saas.api.ts
+index b35808d..f5d3654 100644
+--- a/app/lib/saas.api.ts
++++ b/app/lib/saas.api.ts
+@@ -14,6 +14,8 @@ export interface SaaSRegisterFormValues {
+   telefono?: string;
+   password: string;
+   aceptaTerminos: boolean;
++  /** Código de rubro (GET /api/rubros). Vacío = el backend asume gastronomía. */
++  rubro?: string;
+ }
+ 
+ export interface SaaSRegisterResponse {
+@@ -76,6 +78,7 @@ export async function registerSaasCliente(
+       cuit: values.cuit.replace(/\D/g, ''),
+       adminEmail: values.adminEmail.trim().toLowerCase(),
+       aceptaTerminos: String(values.aceptaTerminos),
++      rubro: values.rubro?.trim() || undefined,
+       utmSource: params.get('utm_source') || undefined,
+       utmCampaign: params.get('utm_campaign') || undefined,
+     }),
+diff --git a/app/lib/useRubros.ts b/app/lib/useRubros.ts
+new file mode 100644
+index 0000000..263d7c8
+--- /dev/null
++++ b/app/lib/useRubros.ts
+@@ -0,0 +1,35 @@
++// app/lib/useRubros.ts
++'use client';
++
++import { useEffect, useState } from 'react';
++import apiClient from '@/app/lib/apiClient';
++import type { Rubro } from '@/app/lib/rubros';
++
++/** Catálogo público de rubros activos (GET /api/rubros). Mismo patrón que useTiers. */
++export function useRubros() {
++  const [rubros, setRubros] = useState<Rubro[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [error, setError] = useState<string | null>(null);
++
++  useEffect(() => {
++    let cancelled = false;
++
++    apiClient
++      .get<Rubro[]>('/rubros')
++      .then((res) => {
++        if (!cancelled) setRubros(Array.isArray(res.data) ? res.data : []);
++      })
++      .catch((err: any) => {
++        if (!cancelled) setError(err?.message || 'Error cargando rubros');
++      })
++      .finally(() => {
++        if (!cancelled) setLoading(false);
++      });
++
++    return () => {
++      cancelled = true;
++    };
++  }, []);
++
++  return { rubros, loading, error };
++}
+diff --git a/app/saas/page.tsx b/app/saas/page.tsx
+index 8d458fe..4b67bc4 100644
+--- a/app/saas/page.tsx
++++ b/app/saas/page.tsx
+@@ -1,10 +1,12 @@
+ // app/saas/page.tsx
+ 'use client';
+ 
+-import { useRef, useState, FormEvent, Suspense } from 'react';
++import { useEffect, useRef, useState, FormEvent, Suspense } from 'react';
+ import Image from 'next/image';
+ import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
+ import { useTiers } from '@/app/lib/useTiers';   // 👈 NUEVO
++import { useRubros } from '@/app/lib/useRubros';
++import { rubroInicial } from '@/app/lib/rubros';
+ import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
+ import { useSearchParams } from 'next/navigation';
+ 
+@@ -45,6 +47,15 @@ function SaasLandingPage() {
+   const [fieldError, setFieldError] = useState<string | null>(null);
+   const [emailVerificacion, setEmailVerificacion] = useState('');
+   const [aceptaTerminos, setAceptaTerminos] = useState(false);
++  const [rubro, setRubro] = useState('');
++
++  // Rubro: define qué módulos recibe la cuenta. La landing de cada vertical
++  // puede mandarlo preseleccionado con ?rubro=educacion.
++  const { rubros, loading: rubrosLoading, error: rubrosError } = useRubros();
++  const rubroParam = searchParams.get('rubro');
++  useEffect(() => {
++    if (!rubro && rubros.length) setRubro(rubroInicial(rubroParam, rubros));
++  }, [rubros, rubroParam, rubro]);
+ 
+   const formRef = useRef<HTMLDivElement | null>(null);
+ 
+@@ -74,6 +85,13 @@ function SaasLandingPage() {
+       return;
+     }
+ 
++    if (!rubro) {
++      setStatus('error');
++      setErrorMessage('Elegí el rubro de tu negocio.');
++      setFieldError('rubro');
++      return;
++    }
++
+     setStatus('loading');
+     setErrorMessage(null);
+     setFieldError(null);
+@@ -83,7 +101,7 @@ function SaasLandingPage() {
+         plan: selectedPlan,
+         comercioNombre, cuit, adminNombre, adminApellido,
+         adminEmail, adminDni, telefono, password,
+-        aceptaTerminos,
++        aceptaTerminos, rubro,
+       });
+ 
+       // Sin sesión inmediata: la cuenta nace en PENDIENTE_VERIFICACION y el
+@@ -425,6 +443,44 @@ function SaasLandingPage() {
+               </div>
+             </div>
+ 
++            {/* Rubro del negocio */}
++            <div>
++              <label htmlFor="rubro" className="block text-sm font-medium text-brand-800">
++                Rubro del negocio
++              </label>
++              <select
++                id="rubro"
++                value={rubro}
++                onChange={(e) => {
++                  setRubro(e.target.value);
++                  if (fieldError === 'rubro') setFieldError(null);
++                }}
++                required
++                disabled={rubrosLoading || !!rubrosError}
++                aria-invalid={fieldError === 'rubro'}
++                className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-brand-600 focus:outline-none disabled:bg-brand-50 md:w-1/2 ${
++                  fieldError === 'rubro' ? 'border-red-500' : 'border-brand-200'
++                }`}
++              >
++                {rubrosLoading && <option value="">Cargando rubros...</option>}
++                {!rubrosLoading && !rubrosError && !rubro && <option value="">Elegí un rubro</option>}
++                {rubros.map((r) => (
++                  <option key={r.codigo} value={r.codigo}>
++                    {r.nombre}
++                  </option>
++                ))}
++              </select>
++              {rubrosError ? (
++                <p className="mt-1 text-xs text-red-600">
++                  No pudimos cargar los rubros. Recargá la página para intentar de nuevo.
++                </p>
++              ) : (
++                <p className="mt-1 text-xs text-brand-300">
++                  Según el rubro preparamos los módulos de tu cuenta.
++                </p>
++              )}
++            </div>
++
+             {/* Datos del comercio */}
+             <div className="grid gap-4 md:grid-cols-2">
+               <div className="md:col-span-2">
+@@ -561,7 +617,7 @@ function SaasLandingPage() {
+             <div className="flex items-center justify-end">
+               <button
+                 type="submit"
+-                disabled={status === 'loading' || !aceptaTerminos}
++                disabled={status === 'loading' || !aceptaTerminos || !rubro}
+                 className="inline-flex items-center rounded-full bg-brand-600 px-6 py-2 text-sm font-semibold text-white shadow-brand hover:bg-brand-700 disabled:opacity-60"
+               >
+                 {status === 'loading' ? 'Creando cuenta...' : 'Crear mi cuenta'}
+diff --git a/app/ui/AdminSettingsMenu.tsx b/app/ui/AdminSettingsMenu.tsx
+index bb621e6..8c731b2 100644
+--- a/app/ui/AdminSettingsMenu.tsx
++++ b/app/ui/AdminSettingsMenu.tsx
+@@ -2,7 +2,7 @@
+ 'use client';
+ 
+ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+-import { MODULES } from '@/app/lib/modules';
++import { MODULES, settingsModules } from '@/app/lib/modules';
+ import { CreditCard, LogOut, Settings, ShieldCheck, UserCog, Users } from 'lucide-react';
+ import Link from 'next/link';
+ import { useRouter } from 'next/navigation';
+@@ -11,6 +11,8 @@ import AppTooltip from '@/components/ui/AppTooltip';
+ 
+ type AdminSettingsMenuProps = {
+   userId: string | number;
++  /** Módulos del token: sólo se muestran los accesos que el usuario tiene. */
++  modules: string[];
+ };
+ 
+ /**
+@@ -21,16 +23,20 @@ type AdminSettingsMenuProps = {
+  * que el admin los tenga a mano sin depender de que esos módulos estén en
+  * el sidebar.
+  */
+-const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId }) => {
++const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId, modules }) => {
+   const [open, setOpen] = useState(false);
+   const router = useRouter();
+ 
++  const porModulo = {
++    usuarios: { href: MODULES.usuarios.href, label: 'Usuarios', icon: Users, description: MODULES.usuarios.description },
++    roles: { href: MODULES.roles.href, label: 'Roles', icon: ShieldCheck, description: MODULES.roles.description },
++    plan: { href: MODULES.plan.href, label: 'Planes', icon: CreditCard, description: MODULES.plan.description },
++  };
++
++  // Mi perfil es alwaysOpen: no depende de ningún módulo.
+   const items = [
+-    { href: MODULES.usuarios.href, label: 'Usuarios', icon: Users, 
+-      description: MODULES.usuarios.description },
+-    { href: MODULES.roles.href, label: 'Roles', icon: ShieldCheck,description: MODULES.roles.description },
+-    { href: MODULES.plan.href, label: 'Planes', icon: CreditCard,description: MODULES.plan.description },
+-    { href: `/dashboard/profile/${userId}/edit`, label: 'Mi perfil', icon: UserCog,description: "Mi perfil" },
++    ...settingsModules(modules).map((k) => porModulo[k]),
++    { href: `/dashboard/profile/${userId}/edit`, label: 'Mi perfil', icon: UserCog, description: 'Mi perfil' },
+   ];
+ 
+   // Misma lógica que el "Cerrar sesión" del sidebar (app/lib/dynamicMenu.tsx)
+@@ -64,9 +70,8 @@ const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId }) => {
+       <PopoverContent align="end" className="w-56 p-1.5">
+         <nav className="flex flex-col">
+           {items.map(({ href,description, label, icon: Icon }) => (
+-            <AppTooltip text={description ?? label} side="right">
++            <AppTooltip key={href} text={description ?? label} side="right">
+               <Link
+-              key={href}
+               href={href}
+               onClick={() => setOpen(false)}
+               className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-brand-800 hover:bg-brand-50"
+diff --git a/app/ui/Header.tsx b/app/ui/Header.tsx
+index ded2038..2f0001b 100644
+--- a/app/ui/Header.tsx
++++ b/app/ui/Header.tsx
+@@ -10,6 +10,7 @@ interface DecodedToken {
+   userId: string | number;
+   username: string;
+   role: string[];
++  modules?: string[];
+ }
+ 
+ type HeaderProps = {
+@@ -20,6 +21,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+   const [userName, setUserName] = useState<string | null>(null);
+   const [userId, setUserId] = useState<string | number | null>(null);
+   const [isAdmin, setIsAdmin] = useState<boolean>(false);
++  const [modules, setModules] = useState<string[]>([]);
+   const [currentDate, setCurrentDate] = useState<string>('');
+   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+   const router = useRouter();
+@@ -51,17 +53,20 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+         setUserName(decodedToken.username);
+         setUserId(decodedToken.userId);
+         setIsAdmin(Array.isArray(decodedToken.role) && decodedToken.role.includes('admin'));
++        setModules(Array.isArray(decodedToken.modules) ? decodedToken.modules : []);
+         setIsLoggedIn(true);
+       } catch {
+         setUserName(null);
+         setUserId(null);
+         setIsAdmin(false);
++        setModules([]);
+         setIsLoggedIn(false);
+       }
+     } else {
+       setUserName(null);
+       setUserId(null);
+       setIsAdmin(false);
++      setModules([]);
+       setIsLoggedIn(false);
+     }
+   };
+@@ -96,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+           <span className="font-semibold text-brand-800 whitespace-nowrap hidden sm:inline">
+             {userName}
+           </span>
+-          {isAdmin && userId != null && <AdminSettingsMenu userId={userId} />}
++          {isAdmin && userId != null && <AdminSettingsMenu userId={userId} modules={modules} />}
+           {isAdmin && (
+             <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
+               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+diff --git a/app/ui/LoginForm.tsx b/app/ui/LoginForm.tsx
+index fedf2ce..dc2aff9 100644
+--- a/app/ui/LoginForm.tsx
++++ b/app/ui/LoginForm.tsx
+@@ -5,6 +5,7 @@ import Image from 'next/image';
+ import { useRouter } from 'next/navigation';
+ import React, { FormEvent, useEffect, useState } from 'react';
+ import { notifyAuthChanged } from '@/app/lib/authEvents';
++import { landingRoute } from '@/app/lib/modules';
+ 
+ 
+ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+@@ -12,26 +13,10 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+ interface DecodedToken {
+   userId: string;
+   role: string[]; // el backend manda los nombres de rol (ej. 'admin', 'empleado'), no ids
++  modules?: string[];
++  exp?: number;
+ }
+ 
+-// Definir prioridad y rutas para cada rol
+-const ROLE_PRIORITY: Record<string, number> = {
+-  admin: 1,
+-  empleado: 2,
+-};
+-
+-const ROLE_ROUTES: Record<string, string> = {
+-  admin: '/dashboard/operaciones/admin',
+-  empleado: '/dashboard/operaciones/empleado',
+-};
+-
+-const getRedirectionRoute = (roles: string[]): string => {
+-  const sortedRoles = [...roles].sort(
+-    (a, b) => (ROLE_PRIORITY[a] ?? Infinity) - (ROLE_PRIORITY[b] ?? Infinity),
+-  );
+-  return ROLE_ROUTES[sortedRoles[0]] || '/dashboard/operaciones/empleado';
+-};
+-
+ const LoginForm: React.FC = () => {
+   const [email, setEmail] = useState('');
+   const [password, setPassword] = useState('');
+@@ -40,8 +25,13 @@ const LoginForm: React.FC = () => {
+ 
+   useEffect(() => {
+     const token = localStorage.getItem('token');
+-    if (token) {
+-      router.push('/dashboard/operaciones/admin');
++    if (!token) return;
++    try {
++      const decoded: DecodedToken = jwtDecode(token);
++      if (decoded.exp && decoded.exp < Date.now() / 1000) return;
++      router.push(landingRoute(decoded.role, decoded.modules));
++    } catch {
++      // Token corrupto: lo limpia useAuthCheck, acá sólo no redirigimos.
+     }
+   }, [router]);
+ 
+@@ -56,8 +46,7 @@ const LoginForm: React.FC = () => {
+         localStorage.setItem('token', token);
+         window.dispatchEvent(new Event('storage'));
+         notifyAuthChanged();
+-        const redirectionRoute = getRedirectionRoute(decodedToken.role);
+-        router.push(redirectionRoute);
++        router.push(landingRoute(decodedToken.role, decodedToken.modules));
+       }
+     } catch (err) {
+       setError('Credenciales inválidas');
+diff --git a/package-lock.json b/package-lock.json
+index 7592168..96dcdda 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -61,6 +61,7 @@
+         "prettier": "^3.0.3",
+         "prettier-plugin-tailwindcss": "0.5.4",
+         "tailwindcss": "^3.4.17",
++        "vitest": "^3.2.7",
+         "webpack-obfuscator": "^3.5.1"
+       },
+       "engines": {
+@@ -511,6 +512,448 @@
+       "integrity": "sha512-snKqtPW01tN0ui7yu9rGv69aJXr/a/Ywvl11sUjNtEcRc+ng/mQriFL0wLXMef74iHa/EkftbDzU9F8iFbH+zg==",
+       "license": "MIT"
+     },
++    "node_modules/@esbuild/aix-ppc64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.28.2.tgz",
++      "integrity": "sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "aix"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/android-arm": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.28.2.tgz",
++      "integrity": "sha512-kXXoiPVVGQcnIYGOeaovwOURpniDBpSq4A03qkQ+BMQqtGG6HYap3xne9C1O1yo4TR3qxlCX5IqqmX6fFo2Lqg==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/android-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.28.2.tgz",
++      "integrity": "sha512-5YfKeeI8qWfBZIX+u2xZC3Zlb3Os/gLS2sbEKM+I4ZOcsWmHS2WLysCcQZDAFRslDUU5Oiq44gf6PYN1vGwG5A==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/android-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-x64/-/android-x64-0.28.2.tgz",
++      "integrity": "sha512-O387ite7SzUyCcy3JQX4P4bLtEA7bLLkx+esve5JHnyYfNTxcVpXZo9jhdB0lTKN44gztELTdU7nS8Nr16Fs1Q==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/darwin-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.28.2.tgz",
++      "integrity": "sha512-n4KqkOQrraxHJcgjM1RvwbigfQKIKJVpM7xp+KsxiyUSrRdIXnt73VhrPAx0fV44hgfmIVKjxMN9J1t5jySVkw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/darwin-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.28.2.tgz",
++      "integrity": "sha512-uq6suIWYP37qzGddBKPw5QEQPi6HiLGsO7UmkpfyaYNQ3D+rN6w6WfwH+nuqcGXWvawGwxOEroO4YGnFh95azw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/freebsd-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/freebsd-arm64/-/freebsd-arm64-0.28.2.tgz",
++      "integrity": "sha512-n+I0BTSRIoy+d6RPKnEVwql5UwBJolytvY4mAOIEJorKlqgPII8ix6slVVrfZ5Tnj7glIZvloylbB/EJPMWEXw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/freebsd-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/freebsd-x64/-/freebsd-x64-0.28.2.tgz",
++      "integrity": "sha512-78XJTJkvPs0kz2w61301PJjXl4g7q3JqiYMZ/M/yVI73EHBrCRTgkhu9oqG7vPqq+a/yadEW8aD+agKlk5xrmg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-arm": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-arm/-/linux-arm-0.28.2.tgz",
++      "integrity": "sha512-XlDnu2q5yoqems+xay6wSAcg9DDD7K9RLKZEBOMZm3ckNpJBvOX20tSfby8KfrrhINDyv9V2YVZKY/SpoGJI8w==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.28.2.tgz",
++      "integrity": "sha512-pW4AC0P3it8c7do9MVM4p51FzHzdM/TZrerurgRcHJ2WTa1VQ1CIq18xncfpBJw4ojkiZZrKW2yIBWBP92j6Ug==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-ia32": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.28.2.tgz",
++      "integrity": "sha512-CYbnj78HsIeA+DhgUKgFCfvNsTHFhMMrinUrMZpDXJXKN8T3XViTZ/+wtHeVxEWY8ewSzTFN+nRmSwO2tZaLUQ==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-loong64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-loong64/-/linux-loong64-0.28.2.tgz",
++      "integrity": "sha512-buwkd8nsph4R+ajRvw0qM5Hja/TXQow3ptzWO2EbG/cqcIkHloRrdlBtQlshyYGTNFvfkfJ5tpPLVkY4DtsPfQ==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-mips64el": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-mips64el/-/linux-mips64el-0.28.2.tgz",
++      "integrity": "sha512-ZVykbDyk7519VwiNb9Lcj9m8XM6v5V9uKPvrEMkkEedVewf+0itkhahp4HDpgERXhwLRpWFypsGbG/J8s0QjJA==",
++      "cpu": [
++        "mips64el"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-ppc64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-ppc64/-/linux-ppc64-0.28.2.tgz",
++      "integrity": "sha512-CAXl+Dtd9UUuJd8pKKdwh6MLm3MUMiqMPmhZ3tTSXPqfyQ3vDl6R5hZdZ/kYojK4ofXtdfSv1tFq8XzWx3heNQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-riscv64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-riscv64/-/linux-riscv64-0.28.2.tgz",
++      "integrity": "sha512-GeXCej4IQtU1B+QlDV8W/RRvbzI3O/Stss+/bCXv4lZls5WGRtu2a+3JkA3i4qIUlMXpcHebWpF8AkJhATowuA==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-s390x": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-s390x/-/linux-s390x-0.28.2.tgz",
++      "integrity": "sha512-3H1weTYZPxt/WOhByszQZybS9w5lKzUn1FDMsgEChbHWQwHYQQRfBxgCcZvPhjHfKyJjIievvMmEUawJrdY9Dg==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/linux-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
++      "integrity": "sha512-4xTZr1FUmSoQW4XIWmit3tzQrUTZM+N3P0XV8xROKYF50XfI7xeO90+1bZvNwxIufQ9hDQVRJH5YhgPVF8A/HQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/netbsd-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/netbsd-arm64/-/netbsd-arm64-0.28.2.tgz",
++      "integrity": "sha512-sSATRjPeDBg3pdgHoQfoYBob11Kk1FGa9lui5RIHZCoCkJa9QKlvl3/vKz2usCmYYjs7ymJR/2Nnsqe+Hjt5nw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/netbsd-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/netbsd-x64/-/netbsd-x64-0.28.2.tgz",
++      "integrity": "sha512-lqnzCV+mM0gIADaKihiCg6ifgfU2L3h5E33rNQBN1Y4MaVGnzryzmvvf7UHxprpQdE8hpqLolJ9Rl+SkIRDpyw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/openbsd-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/openbsd-arm64/-/openbsd-arm64-0.28.2.tgz",
++      "integrity": "sha512-AL2qJILH7lNjrDmCQDvdxMfAUIv8KMNZOvrwAQ8i8//ntL9FflhOyMJ8OZSMBb8/AWXe3/5v5S20y3zCoZWKoQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/openbsd-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/openbsd-x64/-/openbsd-x64-0.28.2.tgz",
++      "integrity": "sha512-QtiuPytchRyC4rwUKhexJdQKvDuZ6hWloi3igqPQNUJCS1/v9EiO3UTOXR6A3FoMo4fnAKbWJdqaIwhOzh8qEw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/openharmony-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/openharmony-arm64/-/openharmony-arm64-0.28.2.tgz",
++      "integrity": "sha512-WkhYDmpTjLvGlScA1rwjRUmhl4k8oXR3cIbtqWmELgU/dFeHHlEllxDvdWcNJV9rbzCexB5vz8gtNewWLgCT7Q==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/sunos-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/sunos-x64/-/sunos-x64-0.28.2.tgz",
++      "integrity": "sha512-GPMSkTOtMnv2U2F8gxe4Io6qmVs+YKyp832Etqqxr0hFngmXQ3rzwytelm3GIn7T4VviRUlf3sOgBOiTdvaf7g==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "sunos"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/win32-arm64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-arm64/-/win32-arm64-0.28.2.tgz",
++      "integrity": "sha512-PIhhEkE9uPBleRBrQEJpUn7MBnibZzbGzYWPmY3x+YoVg/95zbjB4CxPPOQ8l5tYYM4mMaCthF8/1DIfBQQyWQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/win32-ia32": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.28.2.tgz",
++      "integrity": "sha512-YmJbfTlvU7Sdn9BB+4PRES4oB6pxgS37MAONj+hBr/cpXS1aBPKXxNnDbu+QCWPj0o9dgyxeq79g6c5P8KeuYA==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@esbuild/win32-x64": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.28.2.tgz",
++      "integrity": "sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=18"
++      }
++    },
+     "node_modules/@eslint-community/eslint-utils": {
+       "version": "4.7.0",
+       "resolved": "https://registry.npmjs.org/@eslint-community/eslint-utils/-/eslint-utils-4.7.0.tgz",
+@@ -983,9 +1426,9 @@
+       }
+     },
+     "node_modules/@jridgewell/sourcemap-codec": {
+-      "version": "1.5.4",
+-      "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.4.tgz",
+-      "integrity": "sha512-VT2+G1VQs/9oz078bLrYbecdZKs912zQlkelYpuf+SXF+QvZDYJlbx/LSx+meSAwdDFnF8FVXW92AVjjkVmgFw==",
++      "version": "1.6.0",
++      "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz",
++      "integrity": "sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==",
+       "license": "MIT"
+     },
+     "node_modules/@jridgewell/trace-mapping": {
+@@ -1070,6 +1513,23 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/@napi-rs/lzma-linux-x64-gnu": {
++      "version": "1.5.1",
++      "resolved": "https://registry.npmjs.org/@napi-rs/lzma-linux-x64-gnu/-/lzma-linux-x64-gnu-1.5.1.tgz",
++      "integrity": "sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^22.20 || ^24.12 || >=25"
++      }
++    },
+     "node_modules/@napi-rs/wasm-runtime": {
+       "version": "0.2.12",
+       "resolved": "https://registry.npmjs.org/@napi-rs/wasm-runtime/-/wasm-runtime-0.2.12.tgz",
+@@ -2355,26 +2815,376 @@
+         "@swc/helpers": "^0.5.0"
+       }
+     },
+-    "node_modules/@react-stately/utils": {
+-      "version": "3.10.8",
+-      "resolved": "https://registry.npmjs.org/@react-stately/utils/-/utils-3.10.8.tgz",
+-      "integrity": "sha512-SN3/h7SzRsusVQjQ4v10LaVsDc81jyyR0DD5HnsQitm/I5WDpaSr2nRHtyloPFU48jlql1XX/S04T2DLQM7Y3g==",
+-      "license": "Apache-2.0",
+-      "dependencies": {
+-        "@swc/helpers": "^0.5.0"
+-      },
+-      "peerDependencies": {
+-        "react": "^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1"
+-      }
++    "node_modules/@react-stately/utils": {
++      "version": "3.10.8",
++      "resolved": "https://registry.npmjs.org/@react-stately/utils/-/utils-3.10.8.tgz",
++      "integrity": "sha512-SN3/h7SzRsusVQjQ4v10LaVsDc81jyyR0DD5HnsQitm/I5WDpaSr2nRHtyloPFU48jlql1XX/S04T2DLQM7Y3g==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@swc/helpers": "^0.5.0"
++      },
++      "peerDependencies": {
++        "react": "^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1"
++      }
++    },
++    "node_modules/@react-types/shared": {
++      "version": "3.31.0",
++      "resolved": "https://registry.npmjs.org/@react-types/shared/-/shared-3.31.0.tgz",
++      "integrity": "sha512-ua5U6V66gDcbLZe4P2QeyNgPp4YWD1ymGA6j3n+s8CGExtrCPe64v+g4mvpT8Bnb985R96e4zFT61+m0YCwqMg==",
++      "license": "Apache-2.0",
++      "peerDependencies": {
++        "react": "^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1"
++      }
++    },
++    "node_modules/@rollup/rollup-android-arm-eabi": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.64.5.tgz",
++      "integrity": "sha512-MrfgRQSpD5hkkRg6XI16B6EDLb+6+xp8xje6bpdSwkYw+qxrBKbUVrRAQu9h82UT+QumSIVQ8HXsXjPd2dlhqw==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-android-arm64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.64.5.tgz",
++      "integrity": "sha512-+uu2p/R9Tzn8GpoQyX1pAo5dmKT1DhXevfaCzqzmPFhnLjHLWw7uWkaVGlxmhwYoRiYYhsGfRcD5cTBpL7rgSw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-darwin-arm64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.64.5.tgz",
++      "integrity": "sha512-17dys+YEmzwzzFVHQAVDONg5FALXY9kd99HFEpfk4gJVHYxoh5bGea3D4t1fXXnwkTcOe25wPyd6nWS0I8IdLQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@rollup/rollup-darwin-x64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.64.5.tgz",
++      "integrity": "sha512-wg0zQEKkEvFZf1UaaX1UELOoPs//OSKUG7D+yITuqOsAvza7LvHTv5Wu4nmMfzNG7EYI2jp2PJC7Id6OETmsYQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@rollup/rollup-freebsd-arm64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.64.5.tgz",
++      "integrity": "sha512-CoJmWcpEMuwin+TZ/ev/H9uDyF/uxUKQSWXdmIPn/UBx/uGV9+4ebMp0FwnlhWR9PE1AdzYsKf3bZevhif38+A==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-freebsd-x64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.64.5.tgz",
++      "integrity": "sha512-PxZnLAaTUAL5xG0W2BXLeYPKrK2b3LIASV2/e/Kf7PZvSLI1iAQIm9B9aJD+YyFIT7hc6qaMV3+OOO35R28LfA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm-gnueabihf": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.64.5.tgz",
++      "integrity": "sha512-uPo3IvnONjhbFXwWgroBeFwOicuhT7ZwQrnzkzmOtBJzeQbkUJUE1SJDfDI31ijQ5+ZUIA6sPrdUMxTSnxUWAg==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm-musleabihf": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.64.5.tgz",
++      "integrity": "sha512-ywI8Jyuc4LyHYTjC0mw4yA1ulvZBkHusdpWnoiEBsmBuHvSnt90btTBGCZ+s/2y+YNNfVAEKy33nPo5UI9zTmg==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm64-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.64.5.tgz",
++      "integrity": "sha512-tmuXJoQ/3ovSr637aykZMdQteU/CB2APAz2CrvsbibuoHZi1BS1Db13cVViBdEARGwXCLn1DSJ8wsjoThLJPGA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm64-musl": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.64.5.tgz",
++      "integrity": "sha512-5FMjSYNcUOHx7oW8Qu9KB6jGPpvF/8sG7+BDHwU/Ihh1/6FMJ9ySmsFG4tJ1qbNRuP8OLzCBDso4sF0mQaLuFQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-loong64-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.64.5.tgz",
++      "integrity": "sha512-K8ZJ+neLDbUkIrL8dqF/5LtuVCrKwo27kREgOlxjBEjlOXwHvDnHLU8Z/UKv/B49qi7e8hsSDOyoJwhwqhvX4w==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-loong64-musl": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.64.5.tgz",
++      "integrity": "sha512-NlVxsq7PFPv0DBKGuNWRDKixQYQCjM53zl04mxEcKMBmJbCBIUm1JdPfIWDRHyOOFzzYPmLQzfeEwh4716ayQg==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-ppc64-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.64.5.tgz",
++      "integrity": "sha512-ARhRHJYs5eCFet5azfrHD97vOkD8OzNW2RSMlvo5CcBqXaTOLfp0OHDtUQh7/K5AL5fUYoFp2fgC9KDg4vVYMQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-ppc64-musl": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.64.5.tgz",
++      "integrity": "sha512-atSgreM5C7jpxd9aEXN+6vJ5wTd05iYw+S3FiQpw7VsoEl8B90llbq35ARON+GOHj5QlVQEq2vOKWCHTob/BSQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-riscv64-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.64.5.tgz",
++      "integrity": "sha512-vmlmwBFGnjVWxSRoVabNkyYuscSmg52Pd0fM8jEbNT3Jmka4A6HcB84x4uAmuumznWfBVaxKOqU6jbEgomWKCA==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-riscv64-musl": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.64.5.tgz",
++      "integrity": "sha512-hhJrP6S9WkbsbcHgUkvCBS5Cn8IdsG8XjlLZyxjnv9+NdoYfbbZE4TWJYr8apdaj1M5t5Y1id2StnEslxpNFyA==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-s390x-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.64.5.tgz",
++      "integrity": "sha512-NNVCyN9pGrwFmQa4bf+Cnf5aVH3g6ZpnlOg1Cs/H9swIHT9bRixijfzUqyEIWm1WtiAuR1LJ+rJH6zpBm8kgQA==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-x64-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.64.5.tgz",
++      "integrity": "sha512-dR9nd6OKnvSS60Ifz/L7Mj5zzYyoqyRn2NwTuaOONKaa3xsVGXyp8YusMbvFyEOR94DxnwgcbgsFqkHd29ZSzQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-x64-musl": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.64.5.tgz",
++      "integrity": "sha512-1tzsMjaqhsh3bAO6SJiJqh8hIr9sSPRd+i2vPPxJHod8/XYnf9TEnK0z/u3r1z1AkI347X0KbRSg9dWcxeGahw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-openbsd-x64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.64.5.tgz",
++      "integrity": "sha512-01mWMQblKoXXsmk28KXtpbA96w7g/aOWUoV3AC16fdHdqkykGalqyyM+5u8M7uP5/MEMiiPv69Hv7iv/hEH/dA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-openharmony-arm64": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.64.5.tgz",
++      "integrity": "sha512-trdnMPb/DNm4V/CgsaoGgr90HfQQ071wfK0KoIs4YpLvjBgVQGXhGabg2Z6nK4EcYNilrb9ZZPcsP6+zpJIdxQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-arm64-msvc": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.64.5.tgz",
++      "integrity": "sha512-x2LxZlfdfsw99T6/qb9EqE/Qi84JWzibjyOJyhJsgFJy6CafaTiqIXCCnslCGrV5XWNh7fwrS3FbRENcuKnooA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-ia32-msvc": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.64.5.tgz",
++      "integrity": "sha512-/Qd/9aDQIo0+jmItgBmPIs8195YVbDxRRApn47GyufgbutCDOh7eP5vSKKlI4QNFeaI+wKQAkSMsPnF3EuMpaA==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-x64-gnu": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.64.5.tgz",
++      "integrity": "sha512-ngUJ/XvOWrqbd2IMsfXfh2xXFLTP3sY7sCKvxbGvYdBZ1KmXFd3ewDZ9n3/GNzAUgzRuhLT/UvJRivbNoAQRBw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
+     },
+-    "node_modules/@react-types/shared": {
+-      "version": "3.31.0",
+-      "resolved": "https://registry.npmjs.org/@react-types/shared/-/shared-3.31.0.tgz",
+-      "integrity": "sha512-ua5U6V66gDcbLZe4P2QeyNgPp4YWD1ymGA6j3n+s8CGExtrCPe64v+g4mvpT8Bnb985R96e4zFT61+m0YCwqMg==",
+-      "license": "Apache-2.0",
+-      "peerDependencies": {
+-        "react": "^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1"
+-      }
++    "node_modules/@rollup/rollup-win32-x64-msvc": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.64.5.tgz",
++      "integrity": "sha512-IhV6ew/DuzUWwHaYmlh7MrPCV3lKFUq/amTEwysi4r/mwNPAEfAMh5dYWeTSPTeMy2pFHGMEWYtPkHzfX3tG5A==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
+     },
+     "node_modules/@rtsao/scc": {
+       "version": "1.1.0",
+@@ -2478,6 +3288,17 @@
+         "@types/node": "*"
+       }
+     },
++    "node_modules/@types/chai": {
++      "version": "5.2.3",
++      "resolved": "https://registry.npmjs.org/@types/chai/-/chai-5.2.3.tgz",
++      "integrity": "sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/deep-eql": "*",
++        "assertion-error": "^2.0.1"
++      }
++    },
+     "node_modules/@types/d3-array": {
+       "version": "3.2.1",
+       "resolved": "https://registry.npmjs.org/@types/d3-array/-/d3-array-3.2.1.tgz",
+@@ -2541,6 +3362,13 @@
+       "integrity": "sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw==",
+       "license": "MIT"
+     },
++    "node_modules/@types/deep-eql": {
++      "version": "4.0.2",
++      "resolved": "https://registry.npmjs.org/@types/deep-eql/-/deep-eql-4.0.2.tgz",
++      "integrity": "sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@types/eslint": {
+       "version": "9.6.1",
+       "resolved": "https://registry.npmjs.org/@types/eslint/-/eslint-9.6.1.tgz",
+@@ -2566,12 +3394,11 @@
+       }
+     },
+     "node_modules/@types/estree": {
+-      "version": "1.0.8",
+-      "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz",
+-      "integrity": "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==",
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.9.tgz",
++      "integrity": "sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==",
+       "dev": true,
+-      "license": "MIT",
+-      "peer": true
++      "license": "MIT"
+     },
+     "node_modules/@types/http-proxy": {
+       "version": "1.17.16",
+@@ -3287,6 +4114,94 @@
+         }
+       }
+     },
++    "node_modules/@vitest/expect": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/expect/-/expect-3.2.7.tgz",
++      "integrity": "sha512-E8eBXaKibuvH2pSZErOjdVb5vF4PbKYcrnluBTYxEk1l/VhhwZg1kZQsdtjq+CsF5CFydf2Rdkz7jDHKSisi3w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/chai": "^5.2.2",
++        "@vitest/spy": "3.2.7",
++        "@vitest/utils": "3.2.7",
++        "chai": "^5.2.0",
++        "tinyrainbow": "^2.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
++    "node_modules/@vitest/pretty-format": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/pretty-format/-/pretty-format-3.2.7.tgz",
++      "integrity": "sha512-KUHlwqVu0sRlhCdyPdQ/wBoTfRahjUky1MubOmYw9fWfIZy1gNoHpuaaQBPAaMaVYdQYHJLurzj8ECCj5OwTqA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "tinyrainbow": "^2.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
++    "node_modules/@vitest/runner": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/runner/-/runner-3.2.7.tgz",
++      "integrity": "sha512-sB9y4ovltoQP+WaUPwmSxO9WIg9Ig694Di5PalVPsYHklAdE027mehpWF2SQSVq+k6sFgaivbTjTJwZLSHbedA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@vitest/utils": "3.2.7",
++        "pathe": "^2.0.3",
++        "strip-literal": "^3.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
++    "node_modules/@vitest/snapshot": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/snapshot/-/snapshot-3.2.7.tgz",
++      "integrity": "sha512-7C+MwShwtBSI5Buwoyg3s/iY1eHL9PKAf+O1wVh/TdnjXUtkoL/9YQtre90i4MtNXM6edP1wJ2zOBpfCyhIS7g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@vitest/pretty-format": "3.2.7",
++        "magic-string": "^0.30.17",
++        "pathe": "^2.0.3"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
++    "node_modules/@vitest/spy": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/spy/-/spy-3.2.7.tgz",
++      "integrity": "sha512-Q2eQGI6d2L/hBtZ0qNuKcAGid68XK6cv1xsoaIma6PaJhHPoqcEJhYpXZ/5myCMqkNgtP6UKuBhbc0nHKnrkuQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "tinyspy": "^4.0.3"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
++    "node_modules/@vitest/utils": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/utils/-/utils-3.2.7.tgz",
++      "integrity": "sha512-x6BDOd7dyo3PFLY3I9/HJ25X/6OurhGXk2/B9gOZNPF7XDVjeBK4k01lQE5uvDpbuheErh91qYuE1E2OEjK3Rw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@vitest/pretty-format": "3.2.7",
++        "loupe": "^3.1.4",
++        "tinyrainbow": "^2.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
+     "node_modules/@webassemblyjs/ast": {
+       "version": "1.14.1",
+       "resolved": "https://registry.npmjs.org/@webassemblyjs/ast/-/ast-1.14.1.tgz",
+@@ -3916,6 +4831,16 @@
+         "util": "^0.12.0"
+       }
+     },
++    "node_modules/assertion-error": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/assertion-error/-/assertion-error-2.0.1.tgz",
++      "integrity": "sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/ast-types-flow": {
+       "version": "0.0.8",
+       "resolved": "https://registry.npmjs.org/ast-types-flow/-/ast-types-flow-0.0.8.tgz",
+@@ -4179,6 +5104,16 @@
+         "node": ">=10.16.0"
+       }
+     },
++    "node_modules/cac": {
++      "version": "6.7.14",
++      "resolved": "https://registry.npmjs.org/cac/-/cac-6.7.14.tgz",
++      "integrity": "sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=8"
++      }
++    },
+     "node_modules/call-bind": {
+       "version": "1.0.8",
+       "resolved": "https://registry.npmjs.org/call-bind/-/call-bind-1.0.8.tgz",
+@@ -4279,6 +5214,23 @@
+         "node": ">=0.8"
+       }
+     },
++    "node_modules/chai": {
++      "version": "5.3.3",
++      "resolved": "https://registry.npmjs.org/chai/-/chai-5.3.3.tgz",
++      "integrity": "sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "assertion-error": "^2.0.1",
++        "check-error": "^2.1.1",
++        "deep-eql": "^5.0.1",
++        "loupe": "^3.1.0",
++        "pathval": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
+     "node_modules/chalk": {
+       "version": "4.1.2",
+       "resolved": "https://registry.npmjs.org/chalk/-/chalk-4.1.2.tgz",
+@@ -4335,6 +5287,16 @@
+         "pnpm": ">=8"
+       }
+     },
++    "node_modules/check-error": {
++      "version": "2.1.3",
++      "resolved": "https://registry.npmjs.org/check-error/-/check-error-2.1.3.tgz",
++      "integrity": "sha512-PAJdDJusoxnwm1VwW07VWwUN1sl7smmC3OKggvndJFadxxDRyFJBX/ggnu/KE4kQAB7a3Dp8f/YXC1FlUprWmA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">= 16"
++      }
++    },
+     "node_modules/chokidar": {
+       "version": "3.6.0",
+       "resolved": "https://registry.npmjs.org/chokidar/-/chokidar-3.6.0.tgz",
+@@ -4842,6 +5804,16 @@
+       "integrity": "sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==",
+       "license": "MIT"
+     },
++    "node_modules/deep-eql": {
++      "version": "5.0.2",
++      "resolved": "https://registry.npmjs.org/deep-eql/-/deep-eql-5.0.2.tgz",
++      "integrity": "sha512-h5k/5U50IJJFpzfL6nO9jaaumfjO/f2NjK/oYB2Djzm4p9L+3T9qWpZqZ2hAbLPuuYq9wrU08WQyBTL5GbPk5Q==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
+     "node_modules/deep-is": {
+       "version": "0.1.4",
+       "resolved": "https://registry.npmjs.org/deep-is/-/deep-is-0.1.4.tgz",
+@@ -5186,8 +6158,7 @@
+       "resolved": "https://registry.npmjs.org/es-module-lexer/-/es-module-lexer-1.7.0.tgz",
+       "integrity": "sha512-jEQoCwk8hyb2AZziIOLhDqpm5+2ww5uIE6lkO/6jcOCusfk6LhMHpXXfBLXTZ7Ydyt0j4VoUQv6uGNYbdW+kBA==",
+       "dev": true,
+-      "license": "MIT",
+-      "peer": true
++      "license": "MIT"
+     },
+     "node_modules/es-object-atoms": {
+       "version": "1.1.1",
+@@ -5264,6 +6235,48 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/esbuild": {
++      "version": "0.28.2",
++      "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
++      "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "bin": {
++        "esbuild": "bin/esbuild"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "optionalDependencies": {
++        "@esbuild/aix-ppc64": "0.28.2",
++        "@esbuild/android-arm": "0.28.2",
++        "@esbuild/android-arm64": "0.28.2",
++        "@esbuild/android-x64": "0.28.2",
++        "@esbuild/darwin-arm64": "0.28.2",
++        "@esbuild/darwin-x64": "0.28.2",
++        "@esbuild/freebsd-arm64": "0.28.2",
++        "@esbuild/freebsd-x64": "0.28.2",
++        "@esbuild/linux-arm": "0.28.2",
++        "@esbuild/linux-arm64": "0.28.2",
++        "@esbuild/linux-ia32": "0.28.2",
++        "@esbuild/linux-loong64": "0.28.2",
++        "@esbuild/linux-mips64el": "0.28.2",
++        "@esbuild/linux-ppc64": "0.28.2",
++        "@esbuild/linux-riscv64": "0.28.2",
++        "@esbuild/linux-s390x": "0.28.2",
++        "@esbuild/linux-x64": "0.28.2",
++        "@esbuild/netbsd-arm64": "0.28.2",
++        "@esbuild/netbsd-x64": "0.28.2",
++        "@esbuild/openbsd-arm64": "0.28.2",
++        "@esbuild/openbsd-x64": "0.28.2",
++        "@esbuild/openharmony-arm64": "0.28.2",
++        "@esbuild/sunos-x64": "0.28.2",
++        "@esbuild/win32-arm64": "0.28.2",
++        "@esbuild/win32-ia32": "0.28.2",
++        "@esbuild/win32-x64": "0.28.2"
++      }
++    },
+     "node_modules/escalade": {
+       "version": "3.2.0",
+       "resolved": "https://registry.npmjs.org/escalade/-/escalade-3.2.0.tgz",
+@@ -6295,6 +7308,16 @@
+         "node": ">=4.0"
+       }
+     },
++    "node_modules/estree-walker": {
++      "version": "3.0.3",
++      "resolved": "https://registry.npmjs.org/estree-walker/-/estree-walker-3.0.3.tgz",
++      "integrity": "sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/estree": "^1.0.0"
++      }
++    },
+     "node_modules/esutils": {
+       "version": "2.0.3",
+       "resolved": "https://registry.npmjs.org/esutils/-/esutils-2.0.3.tgz",
+@@ -6322,6 +7345,16 @@
+         "node": ">=0.8.x"
+       }
+     },
++    "node_modules/expect-type": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/expect-type/-/expect-type-1.4.0.tgz",
++      "integrity": "sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=12.0.0"
++      }
++    },
+     "node_modules/fast-deep-equal": {
+       "version": "3.1.3",
+       "resolved": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz",
+@@ -8161,6 +9194,13 @@
+         "loose-envify": "cli.js"
+       }
+     },
++    "node_modules/loupe": {
++      "version": "3.2.1",
++      "resolved": "https://registry.npmjs.org/loupe/-/loupe-3.2.1.tgz",
++      "integrity": "sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/lru-cache": {
+       "version": "5.1.1",
+       "resolved": "https://registry.npmjs.org/lru-cache/-/lru-cache-5.1.1.tgz",
+@@ -8180,6 +9220,16 @@
+         "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc"
+       }
+     },
++    "node_modules/magic-string": {
++      "version": "0.30.21",
++      "resolved": "https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz",
++      "integrity": "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@jridgewell/sourcemap-codec": "^1.5.5"
++      }
++    },
+     "node_modules/make-dir": {
+       "version": "3.1.0",
+       "resolved": "https://registry.npmjs.org/make-dir/-/make-dir-3.1.0.tgz",
+@@ -9050,6 +10100,23 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/pathe": {
++      "version": "2.0.3",
++      "resolved": "https://registry.npmjs.org/pathe/-/pathe-2.0.3.tgz",
++      "integrity": "sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/pathval": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/pathval/-/pathval-2.0.1.tgz",
++      "integrity": "sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">= 14.16"
++      }
++    },
+     "node_modules/pg-int8": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/pg-int8/-/pg-int8-1.0.1.tgz",
+@@ -10240,6 +11307,52 @@
+         "node": "*"
+       }
+     },
++    "node_modules/rollup": {
++      "version": "4.64.5",
++      "resolved": "https://registry.npmjs.org/rollup/-/rollup-4.64.5.tgz",
++      "integrity": "sha512-EAP5ZHcz2ijbgCWwPkpI7zh6bfsri2Ez5FtCy2dCp1k62duXzfG7DLGGh7RU2QQXWwavT+u4qpvDF/TWOiiGTw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/estree": "1.0.9"
++      },
++      "bin": {
++        "rollup": "dist/bin/rollup"
++      },
++      "engines": {
++        "node": ">=18.0.0",
++        "npm": ">=8.0.0"
++      },
++      "optionalDependencies": {
++        "@napi-rs/lzma-linux-x64-gnu": "1.5.1",
++        "@rollup/rollup-android-arm-eabi": "4.64.5",
++        "@rollup/rollup-android-arm64": "4.64.5",
++        "@rollup/rollup-darwin-arm64": "4.64.5",
++        "@rollup/rollup-darwin-x64": "4.64.5",
++        "@rollup/rollup-freebsd-arm64": "4.64.5",
++        "@rollup/rollup-freebsd-x64": "4.64.5",
++        "@rollup/rollup-linux-arm-gnueabihf": "4.64.5",
++        "@rollup/rollup-linux-arm-musleabihf": "4.64.5",
++        "@rollup/rollup-linux-arm64-gnu": "4.64.5",
++        "@rollup/rollup-linux-arm64-musl": "4.64.5",
++        "@rollup/rollup-linux-loong64-gnu": "4.64.5",
++        "@rollup/rollup-linux-loong64-musl": "4.64.5",
++        "@rollup/rollup-linux-ppc64-gnu": "4.64.5",
++        "@rollup/rollup-linux-ppc64-musl": "4.64.5",
++        "@rollup/rollup-linux-riscv64-gnu": "4.64.5",
++        "@rollup/rollup-linux-riscv64-musl": "4.64.5",
++        "@rollup/rollup-linux-s390x-gnu": "4.64.5",
++        "@rollup/rollup-linux-x64-gnu": "4.64.5",
++        "@rollup/rollup-linux-x64-musl": "4.64.5",
++        "@rollup/rollup-openbsd-x64": "4.64.5",
++        "@rollup/rollup-openharmony-arm64": "4.64.5",
++        "@rollup/rollup-win32-arm64-msvc": "4.64.5",
++        "@rollup/rollup-win32-ia32-msvc": "4.64.5",
++        "@rollup/rollup-win32-x64-gnu": "4.64.5",
++        "@rollup/rollup-win32-x64-msvc": "4.64.5",
++        "fsevents": "~2.3.2"
++      }
++    },
+     "node_modules/run-parallel": {
+       "version": "1.2.0",
+       "resolved": "https://registry.npmjs.org/run-parallel/-/run-parallel-1.2.0.tgz",
+@@ -10580,6 +11693,13 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/siginfo": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/siginfo/-/siginfo-2.0.0.tgz",
++      "integrity": "sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==",
++      "dev": true,
++      "license": "ISC"
++    },
+     "node_modules/signal-exit": {
+       "version": "4.1.0",
+       "resolved": "https://registry.npmjs.org/signal-exit/-/signal-exit-4.1.0.tgz",
+@@ -10745,6 +11865,20 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/stackback": {
++      "version": "0.0.2",
++      "resolved": "https://registry.npmjs.org/stackback/-/stackback-0.0.2.tgz",
++      "integrity": "sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/std-env": {
++      "version": "3.10.0",
++      "resolved": "https://registry.npmjs.org/std-env/-/std-env-3.10.0.tgz",
++      "integrity": "sha512-5GS12FdOZNliM5mAOxFRg7Ir0pWz8MdpYm6AY6VPkGpbA7ZzmbzNcBJQ0GPvvyWgcY7QAhCgf9Uy89I03faLkg==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/stop-iteration-iterator": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/stop-iteration-iterator/-/stop-iteration-iterator-1.1.0.tgz",
+@@ -11032,6 +12166,26 @@
+         "url": "https://github.com/sponsors/sindresorhus"
+       }
+     },
++    "node_modules/strip-literal": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/strip-literal/-/strip-literal-3.1.0.tgz",
++      "integrity": "sha512-8r3mkIM/2+PpjHoOtiAW8Rg3jJLHaV7xPwG+YRGrv6FP0wwk/toTpATxWYOW0BKdWwl82VT2tFYi5DlROa0Mxg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "js-tokens": "^9.0.1"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/antfu"
++      }
++    },
++    "node_modules/strip-literal/node_modules/js-tokens": {
++      "version": "9.0.1",
++      "resolved": "https://registry.npmjs.org/js-tokens/-/js-tokens-9.0.1.tgz",
++      "integrity": "sha512-mxa9E9ITFOt0ban3j6L5MpjwegGz6lBQmM1IJkWeBZGcMxto50+eWdjC/52xDbS2vy0k7vIMK0Fe2wfL9OQSpQ==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/styled-jsx": {
+       "version": "5.1.1",
+       "resolved": "https://registry.npmjs.org/styled-jsx/-/styled-jsx-5.1.1.tgz",
+@@ -11337,15 +12491,29 @@
+       "integrity": "sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==",
+       "license": "MIT"
+     },
++    "node_modules/tinybench": {
++      "version": "2.9.0",
++      "resolved": "https://registry.npmjs.org/tinybench/-/tinybench-2.9.0.tgz",
++      "integrity": "sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/tinyexec": {
++      "version": "0.3.2",
++      "resolved": "https://registry.npmjs.org/tinyexec/-/tinyexec-0.3.2.tgz",
++      "integrity": "sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/tinyglobby": {
+-      "version": "0.2.14",
+-      "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.14.tgz",
+-      "integrity": "sha512-tX5e7OM1HnYr2+a2C/4V0htOcSQcoSTH9KgJnVvNm5zm/cyEWKJ7j7YutsH9CxMdtOkkLFy2AHrMci9IM8IPZQ==",
++      "version": "0.2.17",
++      "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.17.tgz",
++      "integrity": "sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==",
+       "dev": true,
+       "license": "MIT",
+       "dependencies": {
+-        "fdir": "^6.4.4",
+-        "picomatch": "^4.0.2"
++        "fdir": "^6.5.0",
++        "picomatch": "^4.0.4"
+       },
+       "engines": {
+         "node": ">=12.0.0"
+@@ -11354,32 +12522,65 @@
+         "url": "https://github.com/sponsors/SuperchupuDev"
+       }
+     },
+-    "node_modules/tinyglobby/node_modules/fdir": {
+-      "version": "6.4.6",
+-      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.4.6.tgz",
+-      "integrity": "sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==",
++    "node_modules/tinyglobby/node_modules/fdir": {
++      "version": "6.5.0",
++      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz",
++      "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "peerDependencies": {
++        "picomatch": "^3 || ^4"
++      },
++      "peerDependenciesMeta": {
++        "picomatch": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/tinyglobby/node_modules/picomatch": {
++      "version": "4.0.7",
++      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz",
++      "integrity": "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/jonschlinkert"
++      }
++    },
++    "node_modules/tinypool": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/tinypool/-/tinypool-1.1.1.tgz",
++      "integrity": "sha512-Zba82s87IFq9A9XmjiX5uZA/ARWDrB03OHlq+Vw1fSdt0I+4/Kutwy8BP4Y/y/aORMo61FQ0vIb5j44vSo5Pkg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": "^18.0.0 || >=20.0.0"
++      }
++    },
++    "node_modules/tinyrainbow": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/tinyrainbow/-/tinyrainbow-2.0.0.tgz",
++      "integrity": "sha512-op4nsTR47R6p0vMUUoYl/a+ljLFVtlfaXkLQmqfLR1qHma1h/ysYk4hEXZ880bf2CYgTskvTa/e196Vd5dDQXw==",
+       "dev": true,
+       "license": "MIT",
+-      "peerDependencies": {
+-        "picomatch": "^3 || ^4"
+-      },
+-      "peerDependenciesMeta": {
+-        "picomatch": {
+-          "optional": true
+-        }
++      "engines": {
++        "node": ">=14.0.0"
+       }
+     },
+-    "node_modules/tinyglobby/node_modules/picomatch": {
+-      "version": "4.0.3",
+-      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.3.tgz",
+-      "integrity": "sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==",
++    "node_modules/tinyspy": {
++      "version": "4.0.6",
++      "resolved": "https://registry.npmjs.org/tinyspy/-/tinyspy-4.0.6.tgz",
++      "integrity": "sha512-u8KszXvGfU68hVcZpRHKG28T0krMuv2G5nDhiHaMLen/gIuFEgIJhaJuO69qjnXg5paSrbPMFfx3brNuN8eVSg==",
+       "dev": true,
+       "license": "MIT",
+       "engines": {
+-        "node": ">=12"
+-      },
+-      "funding": {
+-        "url": "https://github.com/sponsors/jonschlinkert"
++        "node": ">=14.0.0"
+       }
+     },
+     "node_modules/to-regex-range": {
+@@ -11616,6 +12817,15 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/undici-types": {
++      "version": "8.9.0",
++      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz",
++      "integrity": "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==",
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "peer": true
++    },
+     "node_modules/unrs-resolver": {
+       "version": "1.11.1",
+       "resolved": "https://registry.npmjs.org/unrs-resolver/-/unrs-resolver-1.11.1.tgz",
+@@ -11834,6 +13044,389 @@
+         "d3-timer": "^3.0.1"
+       }
+     },
++    "node_modules/vite-node": {
++      "version": "3.2.4",
++      "resolved": "https://registry.npmjs.org/vite-node/-/vite-node-3.2.4.tgz",
++      "integrity": "sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cac": "^6.7.14",
++        "debug": "^4.4.1",
++        "es-module-lexer": "^1.7.0",
++        "pathe": "^2.0.3",
++        "vite": "^5.0.0 || ^6.0.0 || ^7.0.0-0"
++      },
++      "bin": {
++        "vite-node": "vite-node.mjs"
++      },
++      "engines": {
++        "node": "^18.0.0 || ^20.0.0 || >=22.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      }
++    },
++    "node_modules/vite-node/node_modules/@types/node": {
++      "version": "26.6.5",
++      "resolved": "https://registry.npmjs.org/@types/node/-/node-26.6.5.tgz",
++      "integrity": "sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==",
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "peer": true,
++      "dependencies": {
++        "undici-types": "~8.9.0"
++      }
++    },
++    "node_modules/vite-node/node_modules/fdir": {
++      "version": "6.5.0",
++      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz",
++      "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "peerDependencies": {
++        "picomatch": "^3 || ^4"
++      },
++      "peerDependenciesMeta": {
++        "picomatch": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vite-node/node_modules/picomatch": {
++      "version": "4.0.7",
++      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz",
++      "integrity": "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/jonschlinkert"
++      }
++    },
++    "node_modules/vite-node/node_modules/vite": {
++      "version": "7.3.7",
++      "resolved": "https://registry.npmjs.org/vite/-/vite-7.3.7.tgz",
++      "integrity": "sha512-AHEzTORMbi7/7aXp7w7KZ5+DCUdSeLsJz0grY8xHpc9DHdYb0vQu6DqJfm2tOw3gDExNgPgnJTXxM6syYFHaCA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "esbuild": "^0.27.0 || ^0.28.0",
++        "fdir": "^6.5.0",
++        "picomatch": "^4.0.3",
++        "postcss": "^8.5.6",
++        "rollup": "^4.43.0",
++        "tinyglobby": "^0.2.15"
++      },
++      "bin": {
++        "vite": "bin/vite.js"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/vitejs/vite?sponsor=1"
++      },
++      "optionalDependencies": {
++        "fsevents": "~2.3.3"
++      },
++      "peerDependencies": {
++        "@types/node": "^20.19.0 || >=22.12.0",
++        "jiti": ">=1.21.0",
++        "less": "^4.0.0",
++        "lightningcss": "^1.21.0",
++        "sass": "^1.70.0",
++        "sass-embedded": "^1.70.0",
++        "stylus": ">=0.54.8",
++        "sugarss": "^5.0.0",
++        "terser": "^5.16.0",
++        "tsx": "^4.8.1",
++        "yaml": "^2.4.2"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        },
++        "jiti": {
++          "optional": true
++        },
++        "less": {
++          "optional": true
++        },
++        "lightningcss": {
++          "optional": true
++        },
++        "sass": {
++          "optional": true
++        },
++        "sass-embedded": {
++          "optional": true
++        },
++        "stylus": {
++          "optional": true
++        },
++        "sugarss": {
++          "optional": true
++        },
++        "terser": {
++          "optional": true
++        },
++        "tsx": {
++          "optional": true
++        },
++        "yaml": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vite-node/node_modules/yaml": {
++      "version": "2.9.1",
++      "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.1.tgz",
++      "integrity": "sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==",
++      "dev": true,
++      "license": "ISC",
++      "optional": true,
++      "peer": true,
++      "bin": {
++        "yaml": "bin.mjs"
++      },
++      "engines": {
++        "node": ">= 14.6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/eemeli"
++      }
++    },
++    "node_modules/vitest": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/vitest/-/vitest-3.2.7.tgz",
++      "integrity": "sha512-KrxIJ62Fd89gfysR4WotlgZABiz2dqFPgqGzX7s+CwsqLFomRH7777ZcrOD6+WVAh7khPQP41A+BKbpcJFrdEg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/chai": "^5.2.2",
++        "@vitest/expect": "3.2.7",
++        "@vitest/mocker": "3.2.7",
++        "@vitest/pretty-format": "^3.2.7",
++        "@vitest/runner": "3.2.7",
++        "@vitest/snapshot": "3.2.7",
++        "@vitest/spy": "3.2.7",
++        "@vitest/utils": "3.2.7",
++        "chai": "^5.2.0",
++        "debug": "^4.4.1",
++        "expect-type": "^1.2.1",
++        "magic-string": "^0.30.17",
++        "pathe": "^2.0.3",
++        "picomatch": "^4.0.2",
++        "std-env": "^3.9.0",
++        "tinybench": "^2.9.0",
++        "tinyexec": "^0.3.2",
++        "tinyglobby": "^0.2.14",
++        "tinypool": "^1.1.1",
++        "tinyrainbow": "^2.0.0",
++        "vite": "^5.0.0 || ^6.0.0 || ^7.0.0-0",
++        "vite-node": "3.2.4",
++        "why-is-node-running": "^2.3.0"
++      },
++      "bin": {
++        "vitest": "vitest.mjs"
++      },
++      "engines": {
++        "node": "^18.0.0 || ^20.0.0 || >=22.0.0"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      },
++      "peerDependencies": {
++        "@edge-runtime/vm": "*",
++        "@types/debug": "^4.1.12",
++        "@types/node": "^18.0.0 || ^20.0.0 || >=22.0.0",
++        "@vitest/browser": "3.2.7",
++        "@vitest/ui": "3.2.7",
++        "happy-dom": "*",
++        "jsdom": "*"
++      },
++      "peerDependenciesMeta": {
++        "@edge-runtime/vm": {
++          "optional": true
++        },
++        "@types/debug": {
++          "optional": true
++        },
++        "@types/node": {
++          "optional": true
++        },
++        "@vitest/browser": {
++          "optional": true
++        },
++        "@vitest/ui": {
++          "optional": true
++        },
++        "happy-dom": {
++          "optional": true
++        },
++        "jsdom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vitest/node_modules/@vitest/mocker": {
++      "version": "3.2.7",
++      "resolved": "https://registry.npmjs.org/@vitest/mocker/-/mocker-3.2.7.tgz",
++      "integrity": "sha512-Trr0hYO9CM3Wj6ksWHRhK9IZpIY6wTMO5u/MqXurMxT57sWBaOPEtP3Oq60ihZuh5JsiagKfz95OcxdEP6dBrA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@vitest/spy": "3.2.7",
++        "estree-walker": "^3.0.3",
++        "magic-string": "^0.30.17"
++      },
++      "funding": {
++        "url": "https://opencollective.com/vitest"
++      },
++      "peerDependencies": {
++        "msw": "^2.4.9",
++        "vite": "^5.0.0 || ^6.0.0 || ^7.0.0-0"
++      },
++      "peerDependenciesMeta": {
++        "msw": {
++          "optional": true
++        },
++        "vite": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vitest/node_modules/fdir": {
++      "version": "6.5.0",
++      "resolved": "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz",
++      "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12.0.0"
++      },
++      "peerDependencies": {
++        "picomatch": "^3 || ^4"
++      },
++      "peerDependenciesMeta": {
++        "picomatch": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vitest/node_modules/picomatch": {
++      "version": "4.0.7",
++      "resolved": "https://registry.npmjs.org/picomatch/-/picomatch-4.0.7.tgz",
++      "integrity": "sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/jonschlinkert"
++      }
++    },
++    "node_modules/vitest/node_modules/vite": {
++      "version": "7.3.7",
++      "resolved": "https://registry.npmjs.org/vite/-/vite-7.3.7.tgz",
++      "integrity": "sha512-AHEzTORMbi7/7aXp7w7KZ5+DCUdSeLsJz0grY8xHpc9DHdYb0vQu6DqJfm2tOw3gDExNgPgnJTXxM6syYFHaCA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "esbuild": "^0.27.0 || ^0.28.0",
++        "fdir": "^6.5.0",
++        "picomatch": "^4.0.3",
++        "postcss": "^8.5.6",
++        "rollup": "^4.43.0",
++        "tinyglobby": "^0.2.15"
++      },
++      "bin": {
++        "vite": "bin/vite.js"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/vitejs/vite?sponsor=1"
++      },
++      "optionalDependencies": {
++        "fsevents": "~2.3.3"
++      },
++      "peerDependencies": {
++        "@types/node": "^20.19.0 || >=22.12.0",
++        "jiti": ">=1.21.0",
++        "less": "^4.0.0",
++        "lightningcss": "^1.21.0",
++        "sass": "^1.70.0",
++        "sass-embedded": "^1.70.0",
++        "stylus": ">=0.54.8",
++        "sugarss": "^5.0.0",
++        "terser": "^5.16.0",
++        "tsx": "^4.8.1",
++        "yaml": "^2.4.2"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        },
++        "jiti": {
++          "optional": true
++        },
++        "less": {
++          "optional": true
++        },
++        "lightningcss": {
++          "optional": true
++        },
++        "sass": {
++          "optional": true
++        },
++        "sass-embedded": {
++          "optional": true
++        },
++        "stylus": {
++          "optional": true
++        },
++        "sugarss": {
++          "optional": true
++        },
++        "terser": {
++          "optional": true
++        },
++        "tsx": {
++          "optional": true
++        },
++        "yaml": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vitest/node_modules/yaml": {
++      "version": "2.9.1",
++      "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.1.tgz",
++      "integrity": "sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==",
++      "dev": true,
++      "license": "ISC",
++      "optional": true,
++      "peer": true,
++      "bin": {
++        "yaml": "bin.mjs"
++      },
++      "engines": {
++        "node": ">= 14.6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/eemeli"
++      }
++    },
+     "node_modules/watchpack": {
+       "version": "2.4.4",
+       "resolved": "https://registry.npmjs.org/watchpack/-/watchpack-2.4.4.tgz",
+@@ -12075,6 +13668,23 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/why-is-node-running": {
++      "version": "2.3.0",
++      "resolved": "https://registry.npmjs.org/why-is-node-running/-/why-is-node-running-2.3.0.tgz",
++      "integrity": "sha512-hUrmaWBdVDcxvYqnyh09zunKzROWjbZTiNy8dBEjkS7ehEDQibXJ7XvlmtbwuTclUiIyN+CyXQD4Vmko8fNm8w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "siginfo": "^2.0.0",
++        "stackback": "0.0.2"
++      },
++      "bin": {
++        "why-is-node-running": "cli.js"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
+     "node_modules/wide-align": {
+       "version": "1.1.5",
+       "resolved": "https://registry.npmjs.org/wide-align/-/wide-align-1.1.5.tgz",
+diff --git a/package.json b/package.json
+index 03a09ba..e5c00d4 100644
+--- a/package.json
++++ b/package.json
+@@ -8,7 +8,8 @@
+     "seed": "node -r dotenv/config ./scripts/seed.js",
+     "build": "next build",
+     "typecheck": "tsc --noEmit",
+-    "lint": "next lint"
++    "lint": "next lint",
++    "test": "vitest run"
+   },
+   "dependencies": {
+     "@fortawesome/fontawesome-svg-core": "^6.6.0",
+@@ -67,6 +68,7 @@
+     "prettier": "^3.0.3",
+     "prettier-plugin-tailwindcss": "0.5.4",
+     "tailwindcss": "^3.4.17",
++    "vitest": "^3.2.7",
+     "webpack-obfuscator": "^3.5.1"
+   },
+   "overrides": {
+diff --git a/tests/modules.test.ts b/tests/modules.test.ts
+new file mode 100644
+index 0000000..7761dbc
+--- /dev/null
++++ b/tests/modules.test.ts
+@@ -0,0 +1,116 @@
++import { describe, expect, it } from 'vitest';
++import {
++  canAccess,
++  defaultRouteFor,
++  landingRoute,
++  menuModules,
++  settingsModules,
++} from '@/app/lib/modules';
++
++// Módulos que el backend pone en el JWT según el rubro (crm_api 009_rubros.sql)
++const PIZZERIA = ['usuarios', 'reportes', 'productos', 'cerrarcaja', 'operaciones', 'gasto', 'roles', 'flujo', 'plan'];
++const ACADEMIA = ['usuarios', 'roles', 'plan', 'gasto', 'flujo'];
++
++describe('menú por rubro', () => {
++  it('pizzería: mismo menú que hoy, en orden', () => {
++    expect(menuModules(PIZZERIA).map((m) => m.key)).toEqual([
++      'operaciones', 'productos', 'gasto', 'flujo', 'cerrarcaja', 'reportes',
++    ]);
++  });
++
++  it('academia: sólo gastos y flujo (usuarios, roles y plan van al header)', () => {
++    expect(menuModules(ACADEMIA).map((m) => m.key)).toEqual(['gasto', 'flujo']);
++  });
++
++  it('ignora módulos que el front no conoce (ej. uno nuevo del backend)', () => {
++    expect(menuModules(['gasto', 'alumnos']).map((m) => m.key)).toEqual(['gasto']);
++  });
++});
++
++describe('guard de rutas por módulo', () => {
++  it('academia no entra a pedidos, productos, caja ni reportes por URL directa', () => {
++    for (const path of [
++      '/dashboard/operaciones',
++      '/dashboard/operaciones/admin',
++      '/dashboard/productos',
++      '/dashboard/productos/12/edit',
++      '/dashboard/cerrarcaja',
++      '/dashboard/reportes/reportes/ventas',
++    ]) {
++      expect(canAccess(path, ACADEMIA), path).toBe(false);
++    }
++  });
++
++  it('academia entra a sus módulos y subrutas', () => {
++    for (const path of ['/dashboard/gasto', '/dashboard/gasto/create', '/dashboard/flujo', '/dashboard/usuarios', '/dashboard/roles/3/permisos', '/dashboard/plan']) {
++      expect(canAccess(path, ACADEMIA), path).toBe(true);
++    }
++  });
++
++  it('perfil y upgrade de plan quedan abiertos sin módulo', () => {
++    expect(canAccess('/dashboard/profile/5/edit', [])).toBe(true);
++    expect(canAccess('/dashboard/upgrade-plan', [])).toBe(true);
++  });
++
++  it('no confunde prefijos parecidos', () => {
++    expect(canAccess('/dashboard/gastos-raros', ACADEMIA)).toBe(false);
++  });
++});
++
++describe('defaultRouteFor', () => {
++  it('pizzería aterriza en operaciones', () => {
++    expect(defaultRouteFor(PIZZERIA)).toBe('/dashboard/operaciones');
++  });
++
++  it('academia aterriza en gastos', () => {
++    expect(defaultRouteFor(ACADEMIA)).toBe('/dashboard/gasto');
++  });
++
++  it('sin módulos → null (pantalla "sin acceso")', () => {
++    expect(defaultRouteFor([])).toBeNull();
++  });
++});
++
++describe('landingRoute (post-login)', () => {
++  it('admin de pizzería: panel de operaciones, como siempre', () => {
++    expect(landingRoute(['admin'], PIZZERIA)).toBe('/dashboard/operaciones/admin');
++  });
++
++  it('empleado de pizzería: su caja, como siempre', () => {
++    expect(landingRoute(['empleado'], PIZZERIA)).toBe('/dashboard/operaciones/empleado');
++  });
++
++  it('admin tiene prioridad sobre empleado sin importar el orden', () => {
++    expect(landingRoute(['empleado', 'admin'], PIZZERIA)).toBe('/dashboard/operaciones/admin');
++  });
++
++  it('rol desconocido en pizzería: caja del empleado (comportamiento histórico)', () => {
++    expect(landingRoute(['proveedor'], PIZZERIA)).toBe('/dashboard/operaciones/empleado');
++  });
++
++  it('admin de academia: primer módulo de su menú, no "sin acceso"', () => {
++    expect(landingRoute(['admin'], ACADEMIA)).toBe('/dashboard/gasto');
++  });
++
++  it('usuario sin módulos: /dashboard, que muestra la pantalla sin acceso', () => {
++    expect(landingRoute(['empleado'], [])).toBe('/dashboard');
++  });
++
++  it('tolera token sin role ni modules', () => {
++    expect(landingRoute(undefined, undefined)).toBe('/dashboard');
++  });
++});
++
++describe('settingsModules (menú de configuración del header)', () => {
++  it('muestra los accesos que el usuario tiene, en orden fijo', () => {
++    expect(settingsModules(['plan', 'gasto', 'usuarios', 'roles'])).toEqual(['usuarios', 'roles', 'plan']);
++  });
++
++  it('oculta un acceso desactivado por Counter', () => {
++    expect(settingsModules(['usuarios', 'plan'])).toEqual(['usuarios', 'plan']);
++  });
++
++  it('sin módulos no muestra ninguno', () => {
++    expect(settingsModules(undefined)).toEqual([]);
++  });
++});
+diff --git a/tests/rubros.test.ts b/tests/rubros.test.ts
+new file mode 100644
+index 0000000..dfd451d
+--- /dev/null
++++ b/tests/rubros.test.ts
+@@ -0,0 +1,87 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { RUBRO_DEFAULT, rubroInicial, type Rubro } from '@/app/lib/rubros';
++
++const CATALOGO: Rubro[] = [
++  { codigo: 'educacion', nombre: 'Educación' },
++  { codigo: 'gastronomia', nombre: 'Gastronomía' },
++];
++
++describe('rubroInicial', () => {
++  it('sin parámetro: gastronomía (el funnel actual no cambia)', () => {
++    expect(rubroInicial(null, CATALOGO)).toBe(RUBRO_DEFAULT);
++  });
++
++  it('respeta ?rubro= de la landing, sin importar mayúsculas ni espacios', () => {
++    expect(rubroInicial(' Educacion ', CATALOGO)).toBe('educacion');
++  });
++
++  it('un rubro que no existe en el catálogo cae en gastronomía', () => {
++    expect(rubroInicial('gimnasio', CATALOGO)).toBe('gastronomia');
++  });
++
++  it('si el catálogo no trae gastronomía, usa el primero', () => {
++    expect(rubroInicial(null, [{ codigo: 'educacion', nombre: 'Educación' }])).toBe('educacion');
++  });
++
++  it('catálogo vacío: sin rubro (el formulario bloquea el envío)', () => {
++    expect(rubroInicial('educacion', [])).toBe('');
++  });
++});
++
++describe('registerSaasCliente envía el rubro', () => {
++  const BASE = {
++    plan: 'FREE' as const,
++    comercioNombre: 'Academia Do Re Mi',
++    cuit: '30-71234567-1',
++    adminNombre: 'Ana',
++    adminApellido: 'Paz',
++    adminEmail: ' Ana@Ejemplo.com ',
++    password: 'Contrasena123',
++    aceptaTerminos: true,
++  };
++
++  let fetchMock: ReturnType<typeof vi.fn>;
++
++  beforeEach(() => {
++    vi.resetModules();
++    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.test/api');
++    fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ requiereVerificacion: true }) });
++    vi.stubGlobal('fetch', fetchMock);
++  });
++
++  afterEach(() => {
++    vi.unstubAllEnvs();
++    vi.unstubAllGlobals();
++  });
++
++  const bodyEnviado = () => JSON.parse(fetchMock.mock.calls[0][1].body);
++
++  it('incluye el rubro elegido', async () => {
++    const { registerSaasCliente } = await import('@/app/lib/saas.api');
++    await registerSaasCliente({ ...BASE, rubro: 'educacion' });
++
++    expect(fetchMock.mock.calls[0][0]).toBe('https://api.test/api/signup');
++    expect(bodyEnviado().rubro).toBe('educacion');
++    expect(bodyEnviado().cuit).toBe('30712345671');
++  });
++
++  it('sin rubro no manda la clave (el backend asume gastronomía)', async () => {
++    const { registerSaasCliente } = await import('@/app/lib/saas.api');
++    await registerSaasCliente({ ...BASE, rubro: '  ' });
++
++    expect('rubro' in bodyEnviado()).toBe(false);
++  });
++
++  it('propaga field y code de un RUBRO_INVALIDO del backend', async () => {
++    fetchMock.mockResolvedValueOnce({
++      ok: false,
++      json: async () => ({ error: 'El rubro elegido no es válido', code: 'RUBRO_INVALIDO', field: 'rubro' }),
++    });
++    const { registerSaasCliente, SignupError } = await import('@/app/lib/saas.api');
++
++    const err = await registerSaasCliente({ ...BASE, rubro: 'gimnasio' }).catch((e) => e);
++    expect(err).toBeInstanceOf(SignupError);
++    expect(err.field).toBe('rubro');
++    expect(err.code).toBe('RUBRO_INVALIDO');
++  });
++});
+diff --git a/vitest.config.mts b/vitest.config.mts
+new file mode 100644
+index 0000000..79f1ac5
+--- /dev/null
++++ b/vitest.config.mts
+@@ -0,0 +1,14 @@
++import { fileURLToPath } from 'node:url';
++import { defineConfig } from 'vitest/config';
++
++// Tests unitarios de lógica pura (app/lib). Sin DOM: si un test necesita
++// renderizar componentes, se agrega jsdom + Testing Library en ese momento.
++export default defineConfig({
++  resolve: {
++    alias: { '@': fileURLToPath(new URL('.', import.meta.url)) },
++  },
++  test: {
++    environment: 'node',
++    include: ['tests/**/*.test.ts'],
++  },
++});
+-- 
+2.43.0
+

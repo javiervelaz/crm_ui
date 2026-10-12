@@ -1,0 +1,524 @@
+From 99d2b43f73df46c86793dd3da11a5bffb063e608 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 12 Oct 2026 19:38:27 +0000
+Subject: [PATCH] feat(flujo): modo sin caja en el wizard de Flujo de caja
+ (CP-20)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Mismo wizard y mismas solapas para todos los rubros. Un tenant sin el
+módulo 'operaciones' (ej. academia) no abre caja, así que:
+- no se exige caja abierta ni se muestra "Abrir operaciones";
+- los gastos se guardan sin id de operación (registro_diario_id null);
+- se oculta la solapa Caja Inicial (no hay caja ni ventas);
+- la lista y el Resumen muestran los gastos del mes elegido (selector de
+  mes) en lugar de los de la caja del día.
+Gastronomía sigue exactamente igual. El modo lo decide la API con
+GET /salida-caja/config; si la consulta falla, comportamiento con caja.
+
+Requiere crm_api con 010_gastos_sin_caja.sql.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014RFddfgFoRADGhYSqcdhLn
+---
+ app/lib/gastosPeriodo.ts                      |  55 +++++++++
+ app/lib/gastosSinCaja.api.ts                  |  17 +++
+ .../admin/components/gastos/GastoWizard.tsx   | 114 ++++++++++++++----
+ .../admin/components/gastos/ResumenGastos.tsx |  50 +++++++-
+ tests/gastosPeriodo.test.ts                   |  80 ++++++++++++
+ 5 files changed, 293 insertions(+), 23 deletions(-)
+ create mode 100644 app/lib/gastosPeriodo.ts
+ create mode 100644 app/lib/gastosSinCaja.api.ts
+ create mode 100644 tests/gastosPeriodo.test.ts
+
+diff --git a/app/lib/gastosPeriodo.ts b/app/lib/gastosPeriodo.ts
+new file mode 100644
+index 0000000..53c6000
+--- /dev/null
++++ b/app/lib/gastosPeriodo.ts
+@@ -0,0 +1,55 @@
++// app/lib/gastosPeriodo.ts
++//
++// Lógica pura del Flujo en modo sin caja (tenants sin el módulo 'operaciones',
++// ej. academias): los gastos se agrupan por mes en vez de por caja del día.
++
++/** Ids de categoria_tipo, los mismos que usa GastoWizard al guardar. */
++export const TIPO_GASTO = { fijo: 1, variable: 2, sueldos: 3 } as const;
++
++export interface GastoPeriodo {
++  id: number;
++  descripcion: string;
++  monto: string | number; // numeric de Postgres llega como string
++  categoria_salida_id: number;
++  categoria_nombre?: string | null;
++  fecha: string; // YYYY-MM-DD (hora de Córdoba, la calcula la API)
++}
++
++const pad = (n: number) => String(n).padStart(2, '0');
++
++/** Mes actual en hora local como 'YYYY-MM' (valor de un <input type="month">). */
++export function mesActual(hoy: Date = new Date()): string {
++  return `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}`;
++}
++
++/** 'YYYY-MM' → primer y último día del mes. null si el valor no es un mes válido. */
++export function rangoMes(mes: string): { desde: string; hasta: string } | null {
++  const m = /^(\d{4})-(\d{2})$/.exec(mes);
++  if (!m) return null;
++  const nroMes = Number(m[2]);
++  if (nroMes < 1 || nroMes > 12) return null;
++  const ultimo = new Date(Date.UTC(Number(m[1]), nroMes, 0)).getUTCDate();
++  return { desde: `${m[1]}-${m[2]}-01`, hasta: `${m[1]}-${m[2]}-${pad(ultimo)}` };
++}
++
++/** Total del listado. Ignora montos no numéricos en vez de devolver NaN. */
++export function totalGastos(gastos: Pick<GastoPeriodo, 'monto'>[]): number {
++  return gastos.reduce((acc, g) => {
++    const n = Number(g.monto);
++    return acc + (Number.isFinite(n) ? n : 0);
++  }, 0);
++}
++
++/** Totales por tipo, con las mismas tres categorías del Resumen. */
++export function totalesPorTipo(gastos: Pick<GastoPeriodo, 'monto' | 'categoria_salida_id'>[]) {
++  const de = (id: number) => totalGastos(gastos.filter((g) => Number(g.categoria_salida_id) === id));
++  return { fijo: de(TIPO_GASTO.fijo), sueldos: de(TIPO_GASTO.sueldos), variable: de(TIPO_GASTO.variable) };
++}
++
++/** 'YYYY-MM' → 'octubre 2026', para títulos. */
++export function nombreMes(mes: string): string {
++  const r = rangoMes(mes);
++  if (!r) return mes;
++  const [a, m] = mes.split('-').map(Number);
++  return new Date(a, m - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
++}
+diff --git a/app/lib/gastosSinCaja.api.ts b/app/lib/gastosSinCaja.api.ts
+new file mode 100644
+index 0000000..b42ffc3
+--- /dev/null
++++ b/app/lib/gastosSinCaja.api.ts
+@@ -0,0 +1,17 @@
++// app/lib/gastosSinCaja.api.ts
++// Flujo para tenants sin caja (sin módulo 'operaciones'). Usa apiClient:
++// token, 401 y toasts de error los resuelve el interceptor.
++import apiClient from '@/app/lib/apiClient';
++import type { GastoPeriodo } from '@/app/lib/gastosPeriodo';
++
++/** ¿El tenant necesita caja abierta para cargar gastos? Sólo un false explícito la saca. */
++export async function getGastosConfig(): Promise<{ requiereCaja: boolean }> {
++  const { data } = await apiClient.get('/salida-caja/config');
++  return { requiereCaja: data?.requiereCaja !== false };
++}
++
++/** Gastos entre dos fechas YYYY-MM-DD (inclusive), en hora de Córdoba. */
++export async function getGastosPorPeriodo(desde: string, hasta: string): Promise<GastoPeriodo[]> {
++  const { data } = await apiClient.get('/salida-caja/periodo', { params: { desde, hasta } });
++  return Array.isArray(data) ? data : [];
++}
+diff --git a/app/ui/dashboard/operaciones/admin/components/gastos/GastoWizard.tsx b/app/ui/dashboard/operaciones/admin/components/gastos/GastoWizard.tsx
+index f584fee..0c7b44a 100644
+--- a/app/ui/dashboard/operaciones/admin/components/gastos/GastoWizard.tsx
++++ b/app/ui/dashboard/operaciones/admin/components/gastos/GastoWizard.tsx
+@@ -6,6 +6,8 @@ import { crearGasto, getGastoCategorias, getGastosPorRegistro, eliminarGasto, ge
+ import { Trash2 } from 'lucide-react';
+ import { notifyError, notifySuccess } from '@/app/lib/notificationService';
+ import { getCajaInicial, pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
++import { getGastosConfig, getGastosPorPeriodo } from '@/app/lib/gastosSinCaja.api';
++import { mesActual, nombreMes, rangoMes } from '@/app/lib/gastosPeriodo';
+ import useCajaAbierta from '@/app/lib/useCajaAbierta';
+ import { jwtDecode } from 'jwt-decode';
+ import { useRouter } from 'next/navigation';
+@@ -45,6 +47,40 @@ export default function GastoWizard() {
+   const { cajaAbierta, registroDiarioId } = useCajaAbierta();
+   const router = useRouter();
+ 
++  // Modo sin caja: un tenant sin el módulo 'operaciones' (ej. academia) no
++  // abre caja. Mismas solapas y planillas; los gastos se guardan sin id de
++  // operación (registro_diario_id) y se agrupan por mes en vez de por caja.
++  // La API decide (GET /salida-caja/config) y valida lo mismo al guardar.
++  const [requiereCaja, setRequiereCaja] = useState<boolean | null>(null);
++  const sinCaja = requiereCaja === false;
++  const [mes, setMes] = useState(mesActual());
++  const tabsVisibles = sinCaja ? tabs.filter((t) => t.id !== 'cajaInicial') : tabs;
++
++  useEffect(() => {
++    let cancelado = false;
++    getGastosConfig()
++      .then((cfg) => { if (!cancelado) setRequiereCaja(cfg.requiereCaja); })
++      .catch((error) => {
++        // Si no se puede consultar, comportamiento previo: con caja.
++        logError('No se pudo consultar la config de gastos', error);
++        if (!cancelado) setRequiereCaja(true);
++      });
++    return () => { cancelado = true; };
++  }, []);
++
++  useEffect(() => {
++    if (sinCaja && activeTab === 'cajaInicial') setActiveTab('fijos');
++  }, [sinCaja, activeTab]);
++
++  /** Gastos de la caja abierta, o del mes elegido en modo sin caja. */
++  const cargarGastos = async (): Promise<any[]> => {
++    if (sinCaja) {
++      const rango = rangoMes(mes);
++      return rango ? getGastosPorPeriodo(rango.desde, rango.hasta) : [];
++    }
++    return registroDiarioId ? getGastosPorRegistro(registroDiarioId, getClienteId()) : [];
++  };
++
+   // bug 39: vista histórica read-only cuando no hay caja abierta
+   const [histRegistros, setHistRegistros] = useState<any[]>([]);
+   const [histSelId, setHistSelId] = useState<number | null>(null);
+@@ -62,13 +98,15 @@ export default function GastoWizard() {
+   const [form, setForm] = useState(INITIAL_FORM);
+ 
+   useEffect(() => {
++    if (requiereCaja === null) return;
++    const conCaja = !sinCaja && registroDiarioId;
+     const fetchData = async () => {
+       try {
+         const [categoriasData, gastosData, montoVentas, montoCajaInicial] = await Promise.all([
+           getGastoCategorias(getClienteId()),
+-          registroDiarioId ? getGastosPorRegistro(registroDiarioId, getClienteId()) : Promise.resolve([]),
+-          registroDiarioId ? pedidoMontoTotalDiario(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
+-          registroDiarioId ? getCajaInicial(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
++          cargarGastos(),
++          conCaja ? pedidoMontoTotalDiario(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
++          conCaja ? getCajaInicial(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
+         ]);
+         setCategoriasCompletas(categoriasData);
+         setGastosExistentes(gastosData);
+@@ -86,11 +124,12 @@ export default function GastoWizard() {
+       }
+     };
+     fetchData();
+-  }, [registroDiarioId]);
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [registroDiarioId, requiereCaja, mes]);
+ 
+   // bug 39: cargar registros de los últimos 30 días cuando la caja está cerrada
+   useEffect(() => {
+-    if (cajaAbierta) return;
++    if (cajaAbierta || requiereCaja !== true) return;
+     (async () => {
+       try {
+         const regs = await getRegistrosDiarios('mes', getClienteId());
+@@ -99,7 +138,7 @@ export default function GastoWizard() {
+         logError('Error cargando registros históricos:', error);
+       }
+     })();
+-  }, [cajaAbierta]);
++  }, [cajaAbierta, requiereCaja]);
+ 
+   const verFlujoHistorico = async (registroId: number) => {
+     setHistSelId(registroId);
+@@ -128,7 +167,7 @@ export default function GastoWizard() {
+   }, [activeTab, categoriasCompletas]);
+ 
+   const handleGuardarGastos = async (tipo: keyof typeof CATEGORIA_POR_TIPO) => {
+-    if (!registroDiarioId) { notifyError('No hay registro diario activo'); return; }
++    if (!sinCaja && !registroDiarioId) { notifyError('No hay registro diario activo'); return; }
+     const token = localStorage.getItem('token');
+     if (!token) { notifyError('No hay sesión activa'); return; }
+ 
+@@ -141,19 +180,19 @@ export default function GastoWizard() {
+       if (tipo === 'fijos') {
+         payload = form.fijos.filter((g: any) => g.servicio && g.monto).map((g: any) => ({
+           descripcion: g.servicio, monto: g.monto,
+-          categoria_salida_id: categoriaId, registro_diario_id: registroDiarioId,
++          categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
+           usuario_id, cliente_id: getClienteId(),
+         }));
+       } else if (tipo === 'sueldos') {
+         payload = form.sueldos.filter((g: any) => g.empleado && g.monto).map((g: any) => ({
+           descripcion: g.empleado, monto: g.monto,
+-          categoria_salida_id: categoriaId, registro_diario_id: registroDiarioId,
++          categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
+           usuario_id, cliente_id: getClienteId(),
+         }));
+       } else if (tipo === 'variables') {
+         payload = form.variables.filter((g: any) => g.concepto && g.monto).map((g: any) => ({
+           descripcion: g.concepto, monto: g.monto,
+-          categoria_salida_id: categoriaId, registro_diario_id: registroDiarioId,
++          categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
+           usuario_id, cliente_id: getClienteId(),
+         }));
+       }
+@@ -161,8 +200,9 @@ export default function GastoWizard() {
+       if (payload.length === 0) { notifyError('Ingresá al menos un gasto válido'); return; }
+       await crearGasto(payload);
+       notifySuccess('Gastos registrados correctamente');
+-      const nuevosGastos = await getGastosPorRegistro(registroDiarioId, getClienteId());
+-      setGastosExistentes(nuevosGastos);
++      // Sin caja el gasto queda con fecha de hoy: si se miraba otro mes, se vuelve al actual.
++      if (sinCaja && mes !== mesActual()) setMes(mesActual());
++      else setGastosExistentes(await cargarGastos());
+       setForm(prev => ({ ...prev, [tipo]: [] }));
+     } catch (error) {
+       logError('Error al guardar gastos:', error);
+@@ -176,10 +216,7 @@ export default function GastoWizard() {
+     try {
+       await eliminarGasto(id, getClienteId());
+       notifySuccess('Gasto eliminado');
+-      if (registroDiarioId) {
+-        const nuevos = await getGastosPorRegistro(registroDiarioId, getClienteId());
+-        setGastosExistentes(nuevos);
+-      }
++      if (sinCaja || registroDiarioId) setGastosExistentes(await cargarGastos());
+     } catch (error: any) {
+       logError('No se pudo eliminar el gasto', error);
+       notifyError(error?.message || 'No se pudo eliminar el gasto');
+@@ -194,7 +231,16 @@ export default function GastoWizard() {
+   };
+ 
+   // bug 39: sin caja abierta -> no bloquear; permitir consultar flujo histórico read-only
+-  if (!cajaAbierta) {
++  if (requiereCaja === null) {
++    return (
++      <div className="animate-pulse space-y-4" aria-busy="true">
++        <div className="h-8 w-48 rounded-md bg-brand-100" />
++        <div className="h-64 rounded-xl bg-brand-100" />
++      </div>
++    );
++  }
++
++  if (!cajaAbierta && !sinCaja) {
+     const totalHistGastos = histGastos.reduce((acc: number, g: any) => acc + (Number(g.monto) || 0), 0);
+     return (
+       <div className="flex flex-col gap-4">
+@@ -272,11 +318,25 @@ export default function GastoWizard() {
+   return (
+     <div className="flex flex-col gap-4">
+       {/* Título */}
+-      <h1 className="font-display text-2xl text-brand-800">Flujo de caja</h1>
++      <div className="flex flex-wrap items-end justify-between gap-3">
++        <h1 className="font-display text-2xl text-brand-800">Flujo de caja</h1>
++        {sinCaja && (
++          <label className="text-sm text-brand-600">
++            <span className="mb-1 block font-medium">Mes</span>
++            <input
++              type="month"
++              value={mes}
++              max={mesActual()}
++              onChange={(e) => e.target.value && setMes(e.target.value)}
++              className="rounded-md border border-brand-200 px-3 py-2 text-sm"
++            />
++          </label>
++        )}
++      </div>
+ 
+       {/* Tabs — scrollables en mobile */}
+       <div className="flex gap-2 overflow-x-auto pb-1 border-b border-brand-200 scrollbar-hide">
+-        {tabs.map((tab) => (
++        {tabsVisibles.map((tab) => (
+           <button
+             key={tab.id}
+             onClick={() => setActiveTab(tab.id)}
+@@ -319,7 +379,9 @@ export default function GastoWizard() {
+           <ResumenGastos
+             data={form}
+             gastosExistentes={gastosExistentes}
+-            registroDiarioId={registroDiarioId}
++            registroDiarioId={sinCaja ? null : registroDiarioId}
++            sinCaja={sinCaja}
++            periodo={sinCaja ? nombreMes(mes) : undefined}
+           />
+         )}
+ 
+@@ -336,15 +398,23 @@ export default function GastoWizard() {
+       </div>
+ 
+       {/* Gastos registrados hoy */}
+-      {activeTab !== 'resumen' && gastosExistentes.length > 0 && (
++      {activeTab !== 'resumen' && (gastosExistentes.length > 0 || sinCaja) && (
+         <div className="rounded-xl border border-brand-100 bg-white p-4 shadow-card">
+           <h3 className="mb-3 text-sm font-semibold text-brand-800">
+-            Gastos registrados hoy
++            {sinCaja ? `Gastos de ${nombreMes(mes)}` : 'Gastos registrados hoy'}
+           </h3>
++          {sinCaja && gastosExistentes.length === 0 && (
++            <p className="text-sm text-brand-300">Sin gastos registrados en este mes.</p>
++          )}
+           <ul className="divide-y divide-brand-100">
+             {gastosExistentes.map((g: any, i: number) => (
+               <li key={g.id ?? i} className="flex items-center justify-between py-2 text-sm">
+                 <span className="text-brand-700 truncate pr-3">
++                  {sinCaja && g.fecha && (
++                    <span className="mr-2 tabular-nums text-brand-300">
++                      {String(g.fecha).slice(0, 10).split('-').reverse().slice(0, 2).join('/')}
++                    </span>
++                  )}
+                   {g.descripcion}
+                   {g.categoria_nombre && (
+                     <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600">
+diff --git a/app/ui/dashboard/operaciones/admin/components/gastos/ResumenGastos.tsx b/app/ui/dashboard/operaciones/admin/components/gastos/ResumenGastos.tsx
+index 8d27b0c..f0c8272 100644
+--- a/app/ui/dashboard/operaciones/admin/components/gastos/ResumenGastos.tsx
++++ b/app/ui/dashboard/operaciones/admin/components/gastos/ResumenGastos.tsx
+@@ -2,6 +2,7 @@
+ import { getClienteId } from "@/app/lib/authService";
+ import { gatosMontoTotalDiario } from '@/app/lib/gasto';
+ import { pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
++import { totalesPorTipo } from '@/app/lib/gastosPeriodo';
+ import { useEffect, useState } from 'react';
+ 
+ interface Fijo { servicio: string; monto: number; }
+@@ -21,9 +22,13 @@ interface Props {
+   data: FormData;
+   gastosExistentes?: any[];
+   registroDiarioId?: number | null;
++  /** Tenant sin caja (sin módulo 'operaciones'): totales del período, sin caja ni ventas. */
++  sinCaja?: boolean;
++  /** Etiqueta del período en modo sin caja, ej. 'octubre de 2026'. */
++  periodo?: string;
+ }
+ 
+-export default function ResumenGastos({ data, registroDiarioId }: Props) {
++export default function ResumenGastos({ data, registroDiarioId, gastosExistentes = [], sinCaja = false, periodo }: Props) {
+   const [montoFinal, setMontoFinal] = useState(0);
+   const [montoGastoSueldo, setGastoSueldos] = useState(0);
+   const [montoGastoFijo, setGastoFijo] = useState(0);
+@@ -65,6 +70,14 @@ export default function ResumenGastos({ data, registroDiarioId }: Props) {
+     obtenerMontoPedidos();
+   }, []);
+ 
++  // Sin caja no hay registro diario: los totales salen de los gastos del período.
++  if (sinCaja) {
++    const t = totalesPorTipo(gastosExistentes);
++    return (
++      <ResumenSinCaja fijo={t.fijo} sueldos={t.sueldos} variable={t.variable} periodo={periodo} />
++    );
++  }
++
+   const totalGastos = montoGastoFijo + montoGastoSueldo + montoGastoVariable;
+   const cajaInicial = Number(data.cajaInicial?.inicio || 0);
+   const ventas = Number(montoFinal || 0);
+@@ -133,3 +146,38 @@ export default function ResumenGastos({ data, registroDiarioId }: Props) {
+     </div>
+   );
+ }
++
++const fmtSinCaja = (n: number) =>
++  n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
++
++/** Resumen para tenants sin caja: mismas tarjetas de gastos, sin la sección Caja. */
++function ResumenSinCaja({ fijo, sueldos, variable, periodo }: {
++  fijo: number; sueldos: number; variable: number; periodo?: string;
++}) {
++  const total = fijo + sueldos + variable;
++  return (
++    <div>
++      <h2 className="mb-4 text-lg font-bold text-brand-800">
++        Resumen de Gastos{periodo ? ` — ${periodo}` : ''}
++      </h2>
++      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
++        <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
++          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Gastos Fijos</p>
++          <p className="text-xl font-bold text-brand-800">${fmtSinCaja(fijo)}</p>
++        </div>
++        <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
++          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Sueldos</p>
++          <p className="text-xl font-bold text-brand-800">${fmtSinCaja(sueldos)}</p>
++        </div>
++        <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
++          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Variables</p>
++          <p className="text-xl font-bold text-brand-800">${fmtSinCaja(variable)}</p>
++        </div>
++      </div>
++      <div className="rounded-xl border border-red-100 bg-red-50 p-4">
++        <p className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-1">Total Gastos</p>
++        <p className="text-2xl font-bold text-red-600">${fmtSinCaja(total)}</p>
++      </div>
++    </div>
++  );
++}
+diff --git a/tests/gastosPeriodo.test.ts b/tests/gastosPeriodo.test.ts
+new file mode 100644
+index 0000000..f55e532
+--- /dev/null
++++ b/tests/gastosPeriodo.test.ts
+@@ -0,0 +1,80 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { mesActual, nombreMes, rangoMes, totalGastos, totalesPorTipo } from '@/app/lib/gastosPeriodo';
++
++describe('rangoMes', () => {
++  it('mes de 31 días', () => {
++    expect(rangoMes('2026-10')).toEqual({ desde: '2026-10-01', hasta: '2026-10-31' });
++  });
++
++  it('febrero común y bisiesto', () => {
++    expect(rangoMes('2026-02')?.hasta).toBe('2026-02-28');
++    expect(rangoMes('2028-02')?.hasta).toBe('2028-02-29');
++  });
++
++  it('diciembre no se pasa al año siguiente', () => {
++    expect(rangoMes('2026-12')).toEqual({ desde: '2026-12-01', hasta: '2026-12-31' });
++  });
++
++  it('valores inválidos → null', () => {
++    for (const v of ['', '2026-13', '2026-00', '10/2026', '2026-1']) expect(rangoMes(v), v).toBeNull();
++  });
++});
++
++describe('mesActual y nombreMes', () => {
++  it('formatea con cero a la izquierda', () => {
++    expect(mesActual(new Date(2026, 2, 15))).toBe('2026-03');
++  });
++
++  it('nombre del mes en castellano', () => {
++    expect(nombreMes('2026-10')).toMatch(/octubre.*2026/);
++  });
++});
++
++describe('totales', () => {
++  const gastos = [
++    { monto: '150000.00', categoria_salida_id: 1 },
++    { monto: '80000.50', categoria_salida_id: 3 },
++    { monto: 12000, categoria_salida_id: 2 },
++    { monto: '3000', categoria_salida_id: 2 },
++    { monto: 'basura', categoria_salida_id: 2 },
++  ];
++
++  it('suma montos que llegan como string desde Postgres e ignora inválidos', () => {
++    expect(totalGastos(gastos)).toBeCloseTo(245000.5);
++  });
++
++  it('total por tipo con los ids de categoria_tipo', () => {
++    expect(totalesPorTipo(gastos)).toEqual({ fijo: 150000, sueldos: 80000.5, variable: 15000 });
++  });
++
++  it('listado vacío → 0', () => {
++    expect(totalesPorTipo([])).toEqual({ fijo: 0, sueldos: 0, variable: 0 });
++  });
++});
++
++describe('gastosSinCaja.api', () => {
++  const get = vi.fn();
++
++  beforeEach(() => {
++    vi.resetModules();
++    vi.doMock('@/app/lib/apiClient', () => ({ default: { get } }));
++    get.mockReset();
++  });
++
++  afterEach(() => vi.doUnmock('@/app/lib/apiClient'));
++
++  it('getGastosConfig: sólo un false explícito saca la caja', async () => {
++    const { getGastosConfig } = await import('@/app/lib/gastosSinCaja.api');
++    get.mockResolvedValueOnce({ data: { requiereCaja: false } });
++    expect(await getGastosConfig()).toEqual({ requiereCaja: false });
++    get.mockResolvedValueOnce({ data: {} });
++    expect(await getGastosConfig()).toEqual({ requiereCaja: true });
++  });
++
++  it('getGastosPorPeriodo manda el rango como query', async () => {
++    const { getGastosPorPeriodo } = await import('@/app/lib/gastosSinCaja.api');
++    get.mockResolvedValueOnce({ data: [{ id: 1 }] });
++    await getGastosPorPeriodo('2026-10-01', '2026-10-31');
++    expect(get).toHaveBeenCalledWith('/salida-caja/periodo', { params: { desde: '2026-10-01', hasta: '2026-10-31' } });
++  });
++});
+-- 
+2.43.0
+
