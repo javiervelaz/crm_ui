@@ -2,7 +2,7 @@
 'use client';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { MODULES } from '@/app/lib/modules';
+import { MODULES, settingsModules } from '@/app/lib/modules';
 import { CreditCard, LogOut, Settings, ShieldCheck, UserCog, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ import AppTooltip from '@/components/ui/AppTooltip';
 
 type AdminSettingsMenuProps = {
   userId: string | number;
+  /** Módulos del token: sólo se muestran los accesos que el usuario tiene. */
+  modules: string[];
 };
 
 /**
@@ -21,16 +23,20 @@ type AdminSettingsMenuProps = {
  * que el admin los tenga a mano sin depender de que esos módulos estén en
  * el sidebar.
  */
-const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId }) => {
+const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId, modules }) => {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
+  const porModulo = {
+    usuarios: { href: MODULES.usuarios.href, label: 'Usuarios', icon: Users, description: MODULES.usuarios.description },
+    roles: { href: MODULES.roles.href, label: 'Roles', icon: ShieldCheck, description: MODULES.roles.description },
+    plan: { href: MODULES.plan.href, label: 'Planes', icon: CreditCard, description: MODULES.plan.description },
+  };
+
+  // Mi perfil es alwaysOpen: no depende de ningún módulo.
   const items = [
-    { href: MODULES.usuarios.href, label: 'Usuarios', icon: Users, 
-      description: MODULES.usuarios.description },
-    { href: MODULES.roles.href, label: 'Roles', icon: ShieldCheck,description: MODULES.roles.description },
-    { href: MODULES.plan.href, label: 'Planes', icon: CreditCard,description: MODULES.plan.description },
-    { href: `/dashboard/profile/${userId}/edit`, label: 'Mi perfil', icon: UserCog,description: "Mi perfil" },
+    ...settingsModules(modules).map((k) => porModulo[k]),
+    { href: `/dashboard/profile/${userId}/edit`, label: 'Mi perfil', icon: UserCog, description: 'Mi perfil' },
   ];
 
   // Misma lógica que el "Cerrar sesión" del sidebar (app/lib/dynamicMenu.tsx)
@@ -64,9 +70,8 @@ const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId }) => {
       <PopoverContent align="end" className="w-56 p-1.5">
         <nav className="flex flex-col">
           {items.map(({ href,description, label, icon: Icon }) => (
-            <AppTooltip text={description ?? label} side="right">
+            <AppTooltip key={href} text={description ?? label} side="right">
               <Link
-              key={href}
               href={href}
               onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-brand-800 hover:bg-brand-50"

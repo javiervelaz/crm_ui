@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useEffect, useState } from 'react';
 import { notifyAuthChanged } from '@/app/lib/authEvents';
+import { landingRoute } from '@/app/lib/modules';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -12,25 +13,9 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 interface DecodedToken {
   userId: string;
   role: string[]; // el backend manda los nombres de rol (ej. 'admin', 'empleado'), no ids
+  modules?: string[];
+  exp?: number;
 }
-
-// Definir prioridad y rutas para cada rol
-const ROLE_PRIORITY: Record<string, number> = {
-  admin: 1,
-  empleado: 2,
-};
-
-const ROLE_ROUTES: Record<string, string> = {
-  admin: '/dashboard/operaciones/admin',
-  empleado: '/dashboard/operaciones/empleado',
-};
-
-const getRedirectionRoute = (roles: string[]): string => {
-  const sortedRoles = [...roles].sort(
-    (a, b) => (ROLE_PRIORITY[a] ?? Infinity) - (ROLE_PRIORITY[b] ?? Infinity),
-  );
-  return ROLE_ROUTES[sortedRoles[0]] || '/dashboard/operaciones/empleado';
-};
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -40,8 +25,13 @@ const LoginForm: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      router.push('/dashboard/operaciones/admin');
+    if (!token) return;
+    try {
+      const decoded: DecodedToken = jwtDecode(token);
+      if (decoded.exp && decoded.exp < Date.now() / 1000) return;
+      router.push(landingRoute(decoded.role, decoded.modules));
+    } catch {
+      // Token corrupto: lo limpia useAuthCheck, acá sólo no redirigimos.
     }
   }, [router]);
 
@@ -56,8 +46,7 @@ const LoginForm: React.FC = () => {
         localStorage.setItem('token', token);
         window.dispatchEvent(new Event('storage'));
         notifyAuthChanged();
-        const redirectionRoute = getRedirectionRoute(decodedToken.role);
-        router.push(redirectionRoute);
+        router.push(landingRoute(decodedToken.role, decodedToken.modules));
       }
     } catch (err) {
       setError('Credenciales inválidas');
