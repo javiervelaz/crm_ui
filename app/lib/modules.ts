@@ -190,3 +190,48 @@ export function canAccess(pathname: string, userModules: string[]): boolean {
     );
   });
 }
+
+/**
+ * Aterrizaje post-login.
+ *
+ * Gastronomía conserva su comportamiento: el admin cae en el panel de
+ * operaciones y el empleado en su caja. Pero esas rutas existen sólo si el
+ * tenant tiene el módulo 'operaciones'; un tenant de otro rubro (academia)
+ * no lo tiene y aterrizaba en "No tenés acceso". En ese caso va al primer
+ * módulo de su menú.
+ */
+const ROLE_LANDING: Record<string, string> = {
+  admin: '/dashboard/operaciones/admin',
+  empleado: '/dashboard/operaciones/empleado',
+};
+const ROLE_PRIORITY = ['admin', 'empleado'];
+
+export function landingRoute(
+  roles: string[] | undefined,
+  userModules: string[] | undefined,
+): string {
+  const mods = userModules ?? [];
+  const conocidos = (roles ?? [])
+    .filter((r) => r in ROLE_LANDING)
+    .sort((a, b) => ROLE_PRIORITY.indexOf(a) - ROLE_PRIORITY.indexOf(b));
+  // Sin rol conocido, el comportamiento histórico era la caja del empleado.
+  const porRol = ROLE_LANDING[conocidos[0]] ?? ROLE_LANDING.empleado;
+
+  if (canAccess(porRol, mods)) return porRol;
+  return defaultRouteFor(mods) ?? '/dashboard';
+}
+
+/**
+ * Accesos del menú de configuración del header (AdminSettingsMenu) que el
+ * usuario efectivamente tiene. Si Counter le desactiva uno al tenant, el
+ * acceso desaparece en vez de llevar a "No tenés acceso".
+ */
+const SETTINGS_KEYS = ['usuarios', 'roles', 'plan'] as const;
+export type SettingsKey = (typeof SETTINGS_KEYS)[number];
+
+export function settingsModules(
+  userModules: string[] | undefined,
+): SettingsKey[] {
+  const mods = userModules ?? [];
+  return SETTINGS_KEYS.filter((k) => mods.includes(k));
+}

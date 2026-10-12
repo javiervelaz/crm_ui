@@ -10,6 +10,7 @@ interface DecodedToken {
   userId: string | number;
   username: string;
   role: string[];
+  modules?: string[];
 }
 
 type HeaderProps = {
@@ -20,6 +21,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | number | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [modules, setModules] = useState<string[]>([]);
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const router = useRouter();
@@ -51,17 +53,20 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         setUserName(decodedToken.username);
         setUserId(decodedToken.userId);
         setIsAdmin(Array.isArray(decodedToken.role) && decodedToken.role.includes('admin'));
+        setModules(Array.isArray(decodedToken.modules) ? decodedToken.modules : []);
         setIsLoggedIn(true);
       } catch {
         setUserName(null);
         setUserId(null);
         setIsAdmin(false);
+        setModules([]);
         setIsLoggedIn(false);
       }
     } else {
       setUserName(null);
       setUserId(null);
       setIsAdmin(false);
+      setModules([]);
       setIsLoggedIn(false);
     }
   };
@@ -96,7 +101,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <span className="font-semibold text-brand-800 whitespace-nowrap hidden sm:inline">
             {userName}
           </span>
-          {isAdmin && userId != null && <AdminSettingsMenu userId={userId} />}
+          {isAdmin && userId != null && <AdminSettingsMenu userId={userId} modules={modules} />}
           {isAdmin && (
             <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
