@@ -3,7 +3,7 @@
 import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { notifySuccess,notifyError } from '@/app/lib/notificationService';
-import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
+import { createProfile, getProfileUserById, getProximoLegajo, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
 import { createUserRol, deleteUserRol, getUserRolUserById } from '@/app/lib/userRol.api';
 import { getUserById, getUserRol, updateUser } from '@/app/lib/usuario.api';
@@ -37,8 +37,15 @@ const EditUserPage = () => {
           // Obtener los detalles del perfil del usuario
           if (data.id) {
             const profile = await getProfileUserById(data.id,cliente);
-            setProfileDetails(profile || {});
-            setProfileExists(!!(profile && Object.keys(profile).length > 0));
+            const existe = !!(profile && Object.keys(profile).length > 0);
+            setProfileExists(existe);
+            if (existe) {
+              setProfileDetails(profile);
+            } else {
+              // Alta: el legajo lo asigna la API al guardar; se muestra el próximo.
+              const proximo = await getProximoLegajo();
+              setProfileDetails({ legajo: proximo ?? '' });
+            }
           }
           // Inicializar los roles seleccionados con los roles del usuario
           const userRols = await getUserRol(data.id,cliente);
@@ -150,13 +157,13 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
           dni: payload.profile.dni,
           telefono: payload.profile.telefono,
           password: payload.profile.password,
-          legajo: payload.profile.legajo,
           fecha_ingreso: payload.profile.fecha_ingreso,
           cliente_id: payload.cliente_id,
         });
       } else {
         // En edición sólo mandamos la contraseña si el usuario tipeó una nueva.
-        const { password, ...restProfile } = payload.profile || {};
+        // legajo no se manda: no es editable.
+        const { password, legajo: _legajo, ...restProfile } = payload.profile || {};
         const profilePayload =
           typeof password === 'string' && password.trim() !== ''
             ? { ...restProfile, password }
@@ -268,10 +275,6 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
     }
     if (estaVacio(profileDetails.telefono)) {
       newErrors.telefono = 'El telefono es obligatorio';
-      isValid = false;
-    }
-    if (estaVacio(profileDetails.legajo)) {
-      newErrors.legajo = 'El legajo es obligatorio';
       isValid = false;
     }
     if (estaVacio(profileDetails.fecha_ingreso)) {
@@ -419,20 +422,20 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
                {errors.telefono && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Legajo</label>
+              <label htmlFor="legajo" className="block text-sm font-medium text-gray-700">Legajo</label>
               <input
+                id="legajo"
                 type="text"
                 name="legajo"
                 value={profileDetails.legajo || ''}
-                onBlur={() => {
-                  if (estaVacio(profileDetails.legajo)) {
-                    setErrors({ ...errors, legajo: 'El legajo es obligatorio' });
-                  }
-                }}
-                onChange={handleProfileDetailChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                readOnly
+                aria-readonly="true"
+                aria-describedby="legajo-ayuda"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed"
               />
-               {errors.legajo && <p className="text-red-500 text-sm mt-1">{errors.legajo}</p>}
+              <p id="legajo-ayuda" className="text-xs text-gray-500 mt-1">
+                {profileExists ? 'Asignado automáticamente.' : 'Se asigna automáticamente al guardar.'}
+              </p>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Fecha de Ingreso</label>
