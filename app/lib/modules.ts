@@ -1,6 +1,9 @@
 import {
   BarChart3,
+  CalendarDays,
   CreditCard,
+  GraduationCap,
+  KeyRound,
   DollarSign,
   Package,
   ShieldCheck,
@@ -69,6 +72,25 @@ export const MODULES = {
     href: '/dashboard/roles',
     prefix: true, // faltaba por completo en MODULE_PERMISSIONS
     hidden: true, // se accede desde el menú de configuración del admin (Header)
+  },
+  // Rubro educación (crm_api 015): clases, personas, inscripciones y agenda.
+  alumnos: {
+    order: 3,
+    label: 'Academia',
+    description: 'Alumnos, profesores, clases, inscripciones y agenda',
+    icon: GraduationCap,
+    href: '/dashboard/academia',
+    prefix: true,
+  },
+  // Profesor, tutor y alumno: no tienen módulos en el token (son usuarios
+  // externos); el front les asigna este módulo virtual (sessionModules).
+  'mis-clases': {
+    order: 0,
+    label: 'Mis clases',
+    description: 'Tus clases, horarios y alumnos',
+    icon: CalendarDays,
+    href: '/dashboard/mis-clases',
+    prefix: true,
   },
   gasto: {
     order: 4,
@@ -143,6 +165,17 @@ export const MODULES = {
     alwaysOpen: true,
   },
 
+  cuenta: {
+    order: 92,
+    label: 'Cambiar contraseña',
+    description: 'Cambiá tu contraseña',
+    icon: KeyRound,
+    href: '/dashboard/cuenta',
+    prefix: true,
+    hidden: true,
+    alwaysOpen: true,
+  },
+
   // [3.3] 'tipo-producto' y 'tipo-salida' se borraron de acá: eran entradas
   // auxiliares redundantes — 'productos' y 'gasto' ya tienen prefix: true y
   // cubren esas subrutas. La de 'tipo-salida' además apuntaba a
@@ -150,6 +183,31 @@ export const MODULES = {
 } satisfies Record<string, ModuleDef>;
 
 export type ModuleKey = keyof typeof MODULES;
+
+/** Campos del JWT que deciden qué ve el usuario. */
+export interface SessionToken {
+  modules?: string[];
+  role?: string[];
+  tipo?: string | null;
+  debeCambiarPassword?: boolean;
+}
+
+/** Profesor, tutor y alumno: usuarios externos al staff (crm_api cuentaGuards). */
+export const TIPOS_EXTERNOS = ['PROF', 'TUT', 'ALU'] as const;
+export const esExterno = (t: SessionToken | null | undefined): boolean =>
+  !!t?.tipo && (TIPOS_EXTERNOS as readonly string[]).includes(t.tipo);
+
+export const RUTA_CAMBIO_PASSWORD = '/dashboard/cuenta/password';
+
+/**
+ * Módulos efectivos de la sesión. Los externos no traen módulos en el token:
+ * su único módulo es "Mis clases". El staff usa los del token.
+ */
+export function sessionModules(t: SessionToken | null | undefined): string[] {
+  if (!t) return [];
+  if (esExterno(t)) return ['mis-clases'];
+  return Array.isArray(t.modules) ? t.modules : [];
+}
 
 /** Módulos del token, ordenados y filtrados a los que existen en el registro. */
 export function menuModules(
@@ -209,7 +267,10 @@ const ROLE_PRIORITY = ['admin', 'empleado'];
 export function landingRoute(
   roles: string[] | undefined,
   userModules: string[] | undefined,
+  opciones: { debeCambiarPassword?: boolean } = {},
 ): string {
+  // Contraseña temporal: la API sólo deja usar /api/cuenta hasta cambiarla.
+  if (opciones.debeCambiarPassword) return RUTA_CAMBIO_PASSWORD;
   const mods = userModules ?? [];
   const conocidos = (roles ?? [])
     .filter((r) => r in ROLE_LANDING)
@@ -219,6 +280,11 @@ export function landingRoute(
 
   if (canAccess(porRol, mods)) return porRol;
   return defaultRouteFor(mods) ?? '/dashboard';
+}
+
+/** Aterrizaje a partir del token completo (staff, externos y contraseña temporal). */
+export function landingForToken(t: SessionToken): string {
+  return landingRoute(t.role, sessionModules(t), { debeCambiarPassword: t.debeCambiarPassword === true });
 }
 
 /**

@@ -37,6 +37,7 @@ const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId, modules }
   const items = [
     ...settingsModules(modules).map((k) => porModulo[k]),
     { href: `/dashboard/profile/${userId}/edit`, label: 'Mi perfil', icon: UserCog, description: 'Mi perfil' },
+    { href: MODULES.cuenta.href + '/password', label: 'Cambiar contraseña', icon: MODULES.cuenta.icon, description: MODULES.cuenta.description },
   ];
 
   // Misma lógica que el "Cerrar sesión" del sidebar (app/lib/dynamicMenu.tsx)
