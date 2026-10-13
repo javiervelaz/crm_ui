@@ -5,6 +5,8 @@ import useAuthCheck from '@/app/lib/useAuthCheck';
 import { createUser } from '@/app/lib/usuario.api';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { estaVacio } from '@/app/lib/formValidacion';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 
 
@@ -15,10 +17,11 @@ const CreateUserPage = () => {
     nombre:'',
     apellido: '',
     email: '',
-    user_type_id: 0,
     cliente_id: clienteId
   });
   const router = useRouter();
+  // Bloquea el botón mientras guarda: varios clicks creaban varios usuarios.
+  const [guardando, setGuardando] = useState(false);
 
   const handleChange = (e: any) => {
     setUserDetails({
@@ -29,15 +32,18 @@ const CreateUserPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (guardando) return;
     if (!validarCampos()) {
       notifyError('Debe rellenar los campos obligatorios.');
       return;
     }
+    setGuardando(true);
     try {
       const created = await createUser(userDetails);
       // Bug 7 (USR-02): un usuario recién creado no tiene contraseña ni rol, así
       // que no puede ingresar ni tiene módulos. Lo mandamos directo a Editar para
       // completar contraseña y asignar el rol (que le da los módulos).
+      // CP-05: no se elige tipo de usuario; la API lo deriva de los roles.
       if (created?.id) {
         notifySuccess('Usuario creado. Completá la contraseña y asigná un rol para que pueda ingresar.');
         router.push(`/dashboard/profile/${created.id}/edit`);
@@ -47,7 +53,9 @@ const CreateUserPage = () => {
       }
     } catch (error) {
       notifyError('No se pudo crear el usuario.');
+      setGuardando(false);
     }
+    // En éxito no se libera: la pantalla navega.
   };
 
   const handleCancel = () => {
@@ -55,7 +63,6 @@ const CreateUserPage = () => {
       nombre: '',
       apellido: '',
       email: '',
-      user_type_id: 0,
     });
     router.push("/dashboard/usuarios");
   };
@@ -64,12 +71,10 @@ const CreateUserPage = () => {
     nombre: string;
     apellido: string;
     email: string;
-    user_type_id: number
   }>({
     nombre: '',
     apellido: '',
     email: '',
-    user_type_id: 0
   });
 
    // Función para validar todos los campos
@@ -78,21 +83,20 @@ const CreateUserPage = () => {
       nombre: '',
       apellido: '',
       email: '',
-      user_type_id: 0,
     };
 
     let isValid = true;
 
      // 1. Validar Teléfono (siempre obligatorio)
-    if (!userDetails.nombre || userDetails.nombre.trim() === '') {
+    if (estaVacio(userDetails.nombre)) {
       newErrors.nombre = 'El nombre es obligatorio';
       isValid = false;
     }
-    if (!userDetails.apellido || userDetails.apellido.trim() === '') {
+    if (estaVacio(userDetails.apellido)) {
       newErrors.apellido = 'El apellido es obligatorio';
       isValid = false;
     }
-     if (!userDetails.email || userDetails.email.trim() === '') {
+     if (estaVacio(userDetails.email)) {
       newErrors.email = 'El email es obligatorio';
       isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userDetails.email.trim())) {
@@ -119,7 +123,7 @@ const CreateUserPage = () => {
             value={userDetails.nombre}
             onChange={handleChange}
             onBlur={() => {
-              if ( (!userDetails.nombre || userDetails.nombre.trim() === '')) {
+              if (estaVacio(userDetails.nombre)) {
                 setErrors({ ...errors, nombre: 'El nombre es obligatorio' });
               }
             }}
@@ -137,7 +141,7 @@ const CreateUserPage = () => {
             value={userDetails.apellido}
             onChange={handleChange}
             onBlur={() => {
-              if ( (!userDetails.apellido || userDetails.apellido.trim() === '')) {
+              if (estaVacio(userDetails.apellido)) {
                 setErrors({ ...errors, apellido: 'El apellido es obligatorio' });
               }
             }}
@@ -156,46 +160,30 @@ const CreateUserPage = () => {
             onChange={handleChange}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
             onBlur={() => {
-              if ( (!userDetails.email || userDetails.email.trim() === '')) {
+              if (estaVacio(userDetails.email)) {
                 setErrors({ ...errors, email: 'El email es obligatorio' });
               }
             }}
           />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Tipo de Usuario
-          </label>
-          <select
-            name="user_type_id"
-            value={userDetails.user_type_id} // Asume que tienes `user_type_id` en `userDetails`
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-          >
-            <option value="0" disabled>
-              Seleccione un tipo de usuario
-            </option>
-            <option value="1">Admin</option>
-            <option value="2">Empleado</option>
-            <option value="3">Proveedor</option>
-            <option value="4">Cliente</option>
-            {/* Añade más opciones según los tipos de usuario que tengas */}
-          </select>
-        </div>
         <div className="flex justify-end gap-4">
           <button
             type="button"
             onClick={handleCancel}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md"
+            disabled={guardando}
+            className="bg-gray-500 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            Cancelar
           </button>
           <button
             type="submit"
-            className="bg-brand-600 text-white px-4 py-2 rounded-md"
+            disabled={guardando}
+            aria-busy={guardando}
+            className="inline-flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-md disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Save
+            {guardando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {guardando ? 'Guardando…' : 'Guardar'}
           </button>
         </div>
       </form>
