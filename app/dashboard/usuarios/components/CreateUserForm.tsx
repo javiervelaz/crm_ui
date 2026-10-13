@@ -15,7 +15,6 @@ const CreateUserPage = () => {
     nombre:'',
     apellido: '',
     email: '',
-    user_type_id: 0,
     cliente_id: clienteId
   });
   const router = useRouter();
@@ -38,6 +37,7 @@ const CreateUserPage = () => {
       // Bug 7 (USR-02): un usuario recién creado no tiene contraseña ni rol, así
       // que no puede ingresar ni tiene módulos. Lo mandamos directo a Editar para
       // completar contraseña y asignar el rol (que le da los módulos).
+      // CP-05: no se elige tipo de usuario; la API lo deriva de los roles.
       if (created?.id) {
         notifySuccess('Usuario creado. Completá la contraseña y asigná un rol para que pueda ingresar.');
         router.push(`/dashboard/profile/${created.id}/edit`);
@@ -55,7 +55,6 @@ const CreateUserPage = () => {
       nombre: '',
       apellido: '',
       email: '',
-      user_type_id: 0,
     });
     router.push("/dashboard/usuarios");
   };
@@ -64,12 +63,10 @@ const CreateUserPage = () => {
     nombre: string;
     apellido: string;
     email: string;
-    user_type_id: number
   }>({
     nombre: '',
     apellido: '',
     email: '',
-    user_type_id: 0
   });
 
    // Función para validar todos los campos
@@ -78,7 +75,6 @@ const CreateUserPage = () => {
       nombre: '',
       apellido: '',
       email: '',
-      user_type_id: 0,
     };
 
     let isValid = true;
@@ -162,26 +158,6 @@ const CreateUserPage = () => {
             }}
           />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Tipo de Usuario
-          </label>
-          <select
-            name="user_type_id"
-            value={userDetails.user_type_id} // Asume que tienes `user_type_id` en `userDetails`
-            onChange={handleChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-          >
-            <option value="0" disabled>
-              Seleccione un tipo de usuario
-            </option>
-            <option value="1">Admin</option>
-            <option value="2">Empleado</option>
-            <option value="3">Proveedor</option>
-            <option value="4">Cliente</option>
-            {/* Añade más opciones según los tipos de usuario que tengas */}
-          </select>
         </div>
         <div className="flex justify-end gap-4">
           <button

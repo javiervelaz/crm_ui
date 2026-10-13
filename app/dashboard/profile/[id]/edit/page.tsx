@@ -6,7 +6,7 @@ import { notifySuccess,notifyError } from '@/app/lib/notificationService';
 import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
 import { createUserRol, deleteUserRol, getUserRolUserById } from '@/app/lib/userRol.api';
-import { getUserById, getUserRol, getUserTypeById, updateUser } from '@/app/lib/usuario.api'; // Importar getUserTypeById
+import { getUserById, getUserRol, updateUser } from '@/app/lib/usuario.api';
 import { useParams, useRouter } from 'next/navigation'; // Para manejar navegación
 import { useEffect, useState } from 'react';
 
@@ -16,7 +16,6 @@ const EditUserPage = () => {
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id; // Obtener el parámetro 'id' de la URL
 
   const [userDetails, setUserDetails] = useState<any>(null);
-  const [userTypeDescription, setUserTypeDescription] = useState('');
   const [profileDetails, setProfileDetails] = useState<any>({});
   const [profileExists, setProfileExists] = useState(false);
   const [rolDetails, setRolDetails] = useState<any[]>([]);
@@ -30,12 +29,6 @@ const EditUserPage = () => {
         try {
           const data = await getUserById(id,cliente); // Llamada a tu servicio que obtiene la lista de usuarios
           setUserDetails(data);
-
-          // Obtener la descripción del tipo de usuario
-          if (data.user_type_id) {
-            const userTypeData = await getUserTypeById(data.user_type_id.toString());
-            setUserTypeDescription(userTypeData?.descripcion || {}); // Asignar la descripción obtenida al estado
-          }
 
           // Obtener los detalles del perfil del usuario
           if (data.id) {
@@ -134,11 +127,11 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
       // 🔹 Verificar si el usuario existe
       const user = await getUserById(payload.id, payload.cliente_id);
       if (user) {
+        // CP-05: el tipo de usuario no se edita; la API lo deriva de los roles.
         await updateUser(user.id, {
           nombre: payload.nombre,
           apellido: payload.apellido,
           email: payload.email,
-          user_type_id: payload.user_type_id,
         });
       }
       
@@ -358,16 +351,6 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tipo de usuario</label>
-              <input
-                type="text"
-                name="user_type"
-                value={userTypeDescription || ''}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                readOnly
-              />
             </div>
           </div>
         </section>
