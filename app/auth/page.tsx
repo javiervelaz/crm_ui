@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'; // Cambia 'next/router' por 'next/n
 import { FormEvent, useState } from 'react';
 import styles from './page.module.css';
 import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
-import { landingRoute } from '@/app/lib/modules';
+import { landingForToken, SessionToken } from '@/app/lib/modules';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const LoginPage = () => {
@@ -27,8 +27,7 @@ const LoginPage = () => {
       localStorage.setItem('token', token);
       window.dispatchEvent(new Event('storage'));
       // Antes iba a '/dashboard/orders', una ruta que no existe.
-      const { role, modules } = jwtDecode<{ role?: string[]; modules?: string[] }>(token);
-      router.push(landingRoute(role, modules));
+      router.push(landingForToken(jwtDecode<SessionToken>(token)));
     } catch (err: any) {
       const status = err?.response?.status;
       const code = err?.response?.data?.code;

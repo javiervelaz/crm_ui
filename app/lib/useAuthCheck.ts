@@ -1,6 +1,6 @@
 'use client';
 
-import { canAccess, defaultRouteFor } from '@/app/lib/modules';
+import { canAccess, defaultRouteFor, RUTA_CAMBIO_PASSWORD, sessionModules, SessionToken } from '@/app/lib/modules';
 import { logError } from '@/app/lib/logger';
 import { jwtDecode } from 'jwt-decode';
 import { usePathname, useRouter } from 'next/navigation';
@@ -49,7 +49,7 @@ export const useAuthCheck = (): AuthState => {
     }
 
     try {
-      const decoded: { modules?: string[]; exp?: number } = jwtDecode(token);
+      const decoded: SessionToken & { exp?: number } = jwtDecode(token);
 
       if (!decoded.exp || decoded.exp < Date.now() / 1000) {
         localStorage.removeItem('token');
@@ -58,7 +58,17 @@ export const useAuthCheck = (): AuthState => {
         return;
       }
 
-      const userModules = decoded.modules ?? [];
+      // Contraseña temporal: sólo la pantalla de cambio (la API rechaza el resto).
+      if (decoded.debeCambiarPassword === true) {
+        if (pathname !== RUTA_CAMBIO_PASSWORD) {
+          router.push(RUTA_CAMBIO_PASSWORD);
+          return;
+        }
+        setState({ status: 'ok', modules: [], fallback: null });
+        return;
+      }
+
+      const userModules = sessionModules(decoded);
       const fallback = defaultRouteFor(userModules);
 
       if (userModules.length === 0 || !fallback) {

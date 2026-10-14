@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { FormEvent, useEffect, useState } from 'react';
 import { notifyAuthChanged } from '@/app/lib/authEvents';
-import { landingRoute } from '@/app/lib/modules';
+import { landingForToken } from '@/app/lib/modules';
 
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -14,6 +14,8 @@ interface DecodedToken {
   userId: string;
   role: string[]; // el backend manda los nombres de rol (ej. 'admin', 'empleado'), no ids
   modules?: string[];
+  tipo?: string | null;
+  debeCambiarPassword?: boolean;
   exp?: number;
 }
 
@@ -29,7 +31,7 @@ const LoginForm: React.FC = () => {
     try {
       const decoded: DecodedToken = jwtDecode(token);
       if (decoded.exp && decoded.exp < Date.now() / 1000) return;
-      router.push(landingRoute(decoded.role, decoded.modules));
+      router.push(landingForToken(decoded));
     } catch {
       // Token corrupto: lo limpia useAuthCheck, acá sólo no redirigimos.
     }
@@ -46,7 +48,7 @@ const LoginForm: React.FC = () => {
         localStorage.setItem('token', token);
         window.dispatchEvent(new Event('storage'));
         notifyAuthChanged();
-        router.push(landingRoute(decodedToken.role, decodedToken.modules));
+        router.push(landingForToken(decodedToken));
       }
     } catch (err) {
       setError('Credenciales inválidas');

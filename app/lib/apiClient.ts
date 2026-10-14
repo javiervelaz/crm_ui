@@ -45,8 +45,11 @@ apiClient.interceptors.response.use(
         // 1,5 s. El usuario perdía el formulario que estaba completando sin
         // poder hacer nada. Ahora se emite un evento y el modal decide.
         emitPlanLimite(raw);
-      } else {
-        toast.error(raw, { position: 'top-right', autoClose: 3000 });
+      } else if (!['SIN_FICHA', 'PASSWORD_TEMPORAL'].includes(data?.code)) {
+        // SIN_FICHA lo muestra Mis clases; PASSWORD_TEMPORAL ya redirige al
+        // cambio de contraseña (useAuthCheck). toastId: varios
+        // requests en paralelo con el mismo 403 muestran un solo aviso.
+        toast.error(raw, { position: 'top-right', autoClose: 3000, toastId: `403:${raw}` });
       }
     }
 

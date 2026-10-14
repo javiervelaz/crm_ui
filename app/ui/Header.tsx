@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import AdminSettingsMenu from '@/app/ui/AdminSettingsMenu';
+import { KeyRound } from 'lucide-react';
+import Link from 'next/link';
+import { RUTA_CAMBIO_PASSWORD } from '@/app/lib/modules';
 
 interface DecodedToken {
   userId: string | number;
@@ -102,6 +105,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             {userName}
           </span>
           {isAdmin && userId != null && <AdminSettingsMenu userId={userId} modules={modules} />}
+          {!isAdmin && (
+            <Link
+              href={RUTA_CAMBIO_PASSWORD}
+              title="Cambiar contraseña"
+              aria-label="Cambiar contraseña"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100"
+            >
+              <KeyRound size={16} />
+            </Link>
+          )}
           {isAdmin && (
             <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />

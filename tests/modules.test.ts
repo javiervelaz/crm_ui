@@ -23,7 +23,7 @@ describe('menú por rubro', () => {
   });
 
   it('ignora módulos que el front no conoce (ej. uno nuevo del backend)', () => {
-    expect(menuModules(['gasto', 'alumnos']).map((m) => m.key)).toEqual(['gasto']);
+    expect(menuModules(['gasto', 'modulo-del-futuro']).map((m) => m.key)).toEqual(['gasto']);
   });
 });
 

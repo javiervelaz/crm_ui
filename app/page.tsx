@@ -1,15 +1,14 @@
 'use client';
 
 import { logError, logWarn } from '@/app/lib/logger';
-import { defaultRouteFor } from '@/app/lib/modules';
+import { landingForToken, sessionModules, SessionToken } from '@/app/lib/modules';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
 import LoginForm from '@/app/ui/LoginForm';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-interface DecodedToken {
-  modules: string[];
+interface DecodedToken extends SessionToken {
   exp: number;
 }
 
@@ -30,13 +29,8 @@ export default function Page() {
           return;
         }
 
-        const modules = decodedToken.modules || [];
-
-        if (modules.length > 0) {
-          // 🔹 Buscar el primer módulo válido definido en modulePermissions
-          const defaultRoute = defaultRouteFor(modules) ?? '/dashboard';
-
-          router.push(defaultRoute);
+        if (decodedToken.debeCambiarPassword || sessionModules(decodedToken).length > 0) {
+          router.push(landingForToken(decodedToken));
         }
       } catch (error) {
         logError('Error decoding token:', error);
