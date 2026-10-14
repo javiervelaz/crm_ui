@@ -4,6 +4,10 @@ import { getClienteId } from "@/app/lib/authService";
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { deleteUser, getUserList, getUserTypes } from '@/app/lib/usuario.api';
+import { MENSAJE_ACADEMIA, tiposDeStaff } from '@/app/lib/rolesStaff';
+import { sessionModules, type SessionToken } from '@/app/lib/modules';
+import { jwtDecode } from 'jwt-decode';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
@@ -40,6 +44,7 @@ export default function UsuariosPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [conAcademia, setConAcademia] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -49,6 +54,13 @@ export default function UsuariosPage() {
       return;
     }
   
+    // Academia (módulo alumnos): avisar dónde se gestionan profesores, tutores y alumnos.
+    try {
+      setConAcademia(sessionModules(jwtDecode<SessionToken>(token)).includes('alumnos'));
+    } catch {
+      setConAcademia(false);
+    }
+
     const fetchData = async () => {
      
       try {
@@ -68,7 +80,7 @@ export default function UsuariosPage() {
       });
    
         setUsers(enrichedUsers);
-        setUserTypes(typesData);
+        setUserTypes(tiposDeStaff(typesData));
       } catch (err) {
         setError('Error al cargar datos');
       } finally {
@@ -108,7 +120,7 @@ export default function UsuariosPage() {
         });
       
         setUsers(enrichedUsers);
-        setUserTypes(typesData);
+        setUserTypes(tiposDeStaff(typesData));
       
         notifySuccess('Usuario eliminado correctamente');
       } catch (error) {
@@ -154,6 +166,13 @@ export default function UsuariosPage() {
         </div>
         <CreateUsuarioButton />
       </div>
+
+      {conAcademia && (
+        <p className="mb-4 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700">
+          {MENSAJE_ACADEMIA}{' '}
+          <Link href="/dashboard/academia" className="font-semibold underline">Ir a Academia</Link>
+        </p>
+      )}
 
       {loading ? (
         <TableSkeleton />

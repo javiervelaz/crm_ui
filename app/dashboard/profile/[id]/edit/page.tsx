@@ -11,6 +11,8 @@ import { useParams, useRouter } from 'next/navigation'; // Para manejar navegaci
 import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { estaVacio } from '@/app/lib/formValidacion';
+import { rolesAsignables, tieneRolExterno } from '@/app/lib/rolesStaff';
+import Link from 'next/link';
 
 const EditUserPage = () => {
   const router = useRouter();
@@ -22,6 +24,8 @@ const EditUserPage = () => {
   const [profileExists, setProfileExists] = useState(false);
   const [rolDetails, setRolDetails] = useState<any[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<any[]>([]);
+  // Roles con los que llegó el usuario: si alguno es de Academia, acá no se edita.
+  const [rolesIniciales, setRolesIniciales] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   // Bloquea el botón mientras guarda: varios clicks disparaban varios guardados.
   const [guardando, setGuardando] = useState(false);
@@ -58,6 +62,7 @@ const EditUserPage = () => {
             }));
 
             setSelectedRoles(rolesFormatted);
+            setRolesIniciales(rolesFormatted.map((r: any) => Number(r.id)));
           }
         } catch (err) {
           logError('Error al cargar datos del usuario', err);
@@ -302,9 +307,19 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
 
   
 
+  const usuarioDeAcademia = tieneRolExterno(rolesIniciales, rolDetails);
+  const hayRolesDeAcademia = rolDetails.length > rolesAsignables(rolDetails).length;
+
   return (
     <div className="w-full p-4 md:p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">Editar Usuario</h1>
+
+      {usuarioDeAcademia && (
+        <div role="alert" className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Este usuario es de la academia (profesor, tutor o alumno): sus datos y su acceso se gestionan desde{' '}
+          <Link href="/dashboard/academia" className="font-semibold underline">Academia</Link>.
+        </div>
+      )}
 
       {/* Contenedor principal */}
       <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 space-y-6">
@@ -463,7 +478,7 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Selecciona roles</label>
               <div className="mt-2 space-y-2">
-                {rolDetails.map((rol) => (
+                {rolesAsignables(rolDetails).map((rol) => (
                   <div key={rol.id} className="flex items-center">
                     <input
                       type="checkbox"
@@ -479,6 +494,11 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
                   </div>
                 ))}
               </div>
+              {hayRolesDeAcademia && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Los roles de profesor, tutor y alumno se asignan desde Academia.
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -498,7 +518,7 @@ const handleRoleCheckboxChange = (e: any, rol: any) => {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={guardando}
+            disabled={guardando || usuarioDeAcademia}
             aria-busy={guardando}
             className="ml-2 inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg shadow-sm hover:bg-brand-600 disabled:opacity-70 disabled:cursor-not-allowed"
           >
