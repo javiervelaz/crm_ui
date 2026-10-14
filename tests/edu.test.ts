@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   admiteAccesoPropio,
   armarAgenda,
+  clasesPorAlumno,
   edad,
   errorDeApi,
   erroresHorarios,
@@ -317,5 +318,40 @@ describe('varios', () => {
 
   it('nombre de mes', () => {
     expect(nombreMes('2026-12-01')).toBe('diciembre 2026');
+  });
+});
+
+describe('clasesPorAlumno (Mis clases del tutor)', () => {
+  const alumnos = [
+    { id: 5, nombre: 'hugo', apellido: 'gati', activo: true },
+    { id: 1, nombre: 'Tomás', apellido: 'Ruiz', activo: true },
+    { id: 9, nombre: 'Ex', apellido: 'Alumno', activo: false },
+  ];
+  it('lista a todos los alumnos activos aunque no tengan clases', () => {
+    const r = clasesPorAlumno(alumnos, [
+      { id: 2, alumno_id: 1, alumno: 'Tomás Ruiz' },
+    ]);
+    expect(r.map((g) => [g.nombre, g.clases.length])).toEqual([
+      ['hugo gati', 0],
+      ['Tomás Ruiz', 1],
+    ]);
+  });
+  it('sin inscripciones: igual muestra a los alumnos', () => {
+    expect(clasesPorAlumno(alumnos, []).map((g) => g.alumno_id)).toEqual([
+      5, 1,
+    ]);
+  });
+  it('inscripción de un alumno fuera de la lista: aparece con su nombre', () => {
+    const r = clasesPorAlumno(
+      [],
+      [{ id: 3, alumno_id: 9, alumno: 'Ex Alumno' }],
+    );
+    expect(r).toEqual([
+      {
+        alumno_id: 9,
+        nombre: 'Ex Alumno',
+        clases: [{ id: 3, alumno_id: 9, alumno: 'Ex Alumno' }],
+      },
+    ]);
   });
 });

@@ -47,6 +47,7 @@ export default function InscripcionNueva() {
   const [profesorId, setProfesorId] = useState<number | ''>('');
   const [fechaAlta, setFechaAlta] = useState(hoy());
   const [ciclo, setCiclo] = useState(Number(hoy().slice(0, 4)));
+  const anioAlta = Number((esFecha(fechaAlta) ? fechaAlta : hoy()).slice(0, 4));
   const [horarios, setHorarios] = useState<Horario[]>([
     { dia_semana: 1, hora_inicio: '17:00', hora_fin: '18:00' },
   ]);
@@ -118,7 +119,7 @@ export default function InscripcionNueva() {
     .filter(Boolean) as Horario[];
   const errorGeneral =
     errorApi &&
-    !['alumno_id', 'clase_id', 'profesor_id', 'fecha_alta'].includes(
+    !['alumno_id', 'clase_id', 'profesor_id', 'fecha_alta', 'ciclo'].includes(
       errorApi.field ?? '',
     );
 
@@ -249,17 +250,23 @@ export default function InscripcionNueva() {
               id="ciclo"
               label="Ciclo lectivo"
               requerido
-              ayuda="Un alumno no puede repetir clase en el mismo ciclo."
+              ayuda="El año del alta o el siguiente. Un alumno no puede repetir clase en el mismo ciclo."
+              error={ver('ciclo')}
             >
-              <input
+              {/* La API sólo acepta el año del alta o el siguiente: un año a mano
+                  (ej. 2099) dejaba la inscripción fuera de Mis clases y la agenda. */}
+              <select
                 id="ciclo"
-                type="number"
-                min={2000}
-                max={2100}
                 value={ciclo}
-                onChange={(e) => setCiclo(Number(e.target.value))}
+                onChange={(e) => actualizar(setCiclo)(Number(e.target.value))}
                 className={claseCampo}
-              />
+              >
+                {[anioAlta, anioAlta + 1].map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
             </Campo>
           </div>
 

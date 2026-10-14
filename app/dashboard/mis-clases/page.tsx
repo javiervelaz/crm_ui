@@ -9,13 +9,18 @@ import {
   type Profesor,
   type Tutor,
 } from '@/app/lib/edu/edu.api';
-import { formatHorario, hoy, type TurnoAgenda } from '@/app/lib/edu/reglas';
+import {
+  clasesPorAlumno,
+  formatHorario,
+  hoy,
+  type TurnoAgenda,
+} from '@/app/lib/edu/reglas';
 import { logError } from '@/app/lib/logger';
 import type { SessionToken } from '@/app/lib/modules';
 import ErrorState from '@/components/ui/ErrorState';
 import EmptyState from '@/components/ui/EmptyState';
 import { jwtDecode } from 'jwt-decode';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Users } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AgendaSemanal from '../academia/componentes/AgendaSemanal';
 import { Etiqueta, Tarjeta } from '../academia/componentes/ui';
@@ -64,13 +69,15 @@ export default function MisClasesPage() {
     cargar();
   }, [cargar]);
 
-  // Tutor: inscripciones agrupadas por hijo.
-  const porAlumno = useMemo(() => {
-    const m = new Map<string, Inscripcion[]>();
-    for (const i of inscripciones ?? [])
-      m.set(i.alumno, [...(m.get(i.alumno) ?? []), i]);
-    return [...m.entries()];
-  }, [inscripciones]);
+  // Tutor: una tarjeta por alumno a cargo, tenga o no clases este ciclo.
+  const porAlumno = useMemo(
+    () =>
+      clasesPorAlumno(
+        (perfil as Tutor | null)?.alumnos ?? [],
+        inscripciones ?? [],
+      ),
+    [perfil, inscripciones],
+  );
 
   if (error)
     return <ErrorState titulo="Mis clases" mensaje={error} onRetry={cargar} />;
@@ -90,42 +97,54 @@ export default function MisClasesPage() {
           {esProfesor
             ? `Tenés ${inscripciones.length} ${inscripciones.length === 1 ? 'alumno' : 'alumnos'} este ciclo.`
             : esTutor
-              ? 'Clases de los alumnos a tu cargo.'
+              ? `Alumnos a tu cargo y sus clases del ciclo ${ciclo}.`
               : 'Tus clases de este ciclo.'}
         </p>
       </div>
 
-      {!inscripciones.length ? (
+      {inscripciones.length > 0 && (
+        <Tarjeta titulo="Semana">
+          <AgendaSemanal
+            turnos={turnos}
+            mostrarProfesor={!esProfesor}
+            linkInscripcion={false}
+          />
+        </Tarjeta>
+      )}
+
+      {esTutor ? (
+        porAlumno.length ? (
+          porAlumno.map((g) => (
+            <Tarjeta key={g.alumno_id} titulo={g.nombre}>
+              {g.clases.length ? (
+                <ListaClases lista={g.clases} mostrar="profesor" />
+              ) : (
+                <p className="py-2 text-sm text-brand-400">
+                  Sin clases en el ciclo {ciclo}.
+                </p>
+              )}
+            </Tarjeta>
+          ))
+        ) : (
+          <EmptyState
+            icono={Users}
+            titulo="No tenés alumnos a cargo"
+            mensaje="Cuando la academia te asigne un alumno, lo vas a ver acá."
+          />
+        )
+      ) : !inscripciones.length ? (
         <EmptyState
           icono={CalendarDays}
           titulo="Todavía no hay clases"
           mensaje="Cuando la academia cargue una inscripción, la vas a ver acá."
         />
       ) : (
-        <>
-          <Tarjeta titulo="Semana">
-            <AgendaSemanal
-              turnos={turnos}
-              mostrarProfesor={!esProfesor}
-              linkInscripcion={false}
-            />
-          </Tarjeta>
-
-          {esTutor ? (
-            porAlumno.map(([alumno, lista]) => (
-              <Tarjeta key={alumno} titulo={alumno}>
-                <ListaClases lista={lista} mostrar="profesor" />
-              </Tarjeta>
-            ))
-          ) : (
-            <Tarjeta titulo={esProfesor ? 'Mis alumnos' : 'Mis clases'}>
-              <ListaClases
-                lista={inscripciones}
-                mostrar={esProfesor ? 'alumno' : 'profesor'}
-              />
-            </Tarjeta>
-          )}
-        </>
+        <Tarjeta titulo={esProfesor ? 'Mis alumnos' : 'Mis clases'}>
+          <ListaClases
+            lista={inscripciones}
+            mostrar={esProfesor ? 'alumno' : 'profesor'}
+          />
+        </Tarjeta>
       )}
     </div>
   );

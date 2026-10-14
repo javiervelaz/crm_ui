@@ -365,3 +365,44 @@ export function validarPersona(
   }
   return e;
 }
+
+// ─── Mis clases del tutor ─────────────────────────────────────────────────────
+/**
+ * Una entrada por alumno a cargo (aunque no tenga clases en el ciclo), con sus
+ * inscripciones. Ordenado por apellido y nombre. Una inscripción de un alumno
+ * que no está en la lista (dado de baja) igual se muestra, con su nombre.
+ */
+export function clasesPorAlumno<
+  A extends { id: number; nombre: string; apellido: string; activo?: boolean },
+  I extends { alumno_id: number; alumno: string },
+>(
+  alumnos: A[],
+  inscripciones: I[],
+): { alumno_id: number; nombre: string; clases: I[] }[] {
+  const grupos = new Map<
+    number,
+    { alumno_id: number; nombre: string; clases: I[]; orden: string }
+  >();
+  for (const a of alumnos) {
+    if (a.activo === false) continue;
+    grupos.set(a.id, {
+      alumno_id: a.id,
+      nombre: `${a.nombre} ${a.apellido}`.trim(),
+      clases: [],
+      orden: `${a.apellido} ${a.nombre}`.toLocaleLowerCase('es'),
+    });
+  }
+  for (const i of inscripciones) {
+    const g = grupos.get(i.alumno_id) ?? {
+      alumno_id: i.alumno_id,
+      nombre: i.alumno,
+      clases: [],
+      orden: i.alumno.toLocaleLowerCase('es'),
+    };
+    g.clases.push(i);
+    grupos.set(i.alumno_id, g);
+  }
+  return [...grupos.values()]
+    .sort((x, y) => x.orden.localeCompare(y.orden, 'es'))
+    .map(({ orden: _o, ...g }) => g);
+}
