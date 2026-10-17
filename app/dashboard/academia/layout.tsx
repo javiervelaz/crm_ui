@@ -4,12 +4,16 @@ import {
   BookOpen,
   CalendarDays,
   ClipboardList,
+  CreditCard,
+  Receipt,
   GraduationCap,
   UserRound,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { resumenPagos } from '@/app/lib/edu/cuotas.api';
 
 /**
  * Academia (módulo "alumnos", rubro educación). Una sola entrada en el menú
@@ -34,6 +38,8 @@ const SECCIONES = [
   },
   { href: '/dashboard/academia/clases', label: 'Clases', icon: BookOpen },
   { href: '/dashboard/academia/agenda', label: 'Agenda', icon: CalendarDays },
+  { href: '/dashboard/academia/cuotas', label: 'Cuotas', icon: Receipt },
+  { href: '/dashboard/academia/pagos', label: 'Pagos', icon: CreditCard },
 ];
 
 export default function AcademiaLayout({
@@ -42,6 +48,13 @@ export default function AcademiaLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [porRevisar, setPorRevisar] = useState(0);
+  // El aviso se refresca al cambiar de solapa: alcanza para una academia chica.
+  useEffect(() => {
+    resumenPagos()
+      .then((r) => setPorRevisar(r.pendientes_revision))
+      .catch(() => setPorRevisar(0));
+  }, [pathname]);
   return (
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="mb-3 font-display text-2xl text-brand-800">Academia</h1>
@@ -64,6 +77,14 @@ export default function AcademiaLayout({
                   }`}
                 >
                   <Icon size={16} /> {label}
+                  {href.endsWith('/pagos') && porRevisar > 0 && (
+                    <span
+                      aria-label={`${porRevisar} pagos para revisar`}
+                      className="rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white"
+                    >
+                      {porRevisar}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
