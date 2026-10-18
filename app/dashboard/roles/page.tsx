@@ -5,7 +5,7 @@ import { getClienteId } from '@/app/lib/authService';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getRolList, deleteRol } from '@/app/lib/rol.api';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
-import { PlusCircle, Shield, Trash2 } from 'lucide-react';
+import { GraduationCap, PlusCircle, Shield, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -13,7 +13,16 @@ interface Rol {
   id: number;
   descripcion: string;
   cliente_id: number;
+  /** Profesor, tutor o alumno: rol del sistema que maneja Academia (sólo lectura). */
+  externo?: boolean;
 }
+
+const AvisoAcademia = () => (
+  <span className="inline-flex items-center gap-1.5 text-xs text-brand-400">
+    <GraduationCap size={14} aria-hidden="true" />
+    Se gestiona desde Academia
+  </span>
+);
 
 export default function RolesPage() {
   const router = useRouter();
@@ -96,6 +105,9 @@ export default function RolesPage() {
                     <p className="text-sm font-semibold text-brand-800 mt-0.5">{rol.descripcion}</p>
                   </div>
                 </div>
+                {rol.externo ? (
+                  <div className="mt-3 border-t border-brand-100 pt-3"><AvisoAcademia /></div>
+                ) : (
                 <div className="mt-3 flex gap-3 border-t border-brand-100 pt-3">
                   <button
                     onClick={() => handleEditPermisos(rol.id)}
@@ -112,6 +124,7 @@ export default function RolesPage() {
                     Eliminar
                   </button>
                 </div>
+                )}
               </div>
             ))}
           </div>
@@ -132,6 +145,9 @@ export default function RolesPage() {
                     <td className="px-4 py-3">{index + 1}</td>
                     <td className="px-4 py-3">{rol.descripcion}</td>
                     <td className="px-4 py-3 text-center">
+                      {rol.externo ? (
+                        <AvisoAcademia />
+                      ) : (
                       <div className="flex justify-center gap-3">
                         <button
                           onClick={() => handleEditPermisos(rol.id)}
@@ -150,6 +166,7 @@ export default function RolesPage() {
                           Eliminar
                         </button>
                       </div>
+                      )}
                     </td>
                   </tr>
                 ))}

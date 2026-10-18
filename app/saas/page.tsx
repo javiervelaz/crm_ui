@@ -1,10 +1,12 @@
 // app/saas/page.tsx
 'use client';
 
-import { useRef, useState, FormEvent, Suspense } from 'react';
+import { useEffect, useRef, useState, FormEvent, Suspense } from 'react';
 import Image from 'next/image';
 import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
 import { useTiers } from '@/app/lib/useTiers';   // 👈 NUEVO
+import { useRubros } from '@/app/lib/useRubros';
+import { rubroInicial } from '@/app/lib/rubros';
 import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
 import { useSearchParams } from 'next/navigation';
 
@@ -45,6 +47,15 @@ function SaasLandingPage() {
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [emailVerificacion, setEmailVerificacion] = useState('');
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [rubro, setRubro] = useState('');
+
+  // Rubro: define qué módulos recibe la cuenta. La landing de cada vertical
+  // puede mandarlo preseleccionado con ?rubro=educacion.
+  const { rubros, loading: rubrosLoading, error: rubrosError } = useRubros();
+  const rubroParam = searchParams.get('rubro');
+  useEffect(() => {
+    if (!rubro && rubros.length) setRubro(rubroInicial(rubroParam, rubros));
+  }, [rubros, rubroParam, rubro]);
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
@@ -74,6 +85,13 @@ function SaasLandingPage() {
       return;
     }
 
+    if (!rubro) {
+      setStatus('error');
+      setErrorMessage('Elegí el rubro de tu negocio.');
+      setFieldError('rubro');
+      return;
+    }
+
     setStatus('loading');
     setErrorMessage(null);
     setFieldError(null);
@@ -83,7 +101,7 @@ function SaasLandingPage() {
         plan: selectedPlan,
         comercioNombre, cuit, adminNombre, adminApellido,
         adminEmail, adminDni, telefono, password,
-        aceptaTerminos,
+        aceptaTerminos, rubro,
       });
 
       // Sin sesión inmediata: la cuenta nace en PENDIENTE_VERIFICACION y el
@@ -425,6 +443,44 @@ function SaasLandingPage() {
               </div>
             </div>
 
+            {/* Rubro del negocio */}
+            <div>
+              <label htmlFor="rubro" className="block text-sm font-medium text-brand-800">
+                Rubro del negocio
+              </label>
+              <select
+                id="rubro"
+                value={rubro}
+                onChange={(e) => {
+                  setRubro(e.target.value);
+                  if (fieldError === 'rubro') setFieldError(null);
+                }}
+                required
+                disabled={rubrosLoading || !!rubrosError}
+                aria-invalid={fieldError === 'rubro'}
+                className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-brand-600 focus:outline-none disabled:bg-brand-50 md:w-1/2 ${
+                  fieldError === 'rubro' ? 'border-red-500' : 'border-brand-200'
+                }`}
+              >
+                {rubrosLoading && <option value="">Cargando rubros...</option>}
+                {!rubrosLoading && !rubrosError && !rubro && <option value="">Elegí un rubro</option>}
+                {rubros.map((r) => (
+                  <option key={r.codigo} value={r.codigo}>
+                    {r.nombre}
+                  </option>
+                ))}
+              </select>
+              {rubrosError ? (
+                <p className="mt-1 text-xs text-red-600">
+                  No pudimos cargar los rubros. Recargá la página para intentar de nuevo.
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-brand-300">
+                  Según el rubro preparamos los módulos de tu cuenta.
+                </p>
+              )}
+            </div>
+
             {/* Datos del comercio */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
@@ -561,7 +617,7 @@ function SaasLandingPage() {
             <div className="flex items-center justify-end">
               <button
                 type="submit"
-                disabled={status === 'loading' || !aceptaTerminos}
+                disabled={status === 'loading' || !aceptaTerminos || !rubro}
                 className="inline-flex items-center rounded-full bg-brand-600 px-6 py-2 text-sm font-semibold text-white shadow-brand hover:bg-brand-700 disabled:opacity-60"
               >
                 {status === 'loading' ? 'Creando cuenta...' : 'Crear mi cuenta'}

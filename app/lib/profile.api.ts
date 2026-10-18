@@ -115,3 +115,16 @@ export const createProfile = async (profileDetails: any) => {
     }
   };
   
+/**
+ * Legajo que va a recibir la próxima alta de perfil. Lo asigna la API al
+ * guardar (autonumérico por comercio); acá sólo se muestra.
+ */
+export const getProximoLegajo = async (): Promise<string | null> => {
+  try {
+    const { data } = await apiClient.get('/profile/legajo/proximo');
+    return data?.legajo != null ? String(data.legajo) : null;
+  } catch (err) {
+    logError('No se pudo obtener el próximo legajo', err);
+    return null;
+  }
+};

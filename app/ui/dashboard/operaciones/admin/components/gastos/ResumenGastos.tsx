@@ -2,6 +2,7 @@
 import { getClienteId } from "@/app/lib/authService";
 import { gatosMontoTotalDiario } from '@/app/lib/gasto';
 import { pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
+import { totalesPorTipo } from '@/app/lib/gastosPeriodo';
 import { useEffect, useState } from 'react';
 
 interface Fijo { servicio: string; monto: number; }
@@ -21,9 +22,13 @@ interface Props {
   data: FormData;
   gastosExistentes?: any[];
   registroDiarioId?: number | null;
+  /** Tenant sin caja (sin módulo 'operaciones'): totales del período, sin caja ni ventas. */
+  sinCaja?: boolean;
+  /** Etiqueta del período en modo sin caja, ej. 'octubre de 2026'. */
+  periodo?: string;
 }
 
-export default function ResumenGastos({ data, registroDiarioId }: Props) {
+export default function ResumenGastos({ data, registroDiarioId, gastosExistentes = [], sinCaja = false, periodo }: Props) {
   const [montoFinal, setMontoFinal] = useState(0);
   const [montoGastoSueldo, setGastoSueldos] = useState(0);
   const [montoGastoFijo, setGastoFijo] = useState(0);
@@ -64,6 +69,14 @@ export default function ResumenGastos({ data, registroDiarioId }: Props) {
     obtenerMontoGastoSueldos();
     obtenerMontoPedidos();
   }, []);
+
+  // Sin caja no hay registro diario: los totales salen de los gastos del período.
+  if (sinCaja) {
+    const t = totalesPorTipo(gastosExistentes);
+    return (
+      <ResumenSinCaja fijo={t.fijo} sueldos={t.sueldos} variable={t.variable} periodo={periodo} />
+    );
+  }
 
   const totalGastos = montoGastoFijo + montoGastoSueldo + montoGastoVariable;
   const cajaInicial = Number(data.cajaInicial?.inicio || 0);
@@ -129,6 +142,41 @@ export default function ResumenGastos({ data, registroDiarioId }: Props) {
         <p className={`text-2xl font-bold ${resultado >= 0 ? 'text-green-700' : 'text-red-600'}`}>
           ${fmt(resultado)}
         </p>
+      </div>
+    </div>
+  );
+}
+
+const fmtSinCaja = (n: number) =>
+  n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Resumen para tenants sin caja: mismas tarjetas de gastos, sin la sección Caja. */
+function ResumenSinCaja({ fijo, sueldos, variable, periodo }: {
+  fijo: number; sueldos: number; variable: number; periodo?: string;
+}) {
+  const total = fijo + sueldos + variable;
+  return (
+    <div>
+      <h2 className="mb-4 text-lg font-bold text-brand-800">
+        Resumen de Gastos{periodo ? ` — ${periodo}` : ''}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+        <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Gastos Fijos</p>
+          <p className="text-xl font-bold text-brand-800">${fmtSinCaja(fijo)}</p>
+        </div>
+        <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Sueldos</p>
+          <p className="text-xl font-bold text-brand-800">${fmtSinCaja(sueldos)}</p>
+        </div>
+        <div className="rounded-xl border border-brand-100 bg-brand-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-1">Variables</p>
+          <p className="text-xl font-bold text-brand-800">${fmtSinCaja(variable)}</p>
+        </div>
+      </div>
+      <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-red-400 mb-1">Total Gastos</p>
+        <p className="text-2xl font-bold text-red-600">${fmtSinCaja(total)}</p>
       </div>
     </div>
   );

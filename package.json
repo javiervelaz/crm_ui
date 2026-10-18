@@ -8,7 +8,8 @@
     "seed": "node -r dotenv/config ./scripts/seed.js",
     "build": "next build",
     "typecheck": "tsc --noEmit",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
@@ -67,6 +68,7 @@
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "0.5.4",
     "tailwindcss": "^3.4.17",
+    "vitest": "^3.2.7",
     "webpack-obfuscator": "^3.5.1"
   },
   "overrides": {

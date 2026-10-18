@@ -1,10 +1,12 @@
 "use client";
 
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation'; // Cambia 'next/router' por 'next/navigation'
 import { FormEvent, useState } from 'react';
 import styles from './page.module.css';
 import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
+import { landingForToken, SessionToken } from '@/app/lib/modules';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const LoginPage = () => {
@@ -21,8 +23,11 @@ const LoginPage = () => {
 
     try {
       const response = await axios.post(`${apiUrl}/auth/login`, { email, password });
-      localStorage.setItem('token', response.data.token);
-      router.push('/dashboard/orders');
+      const token: string = response.data.token;
+      localStorage.setItem('token', token);
+      window.dispatchEvent(new Event('storage'));
+      // Antes iba a '/dashboard/orders', una ruta que no existe.
+      router.push(landingForToken(jwtDecode<SessionToken>(token)));
     } catch (err: any) {
       const status = err?.response?.status;
       const code = err?.response?.data?.code;

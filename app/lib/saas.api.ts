@@ -14,6 +14,8 @@ export interface SaaSRegisterFormValues {
   telefono?: string;
   password: string;
   aceptaTerminos: boolean;
+  /** Código de rubro (GET /api/rubros). Vacío = el backend asume gastronomía. */
+  rubro?: string;
 }
 
 export interface SaaSRegisterResponse {
@@ -76,6 +78,7 @@ export async function registerSaasCliente(
       cuit: values.cuit.replace(/\D/g, ''),
       adminEmail: values.adminEmail.trim().toLowerCase(),
       aceptaTerminos: String(values.aceptaTerminos),
+      rubro: values.rubro?.trim() || undefined,
       utmSource: params.get('utm_source') || undefined,
       utmCampaign: params.get('utm_campaign') || undefined,
     }),
