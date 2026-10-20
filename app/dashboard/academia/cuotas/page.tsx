@@ -176,8 +176,12 @@ export default function CuotasPage() {
         subtitulo={`Cuotas de ${nombreMes(periodo)}`}
         acciones={
           <>
-            <BotonSecundario type="button" onClick={() => setGenerando(true)}>
-              Generar cuotas del mes
+            <BotonSecundario
+              type="button"
+              title="Las cuotas se generan solas el día 1 de cada mes. Usalo para adelantar un mes o recuperar uno."
+              onClick={() => setGenerando(true)}
+            >
+              Generar cuotas de un mes
             </BotonSecundario>
             <BotonPrimario
               type="button"
@@ -261,9 +265,9 @@ export default function CuotasPage() {
           rowKey={(c) => c.id}
           vacio={{
             titulo: 'Sin cuotas',
-            mensaje: `No hay cuotas en ${nombreMes(periodo)}. Se generan solas a fin de mes, o podés generarlas ahora.`,
+            mensaje: `No hay cuotas en ${nombreMes(periodo)}. Se generan solas el día 1 de cada mes, o podés generarlas ahora.`,
             accion: {
-              label: 'Generar cuotas del mes',
+              label: 'Generar cuotas de un mes',
               onClick: () => setGenerando(true),
             },
           }}
