@@ -7,6 +7,8 @@ import { micrositioFetch } from './micrositioApi';
 export interface CrearPedidoParams {
   token: string;
   name: string;
+  /** Sólo cuando el canal no trae teléfono (link público, Telegram) */
+  phone?: string;
   address: string;
   deliveryType: 'delivery' | 'pickup';
   extraNotes: string;
@@ -32,6 +34,7 @@ export async function crearPedidoDesdeMicrositio(
   const {
     token,
     name,
+    phone,
     address,
     deliveryType,
     extraNotes,
@@ -47,6 +50,7 @@ export async function crearPedidoDesdeMicrositio(
     method: 'POST',
     body: JSON.stringify({
       nombre: name,
+      telefono: phone || undefined,
       tipo_entrega: deliveryType,
       direccion: deliveryType === 'delivery' ? address : '',
       observaciones: extraNotes,

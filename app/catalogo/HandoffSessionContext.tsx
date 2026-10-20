@@ -53,10 +53,10 @@ export function HandoffSessionProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setErrorCode('TOKEN_EXPIRED');
     setErrorMessage(
-      'El link expiró. Escribile de nuevo al comercio por WhatsApp para recibir uno nuevo.',
+      'El link expiró. Volvé a abrir el link del comercio o escribile para recibir uno nuevo.',
     );
     notifyError(
-      'La sesión del link de WhatsApp expiró. Pedí un nuevo link para seguir haciendo pedidos.',
+      'La sesión expiró. Volvé a abrir el link del comercio para seguir.',
     );
   }, []);
 

@@ -76,7 +76,7 @@ export default function CatalogPage() {
     return (
       <main className="p-4">
         <p className="text-sm text-red-500">
-          El enlace no es válido o la sesión expiró. Volvé a pedir el link desde WhatsApp.
+          El enlace no es válido o la sesión expiró. Pedile un link nuevo al comercio.
         </p>
       </main>
     );

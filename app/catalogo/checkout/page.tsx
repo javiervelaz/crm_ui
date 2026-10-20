@@ -48,10 +48,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     let cancelled = false;
     if (!session) {
-      notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
+      notifyError('La sesión ya no es válida. Pedile un link nuevo al comercio.');
       return;
     }
-    setPhone(session.userPhoneE164);
+    if (!session.pideTelefono) setPhone(session.userPhoneE164);
     const token = session.token;
 
     async function loadMediosPago() {
@@ -200,9 +200,10 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!session) { notifyError('El link ya no es válido. Pedí uno nuevo por WhatsApp.'); return; }
+    if (!session) { notifyError('El link ya no es válido. Pedile uno nuevo al comercio.'); return; }
     if (!items.length) { notifyError('No tenés productos en el carrito.'); return; }
     if (!name.trim() || !phone.trim()) { notifyError('Completá al menos nombre y teléfono.'); return; }
+    if (session.pideTelefono && phone.replace(/\D/g, '').length < 8) { notifyError('Revisá el teléfono: poné el código de área.'); return; }
     if (deliveryType === 'delivery' && !address.trim()) { notifyError('Para delivery necesitamos una dirección.'); return; }
     if (!selectedMedioPagoId) { notifyError('Seleccioná un medio de pago.'); return; }
 
@@ -224,6 +225,7 @@ export default function CheckoutPage() {
       const result = await crearPedidoDesdeMicrositio({
         token: session.token,
         name: name.trim(),
+        phone: session.pideTelefono ? phone.trim() : undefined,
         address: address.trim(),
         deliveryType,
         extraNotes: extraNotes.trim(),
@@ -315,14 +317,29 @@ export default function CheckoutPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-brand-600">Teléfono (WhatsApp)</label>
-          <input
-            type="tel"
-            required
-            value={phone}
-            disabled
-            className="w-full rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-sm text-brand-300 outline-none"
-          />
+          <label className="text-xs font-medium text-brand-600">
+            {session?.pideTelefono ? 'Teléfono (con código de área)' : 'Teléfono (WhatsApp)'}
+          </label>
+          {session?.pideTelefono ? (
+            <input
+              type="tel"
+              inputMode="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="351 555-1234"
+              autoComplete="tel"
+              className="w-full rounded-2xl border border-brand-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
+            />
+          ) : (
+            <input
+              type="tel"
+              required
+              value={phone}
+              disabled
+              className="w-full rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-sm text-brand-300 outline-none"
+            />
+          )}
         </div>
 
         {/* Método de entrega */}

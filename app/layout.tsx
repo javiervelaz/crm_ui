@@ -47,7 +47,8 @@ export default function RootLayout({
   }, []);
 
   const pathname = usePathname();
-  const isCatalogRoute = pathname.startsWith('/catalogo');
+  // /p/{slug}: link público de pedidos, entra al catálogo
+  const isCatalogRoute = pathname.startsWith('/catalogo') || pathname.startsWith('/p/');
   const isSaasRoute = pathname?.startsWith('/saas');
   const isPublicRoute = isCatalogRoute || isSaasRoute || pathname === '/auth';
 

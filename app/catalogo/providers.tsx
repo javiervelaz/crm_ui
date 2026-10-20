@@ -23,7 +23,7 @@ function CatalogGuard({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-50">
         <div className="rounded-xl border border-brand-200 bg-white px-6 py-4 text-sm text-brand-700 shadow-card">
-          Validando link de WhatsApp...
+          Abriendo el catálogo...
         </div>
       </div>
     );
@@ -42,7 +42,7 @@ function CatalogGuard({ children }: { children: ReactNode }) {
               <>
                 El link que usaste ya no es válido o expiró.
                 <br />
-                Pedí un nuevo acceso por WhatsApp para seguir haciendo pedidos.
+                Pedile un link nuevo al comercio para seguir haciendo pedidos.
               </>
             )}
           </p>
@@ -63,8 +63,8 @@ function CatalogGuard({ children }: { children: ReactNode }) {
             className="object-contain"
             priority
           />
-          <div className="rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white">
-            Pedidos online
+          <div className="max-w-[55%] truncate rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white">
+            {session.comercio ?? 'Pedidos online'}
           </div>
         </div>
       </header>

@@ -1,7 +1,7 @@
 // app/catalogo/micrositioApi.ts
 //
 // Cliente HTTP de /api/micrositio. La única credencial es el token de handoff
-// del link de WhatsApp; el tenant viaja adentro del token, nunca en la URL.
+// del link (WhatsApp, Telegram o link público); el tenant viaja adentro del token, nunca en la URL.
 'use client';
 
 import { getApiBaseUrl } from './catalogConfig';
@@ -63,12 +63,16 @@ function mensajePara(code?: string, fallback?: string): string {
     case 'PLAN_INACTIVE':
       return 'Este comercio no tiene pedidos online activos.';
     case 'TOKEN_EXPIRED':
-      return 'El link expiró. Escribile de nuevo al comercio por WhatsApp para recibir uno nuevo.';
+      return 'El link expiró. Volvé a abrir el link del comercio o escribile para recibir uno nuevo.';
     case 'TOKEN_INVALID':
     case 'NO_TOKEN':
-      return 'El link no es válido. Pedí uno nuevo por WhatsApp.';
+      return 'El link no es válido. Pedile uno nuevo al comercio.';
     case 'CAJA_CERRADA':
       return 'El comercio no está tomando pedidos en este momento.';
+    case 'CANAL_INACTIVO':
+      return 'Este link de pedidos ya no está activo. Pedile uno nuevo al comercio.';
+    case 'LIMITE_PEDIDOS':
+      return 'El comercio no está tomando más pedidos online este mes. Contactalo directamente.';
     case 'RATE_LIMIT':
       return 'Hiciste muchos pedidos seguidos. Probá de nuevo en unos minutos.';
     default:
