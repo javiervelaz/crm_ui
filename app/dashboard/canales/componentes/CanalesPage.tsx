@@ -9,17 +9,13 @@ import {
   desconectarCanal,
   getCanales,
   mensajeError,
+  quitarVinculado,
+  UsuarioVinculado,
 } from '@/app/lib/canales.api';
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
-import {
-  Bell,
-  Copy,
-  ExternalLink,
-  Link2,
-  MessageCircle,
-  Send,
-} from 'lucide-react';
+import MiTelegramCard from '@/app/dashboard/mi-telegram/componentes/MiTelegramCard';
+import { Copy, ExternalLink, Link2, MessageCircle, Send } from 'lucide-react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
 import { useCallback, useEffect, useState } from 'react';
@@ -347,40 +343,8 @@ function Telegram({
             . Cuando un cliente le escribe, le contesta con el botón “Hacer mi
             pedido”.
           </p>
-          <div className="rounded-xl border border-brand-100 bg-brand-50 p-3">
-            <p className="flex items-center gap-1.5 font-medium text-brand-800">
-              <Bell size={14} /> Avisos de pedidos nuevos
-            </p>
-            <p className="mt-1">
-              Abrí este link desde tu Telegram (o el de la cocina) y tocá
-              “Iniciar”.{' '}
-              {bot.chats_avisos > 0
-                ? `Hoy reciben avisos ${bot.chats_avisos} chat(s).`
-                : 'Todavía nadie recibe avisos.'}
-            </p>
-            {bot.url_avisos && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                <a
-                  href={bot.url_avisos}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-medium text-white"
-                >
-                  <ExternalLink size={14} /> Abrir en Telegram
-                </a>
-                <button
-                  type="button"
-                  onClick={() => copiar(bot.url_avisos!)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-700"
-                >
-                  <Copy size={14} /> Copiar link
-                </button>
-              </div>
-            )}
-            <p className="mt-2 text-xs text-brand-300">
-              No lo compartas: quien lo abra ve los pedidos.
-            </p>
-          </div>
+          <MiTelegramCard compacto />
+          <Vinculados vinculados={bot.vinculados ?? []} onCambio={onCambio} />
           <button
             type="button"
             onClick={() => setADesconectar(bot)}
@@ -423,5 +387,98 @@ function Telegram({
         </Dialog>
       )}
     </Seccion>
+  );
+}
+
+function Vinculados({
+  vinculados,
+  onCambio,
+}: {
+  vinculados: UsuarioVinculado[];
+  onCambio: () => void;
+}) {
+  const [aQuitar, setAQuitar] = useState<UsuarioVinculado | null>(null);
+  const [quitando, setQuitando] = useState(false);
+
+  const quitar = async () => {
+    if (!aQuitar) return;
+    try {
+      setQuitando(true);
+      await quitarVinculado(aQuitar.id);
+      setAQuitar(null);
+      notifySuccess('Telegram desvinculado');
+      onCambio();
+    } catch (err) {
+      notifyError(mensajeError(err));
+    } finally {
+      setQuitando(false);
+    }
+  };
+
+  return (
+    <div>
+      <p className="font-medium text-brand-800">
+        Personas con el Telegram vinculado
+      </p>
+      {vinculados.length === 0 ? (
+        <p className="mt-1 text-xs text-brand-300">
+          Nadie todavía. Cada persona lo vincula desde su usuario (ícono de
+          Telegram arriba a la derecha).
+        </p>
+      ) : (
+        <ul className="mt-2 divide-y divide-brand-100 rounded-xl border border-brand-100">
+          {vinculados.map((v) => (
+            <li
+              key={v.id}
+              className="flex items-center justify-between gap-3 px-3 py-2"
+            >
+              <span className="min-w-0 truncate">
+                {v.nombre}
+                <span className="ml-2 text-xs text-brand-300">
+                  {v.recibe_avisos ? 'recibe avisos' : v.avisos ? 'sin acceso a Pedidos' : 'avisos apagados'}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setAQuitar(v)}
+                className="shrink-0 text-xs font-medium text-red-600 hover:underline"
+              >
+                Quitar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {aQuitar && (
+        <Dialog
+          titulo="¿Quitar este Telegram?"
+          onClose={() => setAQuitar(null)}
+          bloquear={quitando}
+        >
+          <p className="text-sm text-brand-600">
+            {aQuitar.nombre} deja de recibir los pedidos en su Telegram. Lo
+            puede volver a vincular desde su usuario.
+          </p>
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setAQuitar(null)}
+              disabled={quitando}
+              className="rounded-full border border-brand-200 px-4 py-2 text-sm text-brand-700"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={quitar}
+              disabled={quitando}
+              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {quitando ? 'Quitando…' : 'Quitar'}
+            </button>
+          </div>
+        </Dialog>
+      )}
+    </div>
   );
 }
