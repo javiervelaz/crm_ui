@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { getRegistrosDiarios } from '@/app/lib/caja.api';
 import { notifyError } from '@/app/lib/notificationService';
-import { lusitana } from '@/app/ui/fonts';
 import { TableSkeleton } from '@/app/ui/TableSkeleton';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -24,7 +24,7 @@ interface RegistroDiario {
   caja_cerrada: boolean;
   created_at: string;
   updated_at: string;
-  total_cierre?: number; // Calculado: (caja_inicial + ventas_efectivo) - (retiros_total + gastos_total)
+  total_cierre?: number | null; // Calculado: (caja_inicial + ventas_efectivo) - (retiros_total + gastos_total)
 }
 
 export default function ReporteCajaPage() {
@@ -42,12 +42,11 @@ export default function ReporteCajaPage() {
     try {
       setLoading(true);
       const data = await getRegistrosDiarios(filtroFecha,getClienteId());
-      console.log(data)
       // Calcular total al cierre para cada registro
-      const registrosConTotal = data.map(registro => ({
+      const registrosConTotal = data.map((registro: any) => ({
         ...registro,
-        total_cierre: registro.caja_cerrada ? 
-          Number((registro.caja_final )).toFixed(2) : 
+        total_cierre: registro.caja_cerrada ?
+          Number(registro.caja_final) :
           null
       }));
       
@@ -56,7 +55,7 @@ export default function ReporteCajaPage() {
     } catch (err) {
       setError('Error al cargar los registros diarios');
       notifyError('Error al cargar los registros de caja');
-      console.error(err);
+      logError('Error al cargar los registros diarios', err);
     } finally {
       setLoading(false);
     }
@@ -66,13 +65,13 @@ export default function ReporteCajaPage() {
     router.push(`/dashboard/reportes/reportes/caja/${registroId}/detalle`);
   };
 
-  const getColorTotal = (total: number | null) => {
-    if (total === null) return 'text-gray-600';
+  const getColorTotal = (total: number | null | undefined) => {
+    if (total === null || total === undefined) return 'text-gray-600';
     return total >= 0 ? 'text-green-600' : 'text-red-600';
   };
 
-  const formatCurrency = (amount: number | null) => {
-    if (amount === null) return '-';
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined) return '-';
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS'
@@ -86,7 +85,7 @@ export default function ReporteCajaPage() {
   return (
     <div className="w-full p-6">
       <div className="flex w-full items-center justify-between mb-6">
-        <h1 className={`${lusitana.className} text-2xl`}>Reporte de Caja Diaria</h1>
+        <h1 className={`font-display text-2xl`}>Reporte de Caja Diaria</h1>
       </div>
 
       {/* Filtros */}
@@ -105,7 +104,7 @@ export default function ReporteCajaPage() {
           
           <button
             onClick={fetchRegistrosDiarios}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-600"
+            className="bg-brand-600 text-white px-4 py-2 rounded-md text-sm hover:bg-brand-600"
           >
             Actualizar
           </button>
@@ -156,7 +155,7 @@ export default function ReporteCajaPage() {
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleVerDetalle(registro.id)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                      className="bg-brand-600 text-white px-3 py-1 rounded text-xs hover:bg-brand-600"
                       disabled={!registro.caja_cerrada}
                     >
                       Ver Detalle

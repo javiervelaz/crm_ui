@@ -1,9 +1,13 @@
 "use client";
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
-import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
+import { crearGasto, getGastoCategorias, getGastosPorRegistro, eliminarGasto, getRegistrosDiarios } from '@/app/lib/gasto';
+import { Trash2 } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { getCajaInicial, pedidoMontoTotalDiario } from '@/app/lib/operaciones.api';
+import { getGastosConfig, getGastosPorPeriodo } from '@/app/lib/gastosSinCaja.api';
+import { mesActual, nombreMes, rangoMes } from '@/app/lib/gastosPeriodo';
 import useCajaAbierta from '@/app/lib/useCajaAbierta';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
@@ -16,220 +20,330 @@ import ResumenGastos from "./ResumenGastos";
 
 const tabs = [
   { id: "cajaInicial", label: "Caja Inicial" },
-  { id: "fijos", label: "Fijos" },
-  { id: "sueldos", label: "Sueldos" },
-  { id: "variables", label: "Insumos" },
-  { id: "resumen", label: "Resumen" },
+  { id: "fijos",       label: "Fijos" },
+  { id: "sueldos",     label: "Sueldos" },
+  { id: "variables",   label: "Variables" },
+  { id: "resumen",     label: "Resumen" },
 ];
 
-// Mapeo de tipos de categoría por solapa
 const TIPO_POR_SOLAPA = {
-  fijos: 1,
-  sueldos: 3,
-  variables: 2,
+  fijos:       1,
+  sueldos:     3,
+  variables:   2,
   cajaInicial: 4,
 };
 
-// Mapeo de categoría ID por tipo (ajusta según tu DB)
 const CATEGORIA_POR_TIPO = {
-  fijos: 1,      // ID de categoría "Fijos"
-  sueldos: 3,    // ID de categoría "Sueldos"
-  variables: 2   // ID de categoría "Variables"
+  fijos:    1,
+  sueldos:  3,
+  variables: 2,
 };
 
 export default function GastoWizard() {
   const [activeTab, setActiveTab] = useState("cajaInicial");
   const [categoriasCompletas, setCategoriasCompletas] = useState<any[]>([]);
   const [categoriasFiltradas, setCategoriasFiltradas] = useState<any[]>([]);
-  const [gastosExistentes, setGastosExistentes] = useState([]);
+  const [gastosExistentes, setGastosExistentes] = useState<any[]>([]);
   const { cajaAbierta, registroDiarioId } = useCajaAbierta();
-  const [cajaInicio, setCajaInicio] = useState(0);
-  const [ventasDia, setVentasDia] = useState(0);
   const router = useRouter();
 
-
-  const INITIAL_FORM = {
-    fijos: [] as { servicio: string; monto: number; descripcion?: string }[],
-    sueldos: [] as { empleado: string; monto: number; descripcion?: string }[],
-    variables: [] as { concepto: string; monto: number; descripcion?: string }[],
-    cajaInicial: { inicio: 0, ventas: 0 },
-  };
-  
-  const [form, setForm] = useState(INITIAL_FORM);
-
+  // Modo sin caja: un tenant sin el módulo 'operaciones' (ej. academia) no
+  // abre caja. Mismas solapas y planillas; los gastos se guardan sin id de
+  // operación (registro_diario_id) y se agrupan por mes en vez de por caja.
+  // La API decide (GET /salida-caja/config) y valida lo mismo al guardar.
+  const [requiereCaja, setRequiereCaja] = useState<boolean | null>(null);
+  const sinCaja = requiereCaja === false;
+  const [mes, setMes] = useState(mesActual());
+  const tabsVisibles = sinCaja ? tabs.filter((t) => t.id !== 'cajaInicial') : tabs;
 
   useEffect(() => {
+    let cancelado = false;
+    getGastosConfig()
+      .then((cfg) => { if (!cancelado) setRequiereCaja(cfg.requiereCaja); })
+      .catch((error) => {
+        // Si no se puede consultar, comportamiento previo: con caja.
+        logError('No se pudo consultar la config de gastos', error);
+        if (!cancelado) setRequiereCaja(true);
+      });
+    return () => { cancelado = true; };
+  }, []);
+
+  useEffect(() => {
+    if (sinCaja && activeTab === 'cajaInicial') setActiveTab('fijos');
+  }, [sinCaja, activeTab]);
+
+  /** Gastos de la caja abierta, o del mes elegido en modo sin caja. */
+  const cargarGastos = async (): Promise<any[]> => {
+    if (sinCaja) {
+      const rango = rangoMes(mes);
+      return rango ? getGastosPorPeriodo(rango.desde, rango.hasta) : [];
+    }
+    return registroDiarioId ? getGastosPorRegistro(registroDiarioId, getClienteId()) : [];
+  };
+
+  // bug 39: vista histórica read-only cuando no hay caja abierta
+  const [histRegistros, setHistRegistros] = useState<any[]>([]);
+  const [histSelId, setHistSelId] = useState<number | null>(null);
+  const [histGastos, setHistGastos] = useState<any[]>([]);
+  const [histVentas, setHistVentas] = useState<number>(0);
+  const [histLoading, setHistLoading] = useState(false);
+
+  const INITIAL_FORM = {
+    fijos:       [] as { servicio: string; monto: number }[],
+    sueldos:     [] as { empleado: string; monto: number }[],
+    variables:   [] as { concepto: string; monto: number }[],
+    cajaInicial: { inicio: 0, ventas: 0 },
+  };
+
+  const [form, setForm] = useState(INITIAL_FORM);
+
+  useEffect(() => {
+    if (requiereCaja === null) return;
+    const conCaja = !sinCaja && registroDiarioId;
     const fetchData = async () => {
       try {
-        const [categoriasData, gastosData,montoVentas,montoCajaInicial] = await Promise.all([
+        const [categoriasData, gastosData, montoVentas, montoCajaInicial] = await Promise.all([
           getGastoCategorias(getClienteId()),
-          registroDiarioId ? getGastosPorRegistro(registroDiarioId,getClienteId()) : Promise.resolve([]),
-          registroDiarioId ? pedidoMontoTotalDiario(registroDiarioId,getClienteId()) : Promise.resolve({ sum: 0 }),
-          registroDiarioId ? getCajaInicial(registroDiarioId,getClienteId()) : Promise.resolve(0)
+          cargarGastos(),
+          conCaja ? pedidoMontoTotalDiario(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
+          conCaja ? getCajaInicial(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
         ]);
         setCategoriasCompletas(categoriasData);
         setGastosExistentes(gastosData);
-        setVentasDia(Number(montoVentas.sum) || 0);
-        setCajaInicio(Number(montoCajaInicial.sum) || 0);
-    
-        // ✅ ACTUALIZAR EL FORM CON LOS VALORES OBTENIDOS
-      setForm(prev => ({
-        ...prev,
-        cajaInicial: {
-          inicio: Number(montoCajaInicial.sum) || 0,
-          ventas: Number(montoVentas.sum) || 0
-        }
-      }));
-
-        // Filtrar categorías para la solapa inicial
+        setForm(prev => ({
+          ...prev,
+          cajaInicial: {
+            inicio: Number(montoCajaInicial.sum) || 0,
+            ventas: Number(montoVentas.sum) || 0,
+          },
+        }));
         const tipoId = TIPO_POR_SOLAPA[activeTab as keyof typeof TIPO_POR_SOLAPA];
-        const filtradas = categoriasData.filter(cat => cat.categoria_tipo_id === tipoId);
-        setCategoriasFiltradas(filtradas);
+        setCategoriasFiltradas(categoriasData.filter((c: any) => c.categoria_tipo_id === tipoId));
       } catch (error) {
-        console.error("Error cargando datos:", error);
+        logError("Error cargando datos:", error);
       }
-    }; 
-    fetchData(); 
-  }, [registroDiarioId]);
+    };
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registroDiarioId, requiereCaja, mes]);
 
-  // Actualizar categorías filtradas cuando cambia la solapa
+  // bug 39: cargar registros de los últimos 30 días cuando la caja está cerrada
+  useEffect(() => {
+    if (cajaAbierta || requiereCaja !== true) return;
+    (async () => {
+      try {
+        const regs = await getRegistrosDiarios('mes', getClienteId());
+        setHistRegistros(Array.isArray(regs) ? regs : []);
+      } catch (error) {
+        logError('Error cargando registros históricos:', error);
+      }
+    })();
+  }, [cajaAbierta, requiereCaja]);
+
+  const verFlujoHistorico = async (registroId: number) => {
+    setHistSelId(registroId);
+    if (!registroId) { setHistGastos([]); setHistVentas(0); return; }
+    setHistLoading(true);
+    try {
+      const [gastos, ventas] = await Promise.all([
+        getGastosPorRegistro(registroId, getClienteId()),
+        pedidoMontoTotalDiario(registroId, getClienteId()),
+      ]);
+      setHistGastos(Array.isArray(gastos) ? gastos : []);
+      setHistVentas(Number(ventas?.sum) || 0);
+    } catch (error) {
+      logError('Error cargando flujo histórico:', error);
+      notifyError('No se pudo cargar el flujo de ese día');
+    } finally {
+      setHistLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (categoriasCompletas.length > 0) {
       const tipoId = TIPO_POR_SOLAPA[activeTab as keyof typeof TIPO_POR_SOLAPA];
-      const filtradas = categoriasCompletas.filter(cat => cat.categoria_tipo_id === tipoId);
-      setCategoriasFiltradas(filtradas);
+      setCategoriasFiltradas(categoriasCompletas.filter((c: any) => c.categoria_tipo_id === tipoId));
     }
   }, [activeTab, categoriasCompletas]);
 
-  // Función para guardar gastos de una categoría específica
   const handleGuardarGastos = async (tipo: keyof typeof CATEGORIA_POR_TIPO) => {
-    if (!registroDiarioId) {
-      notifyError('No hay registro diario activo');
-      return;
-    }
-
+    if (!sinCaja && !registroDiarioId) { notifyError('No hay registro diario activo'); return; }
     const token = localStorage.getItem('token');
-    if (!token) {
-      notifyError('No hay sesión activa');
-      return;
-    }
+    if (!token) { notifyError('No hay sesión activa'); return; }
 
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ userId: number }>(token);
       const usuario_id = decoded.userId;
       const categoriaId = CATEGORIA_POR_TIPO[tipo];
 
-      // Preparar payload según el tipo
       let payload: any[] = [];
-      switch (tipo) {
-        case 'fijos':
-          payload = form.fijos
-            .filter(g => g.servicio && g.monto)
-            .map(g => ({
-              descripcion: g.servicio,
-              monto: g.monto,
-              categoria_salida_id: categoriaId,
-              registro_diario_id: registroDiarioId,
-              usuario_id: usuario_id,
-              cliente_id: getClienteId()
-            }));
-            console.log(payload); 
-          break;
-        
-        case 'sueldos':
-          payload = form.sueldos
-            .filter(g => g.empleado && g.monto)
-            .map(g => ({
-              descripcion: g.empleado,
-              monto: g.monto,
-              categoria_salida_id: categoriaId,
-              registro_diario_id: registroDiarioId,
-              usuario_id: usuario_id,
-              cliente_id: getClienteId()
-            }));
-            console.log(payload);
-          break;
-        
-        case 'variables':
-          payload = form.variables
-            .filter(g => g.concepto && g.monto)
-            .map(g => ({
-              descripcion: g.concepto,
-              monto: g.monto,
-              categoria_salida_id: categoriaId,
-              registro_diario_id: registroDiarioId,
-              usuario_id: usuario_id,
-              cliente_id: getClienteId()
-            }));
-          break;
+      if (tipo === 'fijos') {
+        payload = form.fijos.filter((g: any) => g.servicio && g.monto).map((g: any) => ({
+          descripcion: g.servicio, monto: g.monto,
+          categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
+          usuario_id, cliente_id: getClienteId(),
+        }));
+      } else if (tipo === 'sueldos') {
+        payload = form.sueldos.filter((g: any) => g.empleado && g.monto).map((g: any) => ({
+          descripcion: g.empleado, monto: g.monto,
+          categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
+          usuario_id, cliente_id: getClienteId(),
+        }));
+      } else if (tipo === 'variables') {
+        payload = form.variables.filter((g: any) => g.concepto && g.monto).map((g: any) => ({
+          descripcion: g.concepto, monto: g.monto,
+          categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
+          usuario_id, cliente_id: getClienteId(),
+        }));
       }
 
-      if (payload.length === 0) {
-        notifyError('Debe ingresar al menos un gasto válido');
-        return;
-      }
-
+      if (payload.length === 0) { notifyError('Ingresá al menos un gasto válido'); return; }
       await crearGasto(payload);
       notifySuccess('Gastos registrados correctamente');
-
-      // Actualizar lista de gastos existentes
-      const nuevosGastos = await getGastosPorRegistro(registroDiarioId,getClienteId());
-      setGastosExistentes(nuevosGastos);
-
-      // Limpiar el formulario de la categoría guardada
+      // Sin caja el gasto queda con fecha de hoy: si se miraba otro mes, se vuelve al actual.
+      if (sinCaja && mes !== mesActual()) setMes(mesActual());
+      else setGastosExistentes(await cargarGastos());
       setForm(prev => ({ ...prev, [tipo]: [] }));
-
     } catch (error) {
-      console.error('Error al guardar gastos:', error);
+      logError('Error al guardar gastos:', error);
       notifyError('Error al registrar los gastos');
     }
   };
 
-  // Función para manejar guardado según la solapa activa
-  const handleGuardarSolapaActual = () => {
-    switch (activeTab) {
-      case 'fijos':
-        handleGuardarGastos('fijos');
-        break;
-      case 'sueldos':
-        handleGuardarGastos('sueldos');
-        break;
-      case 'variables':
-        handleGuardarGastos('variables');
-        break;
-      default:
-        notifyError('Esta solapa no tiene funcionalidad de guardado');
+  const handleEliminarGasto = async (id: number) => {
+    if (!id) return;
+    if (!confirm('¿Eliminar este gasto?')) return;
+    try {
+      await eliminarGasto(id, getClienteId());
+      notifySuccess('Gasto eliminado');
+      if (sinCaja || registroDiarioId) setGastosExistentes(await cargarGastos());
+    } catch (error: any) {
+      logError('No se pudo eliminar el gasto', error);
+      notifyError(error?.message || 'No se pudo eliminar el gasto');
     }
   };
 
-  if (!cajaAbierta) {
+  const handleGuardarSolapaActual = () => {
+    if (activeTab === 'fijos')    return handleGuardarGastos('fijos');
+    if (activeTab === 'sueldos')  return handleGuardarGastos('sueldos');
+    if (activeTab === 'variables') return handleGuardarGastos('variables');
+    notifyError('Esta solapa no tiene guardado');
+  };
+
+  // bug 39: sin caja abierta -> no bloquear; permitir consultar flujo histórico read-only
+  if (requiereCaja === null) {
     return (
-      <div className="text-center p-6">
-        <p className="text-red-600 font-semibold text-lg mb-4">
-          Todavía no se registraron operaciones diarias
-        </p>
-        <button
-          onClick={() => router.push('/dashboard/operaciones/empleado')}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Abrir operaciones
-        </button>
+      <div className="animate-pulse space-y-4" aria-busy="true">
+        <div className="h-8 w-48 rounded-md bg-brand-100" />
+        <div className="h-64 rounded-xl bg-brand-100" />
+      </div>
+    );
+  }
+
+  if (!cajaAbierta && !sinCaja) {
+    const totalHistGastos = histGastos.reduce((acc: number, g: any) => acc + (Number(g.monto) || 0), 0);
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <p className="text-brand-300 text-sm mb-4">
+            No hay caja abierta. Podés consultar el flujo de días anteriores o abrir operaciones.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard/operaciones/empleado')}
+            className="rounded-full bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-brand hover:bg-brand-700 transition-colors"
+          >
+            Abrir operaciones
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-brand-100 bg-white p-4 shadow-card">
+          <h3 className="mb-3 text-sm font-semibold text-brand-800">Flujo de días anteriores</h3>
+          {histRegistros.length === 0 ? (
+            <p className="text-sm text-brand-300">No hay registros diarios en los últimos 30 días.</p>
+          ) : (
+            <>
+              <select
+                value={histSelId ?? ''}
+                onChange={(e) => verFlujoHistorico(Number(e.target.value))}
+                className="w-full rounded-md border border-brand-200 px-3 py-2 text-sm"
+              >
+                <option value="">Elegí una fecha…</option>
+                {histRegistros.map((r: any) => (
+                  <option key={r.id} value={r.id}>
+                    {String(r.fecha).slice(0, 10)}
+                  </option>
+                ))}
+              </select>
+
+              {histLoading && <p className="mt-3 text-sm text-brand-300">Cargando…</p>}
+
+              {!histLoading && histSelId && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex justify-between rounded-md bg-brand-50 px-3 py-2 text-sm">
+                    <span className="text-brand-600">Ventas del día</span>
+                    <span className="font-bold text-brand-800">${histVentas.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between rounded-md bg-brand-50 px-3 py-2 text-sm">
+                    <span className="text-brand-600">Total gastos</span>
+                    <span className="font-bold text-brand-800">${totalHistGastos.toFixed(2)}</span>
+                  </div>
+                  {histGastos.length === 0 ? (
+                    <p className="text-sm text-brand-300">Sin gastos registrados ese día.</p>
+                  ) : (
+                    <ul className="divide-y divide-brand-100">
+                      {histGastos.map((g: any, i: number) => (
+                        <li key={g.id ?? i} className="flex items-center justify-between py-2 text-sm">
+                          <span className="text-brand-700 truncate pr-3">
+                            {g.descripcion}
+                            {g.categoria_nombre && (
+                              <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600">
+                                {g.categoria_nombre}
+                              </span>
+                            )}
+                          </span>
+                          <span className="shrink-0 font-bold text-brand-800">${g.monto}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-white shadow rounded-lg">
-      {/* Navegación de pestañas */}
-      <div className="flex space-x-2 border-b mb-6">
-        {tabs.map((tab) => (
+    <div className="flex flex-col gap-4">
+      {/* Título */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="font-display text-2xl text-brand-800">Flujo de caja</h1>
+        {sinCaja && (
+          <label className="text-sm text-brand-600">
+            <span className="mb-1 block font-medium">Mes</span>
+            <input
+              type="month"
+              value={mes}
+              max={mesActual()}
+              onChange={(e) => e.target.value && setMes(e.target.value)}
+              className="rounded-md border border-brand-200 px-3 py-2 text-sm"
+            />
+          </label>
+        )}
+      </div>
+
+      {/* Tabs — scrollables en mobile */}
+      <div className="flex gap-2 overflow-x-auto pb-1 border-b border-brand-200 scrollbar-hide">
+        {tabsVisibles.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-t-lg font-medium ${
+            className={`shrink-0 rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
               activeTab === tab.id
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? 'bg-brand-600 text-white'
+                : 'bg-brand-50 text-brand-600 hover:bg-brand-100'
             }`}
           >
             {tab.label}
@@ -237,68 +351,87 @@ export default function GastoWizard() {
         ))}
       </div>
 
-     
-
-      {/* Renderizado condicional de cada planilla */}
-      <div>
-        {activeTab === "cajaInicial" && (
-          <PlanillaCajaInicial 
-            data={form.cajaInicial}
-          />
-        )}
-        {activeTab === "fijos" && (
-          <PlanillaFijos 
+      {/* Panel activo */}
+      <div className="rounded-xl border border-brand-100 bg-white p-4 shadow-card">
+        {activeTab === "cajaInicial" && <PlanillaCajaInicial data={form.cajaInicial} />}
+        {activeTab === "fijos"       && (
+          <PlanillaFijos
             data={form.fijos}
-            onUpdate={(val) => setForm((prev) => ({ ...prev, fijos: val }))}
+            onUpdate={(val) => setForm(p => ({ ...p, fijos: val }))}
             categorias={categoriasFiltradas}
           />
         )}
-        {activeTab === "sueldos" && (
-          <PlanillaSueldos 
+        {activeTab === "sueldos"     && (
+          <PlanillaSueldos
             data={form.sueldos}
-            onUpdate={(val) => setForm((prev) => ({ ...prev, sueldos: val }))}
+            onUpdate={(val) => setForm(p => ({ ...p, sueldos: val }))}
             categorias={categoriasFiltradas}
           />
         )}
-        {activeTab === "variables" && (
-          <PlanillaVariables 
+        {activeTab === "variables"   && (
+          <PlanillaVariables
             data={form.variables}
-            onUpdate={(val) => setForm((prev) => ({ ...prev, variables: val }))}
+            onUpdate={(val) => setForm(p => ({ ...p, variables: val }))}
             categorias={categoriasFiltradas}
           />
         )}
-        
-        {activeTab === "resumen" && (
-          <ResumenGastos 
-            data={form} 
+        {activeTab === "resumen"     && (
+          <ResumenGastos
+            data={form}
             gastosExistentes={gastosExistentes}
-            registroDiarioId={registroDiarioId} // ← Aquí pasas el valor
+            registroDiarioId={sinCaja ? null : registroDiarioId}
+            sinCaja={sinCaja}
+            periodo={sinCaja ? nombreMes(mes) : undefined}
           />
         )}
-         {/* Botón de guardado para solapas con gastos */}
-          {['fijos', 'sueldos', 'variables'].includes(activeTab) && (
-            <div className="mb-4 flex justify-end">
-              <button
-                onClick={handleGuardarSolapaActual}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-              >
-                Guardar {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-              </button>
-            </div>
-          )}
+
+        {['fijos', 'sueldos', 'variables'].includes(activeTab) && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={handleGuardarSolapaActual}
+              className="rounded-full bg-accent-500 px-6 py-2.5 text-sm font-semibold text-white shadow-accent hover:bg-accent-400 transition-colors"
+            >
+              Guardar {tabs.find(t => t.id === activeTab)?.label}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Mostrar gastos existentes en todas las solapas excepto resumen */}
-      {activeTab !== 'resumen' && gastosExistentes.length > 0 && (
-        <div className="mt-8 border-t pt-4">
-          <h3 className="font-semibold mb-2 text-gray-700">Gastos registrados hoy</h3>
-          <ul className="divide-y divide-gray-200">
-            {gastosExistentes.map((g, i) => (
-              <li key={i} className="py-1 flex justify-between">
-                <span>
-                  {g.descripcion} ({g.categoria_nombre})
+      {/* Gastos registrados hoy */}
+      {activeTab !== 'resumen' && (gastosExistentes.length > 0 || sinCaja) && (
+        <div className="rounded-xl border border-brand-100 bg-white p-4 shadow-card">
+          <h3 className="mb-3 text-sm font-semibold text-brand-800">
+            {sinCaja ? `Gastos de ${nombreMes(mes)}` : 'Gastos registrados hoy'}
+          </h3>
+          {sinCaja && gastosExistentes.length === 0 && (
+            <p className="text-sm text-brand-300">Sin gastos registrados en este mes.</p>
+          )}
+          <ul className="divide-y divide-brand-100">
+            {gastosExistentes.map((g: any, i: number) => (
+              <li key={g.id ?? i} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-brand-700 truncate pr-3">
+                  {sinCaja && g.fecha && (
+                    <span className="mr-2 tabular-nums text-brand-300">
+                      {String(g.fecha).slice(0, 10).split('-').reverse().slice(0, 2).join('/')}
+                    </span>
+                  )}
+                  {g.descripcion}
+                  {g.categoria_nombre && (
+                    <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600">
+                      {g.categoria_nombre}
+                    </span>
+                  )}
                 </span>
-                <span className="font-mono">${g.monto}</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <span className="font-bold text-brand-800">${g.monto}</span>
+                  <button
+                    onClick={() => handleEliminarGasto(g.id)}
+                    title="Eliminar gasto"
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </span>
               </li>
             ))}
           </ul>

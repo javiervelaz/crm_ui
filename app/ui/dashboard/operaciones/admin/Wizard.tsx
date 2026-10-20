@@ -1,3 +1,7 @@
+﻿// @ts-nocheck
+// [Nota] Componente no importado en ningún lado — duplicado muerto de GastoWizard.tsx.
+// Se deja sin type-check en vez de perseguir cada error en código sin uso.
+// Candidato a borrar en una limpieza dedicada.
 import { getClienteId } from "@/app/lib/authService";
 import { crearGasto, getGastoCategorias, getGastosPorRegistro } from '@/app/lib/gasto';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
@@ -7,11 +11,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const GastoWizard = ({ }) => {
-  const [tiposCategoria, setTiposCategoria] = useState([]);
+  const [tiposCategoria, setTiposCategoria] = useState<any[]>([]);
   const [activeTipoId, setActiveTipoId] = useState(null);
   const [categoriasPorTipo, setCategoriasPorTipo] = useState({});
   const [gastosPorCategoria, setGastosPorCategoria] = useState({});
-  const [gastosExistentes, setGastosExistentes] = useState([]);
+  const [gastosExistentes, setGastosExistentes] = useState<any[]>([]);
   const [registroDiario, setRegistroDiario] = useState('');
   //const [cajaAbierta, setCajaAbierta] = useState(false);
   const { cajaAbierta,registroDiarioId } = useCajaAbierta();
@@ -45,7 +49,6 @@ const GastoWizard = ({ }) => {
         id,
         descripcion,
       }));
-      console.log("tiposLista final:", tiposLista);
 
       // Actualizar estado
       setTiposCategoria(tiposLista);
@@ -60,8 +63,6 @@ const GastoWizard = ({ }) => {
       setGastosPorCategoria(inicial);
     
       // Debug opcional
-      console.log("Tipos encontrados:", tiposLista);
-      console.log("Categorias agrupadas:", categoriasAgrupadas);
     };
 
     const fetchGastos = async () => {
@@ -104,7 +105,7 @@ const GastoWizard = ({ }) => {
     if (token) {
       
      
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<{ userId: number }>(token);
       const usuario_id = decoded.userId;
       const payload = (gastosPorCategoria[categoriaId] || [])
       .filter((g) => g.descripcion && g.monto)
@@ -114,7 +115,6 @@ const GastoWizard = ({ }) => {
         registro_diario_id: registroDiarioId,
         usuario_id: usuario_id,
       }));
-      console.log("payload ",payload)
       if (payload.length === 0) {
         notifyError('Debe ingresar al menos un gasto con descripción y monto.');
         return;
@@ -144,7 +144,7 @@ const GastoWizard = ({ }) => {
         </p>
         <button
           onClick={() => router.push('/dashboard/operaciones/empleado')}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-brand-600 text-white px-6 py-2 rounded hover:bg-brand-700 transition"
         >
           Abrir operaciones
         </button>
@@ -161,7 +161,7 @@ const GastoWizard = ({ }) => {
               onClick={() => setActiveTipoId(tipo.id)}
               className={`px-5 py-2 rounded-t-md text-sm font-semibold whitespace-nowrap ${
                 activeTipoId === tipo.id
-                  ? 'bg-blue-600 text-white shadow'
+                  ? 'bg-brand-600 text-white shadow'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               style={{ minWidth: '120px', maxWidth: '220px' }}
@@ -176,7 +176,7 @@ const GastoWizard = ({ }) => {
         {/* Categorías para el tipo seleccionado */}
         {categoriasPorTipo[activeTipoId]?.map((cat) => (
           <div key={cat.id} className="mb-6">
-            <h4 className="font-semibold text-sm mb-2 text-blue-800">{cat.nombre}</h4>
+            <h4 className="font-semibold text-sm mb-2 text-brand-800">{cat.nombre}</h4>
 
             {(gastosPorCategoria[cat.id] || []).map((gasto, idx) => (
               <div key={idx} className="flex items-center space-x-2 mb-2">
@@ -213,7 +213,7 @@ const GastoWizard = ({ }) => {
             <div className="mt-2 text-right">
               <button
                 onClick={() => handleGuardar(cat.id)}
-                className="bg-blue-600 text-white px-4 py-2 rounded"
+                className="bg-brand-600 text-white px-4 py-2 rounded"
               >
                 Guardar Gastos
               </button>

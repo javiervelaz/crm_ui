@@ -1,3 +1,4 @@
+import { logError } from '@/app/lib/logger';
 import apiClient from './apiClient';
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -13,18 +14,20 @@ export const createProfile = async (profileDetails: any) => {
     });
     
     if (!response.ok) {
-      notifyError( 'Failed to load profile');
-      throw new Error('Failed to create profile');
+      notifyError( 'No se pudo cargar el perfil');
+      throw new Error('No se pudo crear el perfil');
     }
-    notifySuccess('profile loaded successfully');
+    notifySuccess('Operación realizada correctamente');
     return await response.json();
   };
 
   export const getProfileById = async (Id: string) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/profile/${Id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -32,33 +35,36 @@ export const createProfile = async (profileDetails: any) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch user');
+      throw new Error('No se pudo obtener el usuario');
     }
     return await response.json();
   };
 
-  export const getProfileUserById = async (userId: string, cliente: BigInt) => {
+  export const getProfileUserById = async (userId: string, cliente: bigint | null) => {
     try {
+      
+      const token = localStorage.getItem('token');
       const response = await apiClient(`${apiUrl}/profile/user/${userId}/${cliente}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
-  
-      // Si la respuesta es un 404, retorna un array vacío
-      if (response.status === 404) {
-        return [];
-      }
-      console.log(response)
+      
       // Si hay otro tipo de error, lanza una excepción
       if (response.status !== 200) {
-        throw new Error('Failed to fetch user');
+        throw new Error('No se pudo obtener el usuario');
       }
-  
+
       return await response.data;
-    } catch (error) {
-      console.error('Error al obtener el perfil del usuario:', error);
+    } catch (error: any) {
+      // apiClient (axios) rechaza la promesa en cualquier status fuera de 2xx,
+      // por lo que un 404 llega acá, no al chequeo de response.status de arriba.
+      if (error?.response?.status === 404) {
+        return [];
+      }
+      logError('Error al obtener el perfil del usuario:', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }
@@ -70,21 +76,24 @@ export const createProfile = async (profileDetails: any) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(updatedProfileDetails),
     });
     if (!response.ok) {
-      throw new Error('Failed to update profile');
+      throw new Error('No se pudo actualizar el perfil');
     }
     return await response.json();
   };
 
-  export const getClienteByTelefono  = async (telefono: string,cliente_id:bigint) => {
+  export const getClienteByTelefono  = async (telefono: string,cliente_id: bigint | null) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/users/cliente/${telefono}/${cliente_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
   
@@ -95,14 +104,27 @@ export const createProfile = async (profileDetails: any) => {
   
       // Si hay otro tipo de error, lanza una excepción
       if (!response.ok) {
-        throw new Error('Failed to fetch user');
+        throw new Error('No se pudo obtener el usuario');
       }
   
       return await response.json();
     } catch (error) {
-      console.error('Error al obtener el perfil del usuario:', error);
+      logError('Error al obtener el perfil del usuario:', error);
       // Si ocurre cualquier otro error, retorna un array vacío
       return [];
     }
   };
   
+/**
+ * Legajo que va a recibir la próxima alta de perfil. Lo asigna la API al
+ * guardar (autonumérico por comercio); acá sólo se muestra.
+ */
+export const getProximoLegajo = async (): Promise<string | null> => {
+  try {
+    const { data } = await apiClient.get('/profile/legajo/proximo');
+    return data?.legajo != null ? String(data.legajo) : null;
+  } catch (err) {
+    logError('No se pudo obtener el próximo legajo', err);
+    return null;
+  }
+};

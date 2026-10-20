@@ -1,24 +1,34 @@
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { notifySuccess,notifyError } from '@/app/lib/notificationService';
-import { createProfile, getProfileUserById, updateProfile } from '@/app/lib/profile.api';
+import { createProfile, getProfileUserById, getProximoLegajo, updateProfile } from '@/app/lib/profile.api';
 import { getRolList } from '@/app/lib/rol.api';
 import { createUserRol, deleteUserRol, getUserRolUserById } from '@/app/lib/userRol.api';
-import { getUserById, getUserRol, getUserTypeById, updateUser } from '@/app/lib/usuario.api'; // Importar getUserTypeById
+import { getUserById, getUserRol, updateUser } from '@/app/lib/usuario.api';
 import { useParams, useRouter } from 'next/navigation'; // Para manejar navegación
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { estaVacio } from '@/app/lib/formValidacion';
+import { rolesAsignables, tieneRolExterno } from '@/app/lib/rolesStaff';
+import Link from 'next/link';
 
 const EditUserPage = () => {
   const router = useRouter();
-  const { id } = useParams(); // Obtener el parámetro 'id' de la URL
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id; // Obtener el parámetro 'id' de la URL
 
-  const [userDetails, setUserDetails] = useState(null);
-  const [userTypeDescription, setUserTypeDescription] = useState('');
-  const [profileDetails, setProfileDetails] = useState({});
-  const [rolDetails, setRolDetails] = useState([]);
-  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [profileDetails, setProfileDetails] = useState<any>({});
+  const [profileExists, setProfileExists] = useState(false);
+  const [rolDetails, setRolDetails] = useState<any[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<any[]>([]);
+  // Roles con los que llegó el usuario: si alguno es de Academia, acá no se edita.
+  const [rolesIniciales, setRolesIniciales] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
+  // Bloquea el botón mientras guarda: varios clicks disparaban varios guardados.
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     const cliente =  getClienteId();
@@ -28,32 +38,34 @@ const EditUserPage = () => {
           const data = await getUserById(id,cliente); // Llamada a tu servicio que obtiene la lista de usuarios
           setUserDetails(data);
 
-          // Obtener la descripción del tipo de usuario
-          if (data.user_type_id) {
-            const userTypeData = await getUserTypeById(data.user_type_id.toString());
-            setUserTypeDescription(userTypeData?.descripcion || {}); // Asignar la descripción obtenida al estado
-          }
-
           // Obtener los detalles del perfil del usuario
           if (data.id) {
             const profile = await getProfileUserById(data.id,cliente);
-            console.log(profile)
-            setProfileDetails(profile);
+            const existe = !!(profile && Object.keys(profile).length > 0);
+            setProfileExists(existe);
+            if (existe) {
+              setProfileDetails(profile);
+            } else {
+              // Alta: el legajo lo asigna la API al guardar; se muestra el próximo.
+              const proximo = await getProximoLegajo();
+              setProfileDetails({ legajo: proximo ?? '' });
+            }
           }
           // Inicializar los roles seleccionados con los roles del usuario
           const userRols = await getUserRol(data.id,cliente);
           if (userRols) {
             // Mapeamos los roles obtenidos de la base de datos y los inicializamos en el estado
-            const rolesFormatted = userRols.map((rol) => ({
+            const rolesFormatted = userRols.map((rol: any) => ({
               descripcion: rol.descripcion,
               id: rol.id_rol, // Asegúrate de usar `id` para mantener la consistencia con el handler de checkbox
               id_user: rol.id_user,
             }));
 
             setSelectedRoles(rolesFormatted);
+            setRolesIniciales(rolesFormatted.map((r: any) => Number(r.id)));
           }
         } catch (err) {
-          console.error(err);
+          logError('Error al cargar datos del usuario', err);
         }
       };
 
@@ -62,7 +74,7 @@ const EditUserPage = () => {
           const data = await getRolList(getClienteId());
           setRolDetails(data);
         } catch (err) {
-          console.error(err);
+          logError('Error al cargar roles', err);
         }
       };
 
@@ -72,25 +84,25 @@ const EditUserPage = () => {
   }, [id]);
 
   // Manejar cambios en los detalles del usuario
-  const handleUserDetailChange = (e) => {
+  const handleUserDetailChange = (e: any) => {
     const { name, value } = e.target;
-    setUserDetails((prevDetails) => ({
+    setUserDetails((prevDetails: any) => ({
       ...prevDetails,
       [name]: value,
     }));
   };
 
   // Manejar cambios en los detalles del perfil
-  const handleProfileDetailChange = (e) => {
+  const handleProfileDetailChange = (e: any) => {
     const { name, value } = e.target;
-    setProfileDetails((prevDetails) => ({
+    setProfileDetails((prevDetails: any) => ({
       ...prevDetails,
       [name]: value,
     }));
   };
 
   // Manejar cambios en los roles seleccionados con casillas de verificación
-const handleRoleCheckboxChange = (e, rol) => {
+const handleRoleCheckboxChange = (e: any, rol: any) => {
   //console.log(rol);
   if (e.target.checked) {
     // Añadir rol seleccionado
@@ -103,8 +115,8 @@ const handleRoleCheckboxChange = (e, rol) => {
 
 
   // Manejar cambios en los roles seleccionados
-  const handleRoleChange = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(option => ({
+  const handleRoleChange = (e: any) => {
+    const selectedOptions = Array.from(e.target.selectedOptions).map((option: any) => ({
       descripcion: option.text,
       id: option.id, 
     }));
@@ -112,6 +124,8 @@ const handleRoleCheckboxChange = (e, rol) => {
   };
 
   const handleSubmit = async () => {
+    if (guardando) return;
+    setErrorMessage('');
     if (!validarCampos()) {
       setErrorMessage('Debe seleccionar rellenar los campos obligatorios.');
       return;
@@ -126,53 +140,56 @@ const handleRoleCheckboxChange = (e, rol) => {
       roles: selectedRoles,
       profile: profileDetails,
     };
-  
+    setGuardando(true);
     try {
       // 🔹 Verificar si el usuario existe
       const user = await getUserById(payload.id, payload.cliente_id);
       if (user) {
+        // CP-05: el tipo de usuario no se edita; la API lo deriva de los roles.
         await updateUser(user.id, {
           nombre: payload.nombre,
           apellido: payload.apellido,
           email: payload.email,
-          user_type_id: payload.user_type_id,
         });
       }
-  
+      
       // 🔹 Crear o actualizar perfil
       const profile = await getProfileUserById(payload.id, payload.cliente_id);
-      console.log(payload)
-      if (!profile || profile.length === 0) {
+      const profileYaExiste = profile && Object.keys(profile).length > 0;
+      if (!profileYaExiste) {
         await createProfile({
           id_user: payload.id,
           dni: payload.profile.dni,
           telefono: payload.profile.telefono,
           password: payload.profile.password,
-          legajo: payload.profile.legajo,
           fecha_ingreso: payload.profile.fecha_ingreso,
           cliente_id: payload.cliente_id,
         });
       } else {
-        await updateProfile(profile.id, payload.profile);
+        // En edición sólo mandamos la contraseña si el usuario tipeó una nueva.
+        // legajo no se manda: no es editable.
+        const { password, legajo: _legajo, ...restProfile } = payload.profile || {};
+        const profilePayload =
+          typeof password === 'string' && password.trim() !== ''
+            ? { ...restProfile, password }
+            : restProfile;
+        await updateProfile(profile.id, profilePayload);
       }
-  
+      
       // ======================================================
       // 🔹 SINCRONIZACIÓN DE ROLES (versión robusta)
       // ======================================================
   
       const existingUserRoles = await getUserRolUserById(payload.id, payload.cliente_id);
-      console.log("Roles actuales:", existingUserRoles);
   
       // Normalizar los valores a números
-      const existingRoleIds = new Set(existingUserRoles.map(r => Number(r.id_rol)));
-      const selectedRoleIds = new Set(payload.roles.map(r => Number(r.id)));
+      const existingRoleIds = new Set(existingUserRoles.map((r: any) => Number(r.id_rol)));
+      const selectedRoleIds = new Set(payload.roles.map((r: any) => Number(r.id)));
   
       // Calcular diferencias
       const rolesToAdd = [...selectedRoleIds].filter(id => !existingRoleIds.has(id));
       const rolesToDelete = [...existingRoleIds].filter(id => !selectedRoleIds.has(id));
   
-      console.log("Roles a agregar:", rolesToAdd);
-      console.log("Roles a eliminar:", rolesToDelete);
   
       // 🔸 Crear roles nuevos
       for (const id_rol of rolesToAdd) {
@@ -185,7 +202,7 @@ const handleRoleCheckboxChange = (e, rol) => {
   
       // 🔸 Eliminar roles removidos
       for (const id_rol of rolesToDelete) {
-        const roleToDelete = existingUserRoles.find(r => Number(r.id_rol) === id_rol);
+        const roleToDelete = existingUserRoles.find((r: any) => Number(r.id_rol) === id_rol);
         if (roleToDelete) {
           await deleteUserRol(roleToDelete.id,getClienteId());
         }
@@ -196,10 +213,12 @@ const handleRoleCheckboxChange = (e, rol) => {
       notifySuccess('Usuario actualizado correctamente.');
       router.push('/dashboard/usuarios');
   
-    } catch (e) {
-      console.error('Error en handleSubmit:', e);
+    } catch (e: any) {
+      logError('Error en handleSubmit:', e);
       setErrorMessage('Error: ' + e.message);
+      setGuardando(false);
     }
+    // En éxito no se libera: la pantalla navega a la lista.
   };
 
 
@@ -210,7 +229,7 @@ const handleRoleCheckboxChange = (e, rol) => {
     password:string;
     dni:string;
     telefono:string;
-    legajo : number;
+    legajo: string;
     fecha_ingreso:string;
   }>({
     nombre: '',
@@ -219,7 +238,7 @@ const handleRoleCheckboxChange = (e, rol) => {
     password:'',
     dni:'',
     telefono:'',
-    legajo : 0,
+    legajo: '',
     fecha_ingreso:'',
   });
 
@@ -232,42 +251,38 @@ const handleRoleCheckboxChange = (e, rol) => {
       password:'',
       dni:'',
       telefono:'',
-      legajo : 0,
+      legajo: '',
       fecha_ingreso:'',
     };
 
     let isValid = true;
 
      // 1. Validar Teléfono (siempre obligatorio)
-    if (!userDetails.nombre || userDetails.nombre.trim() === '') {
+    if (estaVacio(userDetails.nombre)) {
       newErrors.nombre = 'El nombre es obligatorio';
       isValid = false;
     }
-    if (!userDetails.apellido || userDetails.apellido.trim() === '') {
+    if (estaVacio(userDetails.apellido)) {
       newErrors.apellido = 'El apellido es obligatorio';
       isValid = false;
     }
-    if (!userDetails.email || userDetails.email.trim() === '') {
+    if (estaVacio(userDetails.email)) {
       newErrors.email = 'El email es obligatorio';
       isValid = false;
     }
-    if (!profileDetails.password || profileDetails.password.trim() === '') {
+    if (!profileExists && estaVacio(profileDetails.password)) {
       newErrors.password = 'El password es obligatorio';
       isValid = false;
     }
-    if (!profileDetails.dni || profileDetails.dni.trim() === '') {
+    if (estaVacio(profileDetails.dni)) {
       newErrors.dni = 'El dni es obligatorio';
       isValid = false;
     }
-    if (!profileDetails.telefono || profileDetails.telefono.trim() === '') {
+    if (estaVacio(profileDetails.telefono)) {
       newErrors.telefono = 'El telefono es obligatorio';
       isValid = false;
     }
-    if (!profileDetails.legajo || profileDetails.legajo.trim() === '') {
-      newErrors.legajo = 'El legajo es obligatorio';
-      isValid = false;
-    }
-    if (!profileDetails.fecha_ingreso || profileDetails.fecha_ingreso.trim() === '') {
+    if (estaVacio(profileDetails.fecha_ingreso)) {
       newErrors.fecha_ingreso = 'El fecha_ingreso es obligatorio';
       isValid = false;
     }
@@ -281,7 +296,7 @@ const handleRoleCheckboxChange = (e, rol) => {
     return <div>Cargando...</div>;
   }
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: any) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -292,12 +307,22 @@ const handleRoleCheckboxChange = (e, rol) => {
 
   
 
+  const usuarioDeAcademia = tieneRolExterno(rolesIniciales, rolDetails);
+  const hayRolesDeAcademia = rolDetails.length > rolesAsignables(rolDetails).length;
+
   return (
-    <div className="w-full p-6 bg-gray-50 min-h-screen">
+    <div className="w-full p-4 md:p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-800 mb-6">Editar Usuario</h1>
 
+      {usuarioDeAcademia && (
+        <div role="alert" className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Este usuario es de la academia (profesor, tutor o alumno): sus datos y su acceso se gestionan desde{' '}
+          <Link href="/dashboard/academia" className="font-semibold underline">Academia</Link>.
+        </div>
+      )}
+
       {/* Contenedor principal */}
-      <div className="bg-white shadow-lg rounded-lg p-6 space-y-6">
+      <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 space-y-6">
         {/* Sección de Datos del Usuario */}
         <section className="space-y-4">
           <h2 className="text-xl font-medium text-gray-700 border-b pb-2">Datos del Usuario</h2>
@@ -310,7 +335,7 @@ const handleRoleCheckboxChange = (e, rol) => {
                 value={userDetails.nombre || ''}
                 onChange={handleUserDetailChange}
                 onBlur={() => {
-                  if ( (!userDetails.nombre || userDetails.nombre.trim() === '')) {
+                  if (estaVacio(userDetails.nombre)) {
                     setErrors({ ...errors, nombre: 'El nombre es obligatorio' });
                   }
                 }}
@@ -326,7 +351,7 @@ const handleRoleCheckboxChange = (e, rol) => {
                 value={userDetails.apellido || ''}
                 onChange={handleUserDetailChange}
                 onBlur={() => {
-                  if ( (!userDetails.apellido || userDetails.apellido.trim() === '')) {
+                  if (estaVacio(userDetails.apellido)) {
                     setErrors({ ...errors, apellido: 'El apellido es obligatorio' });
                   }
                 }}
@@ -344,23 +369,13 @@ const handleRoleCheckboxChange = (e, rol) => {
                 value={userDetails.email || ''}
                 onChange={handleUserDetailChange}
                 onBlur={() => {
-                  if ( (!userDetails.email || userDetails.email.trim() === '')) {
+                  if (estaVacio(userDetails.email)) {
                     setErrors({ ...errors, email: 'El email es obligatorio' });
                   }
                 }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tipo de usuario</label>
-              <input
-                type="text"
-                name="user_type"
-                value={userTypeDescription || ''}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                readOnly
-              />
             </div>
           </div>
         </section>
@@ -374,10 +389,12 @@ const handleRoleCheckboxChange = (e, rol) => {
               <input
                 type="password"
                 name="password"
+                autoComplete="new-password"
+                placeholder="Dejar en blanco para no cambiar"
                 value={profileDetails.password || ''}
                 onChange={handleProfileDetailChange}
                 onBlur={() => {
-                  if ( (!profileDetails.password || profileDetails.password.trim() === '')) {
+                  if (!profileExists && estaVacio(profileDetails.password)) { // en edición vacío = no cambiar
                     setErrors({ ...errors, password: 'El password es obligatorio' });
                   }
                 }}
@@ -395,13 +412,13 @@ const handleRoleCheckboxChange = (e, rol) => {
                 value={profileDetails.dni || ''}
                 onChange={handleProfileDetailChange}
                 onBlur={() => {
-                  if ( (!profileDetails.dni || profileDetails.dni.trim() === '')) {
+                  if (estaVacio(profileDetails.dni)) {
                     setErrors({ ...errors, dni: 'El dni es obligatorio' });
                   }
                 }}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
-              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.dni}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Teléfono</label>
@@ -410,30 +427,30 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="telefono"
                 value={profileDetails.telefono || ''}
                 onBlur={() => {
-                  if ( (!profileDetails.telefono || profileDetails.telefono.trim() === '')) {
+                  if (estaVacio(profileDetails.telefono)) {
                     setErrors({ ...errors, telefono: 'El telefono es obligatorio' });
                   }
                 }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
-               {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
+               {errors.telefono && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Legajo</label>
+              <label htmlFor="legajo" className="block text-sm font-medium text-gray-700">Legajo</label>
               <input
+                id="legajo"
                 type="text"
                 name="legajo"
                 value={profileDetails.legajo || ''}
-                onBlur={() => {
-                  if ( (!profileDetails.legajo || profileDetails.legajo.trim() === '')) {
-                    setErrors({ ...errors, legajo: 'El legajo es obligatorio' });
-                  }
-                }}
-                onChange={handleProfileDetailChange}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                readOnly
+                aria-readonly="true"
+                aria-describedby="legajo-ayuda"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed"
               />
-               {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.legajo}</p>}
+              <p id="legajo-ayuda" className="text-xs text-gray-500 mt-1">
+                {profileExists ? 'Asignado automáticamente.' : 'Se asigna automáticamente al guardar.'}
+              </p>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Fecha de Ingreso</label>
@@ -442,14 +459,14 @@ const handleRoleCheckboxChange = (e, rol) => {
                 name="fecha_ingreso"
                 value={formatDate(profileDetails.fecha_ingreso) || ''}
                 onBlur={() => {
-                  if ( (!profileDetails.fecha_ingreso || profileDetails.fecha_ingreso.trim() === '')) {
+                  if (estaVacio(profileDetails.fecha_ingreso)) {
                     setErrors({ ...errors, fecha_ingreso: 'El fecha deingreso es obligatorio' });
                   }
                 }}
                 onChange={handleProfileDetailChange}
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
               />
-              {errors.dni && <p className="text-red-500 text-sm mt-1">{errors.fecha_ingreso}</p>}
+              {errors.fecha_ingreso && <p className="text-red-500 text-sm mt-1">{errors.fecha_ingreso}</p>}
             </div>
           </div>
         </section>
@@ -461,7 +478,7 @@ const handleRoleCheckboxChange = (e, rol) => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Selecciona roles</label>
               <div className="mt-2 space-y-2">
-                {rolDetails.map((rol) => (
+                {rolesAsignables(rolDetails).map((rol) => (
                   <div key={rol.id} className="flex items-center">
                     <input
                       type="checkbox"
@@ -469,7 +486,7 @@ const handleRoleCheckboxChange = (e, rol) => {
                       value={rol.descripcion}
                       checked={selectedRoles.some((selectedRol) => selectedRol.id === rol.id)}
                       onChange={(e) => handleRoleCheckboxChange(e, rol)}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-600"
                     />
                     <label htmlFor={`role-${rol.id}`} className="ml-2 text-sm text-gray-700">
                       {rol.descripcion}
@@ -477,6 +494,11 @@ const handleRoleCheckboxChange = (e, rol) => {
                   </div>
                 ))}
               </div>
+              {hayRolesDeAcademia && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Los roles de profesor, tutor y alumno se asignan desde Academia.
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -488,16 +510,20 @@ const handleRoleCheckboxChange = (e, rol) => {
           <button
               type="button"
               onClick={() => router.push('/dashboard/usuarios')}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+              disabled={guardando}
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
           <button
             type="button"
             onClick={handleSubmit}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600"
+            disabled={guardando || usuarioDeAcademia}
+            aria-busy={guardando}
+            className="ml-2 inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg shadow-sm hover:bg-brand-600 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Guardar
+            {guardando && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {guardando ? 'Guardando…' : 'Guardar'}
           </button>
         </div>
       </div>

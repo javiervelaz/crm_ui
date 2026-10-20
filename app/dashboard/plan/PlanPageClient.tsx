@@ -50,7 +50,7 @@ export function PlanPageClient() {
   return (
     <>
       {IS_MOCK && (
-        <div className="rounded-lg border border-blue-300 bg-blue-50 px-4 py-3 text-xs text-blue-800">
+        <div className="rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-xs text-brand-800">
           MODO MOCK ACTIVADO: los pagos no van a MercadoPago, se simulan contra el backend.
         </div>
       )}
@@ -77,7 +77,7 @@ export function PlanPageClient() {
 
       {plan && !isLoading && (
         <>
-          <section className="grid gap-6 md:grid-cols-3">
+          <section className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <p className="text-xs font-semibold uppercase text-gray-500">
                 Plan actual
@@ -109,7 +109,7 @@ export function PlanPageClient() {
                 title={tier.nombre_publico}
                 tierCode={tier.code}
                 description={tier.descripcion}
-                features={tier.beneficios || []}
+                features={[]}
                 price={tier.precio_mensual}
                 currentTier={currentTier}
                 onUpgrade={handleUpgrade}
@@ -122,14 +122,14 @@ export function PlanPageClient() {
           {promoTiers.length > 0 && (
             <>
               <h3 className="mt-10 text-lg font-bold text-gray-800">Promociones especiales</h3>
-              <section className="mt-4 grid gap-6 md:grid-cols-3">
+              <section className="mt-4 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {promoTiers.map((tier) => (
                   <PlanCard
                     key={tier.code}
                     title={tier.nombre_publico}
                     tierCode={tier.code}
                     description={tier.descripcion}
-                    features={tier.beneficios || []}
+                    features={[]}
                     price={tier.precio_mensual}
                     currentTier={currentTier}
                     onUpgrade={handleUpgrade}
@@ -149,7 +149,7 @@ export function PlanPageClient() {
 interface PlanCardProps {
   title: string;
   tierCode: string;
-  description: string;
+  description: string | null;
   features: string[];
   currentTier: string;
   onUpgrade: (tierCode: string) => void;

@@ -1,11 +1,13 @@
 import { getClienteId } from "./authService";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getModulosByCliente = async (cliente_id: BigInt) => {
+export const getModulosByCliente = async (cliente_id: bigint | null) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/modulo/list/${cliente_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
        // Si la respuesta es un 404, retorna un array vacío
@@ -13,7 +15,7 @@ export const getModulosByCliente = async (cliente_id: BigInt) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch tipo salida');
+        throw new Error('No se pudo obtener el tipo de salida');
       }
       return await response.json();
 
@@ -23,10 +25,12 @@ export const getModulosByCliente = async (cliente_id: BigInt) => {
 
 export const getRolModulosPermisos = async (rolId: number) => {
   const clienteId = getClienteId();
+  const token = localStorage.getItem('token');
   const response = await fetch(`${apiUrl}/rol/${rolId}/${clienteId}/modulos-permisos`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
     },
   });
    // Si la respuesta es un 404, retorna un array vacío
@@ -34,17 +38,19 @@ export const getRolModulosPermisos = async (rolId: number) => {
     return [];
   }
   if (!response.ok) {
-    throw new Error('Failed to fetch modulo permiso');
+    throw new Error('No se pudo obtener los módulos/permisos');
   }
   return await response.json();
 
 };
 
-export const getUserPermisosById = async (userId: number, cliente_id: BigInt) => {
+export const getUserPermisosById = async (userId: number, cliente_id: bigint | null) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente_id}/modulos-permisos`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
        // Si la respuesta es un 404, retorna un array vacío
@@ -52,17 +58,19 @@ export const getUserPermisosById = async (userId: number, cliente_id: BigInt) =>
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch tipo salida');
+        throw new Error('No se pudo obtener el tipo de salida');
       }
       return await response.json();
 
 };
 
-export const getPermisosByModuloId = async (cliente_id: BigInt, id_modulo: number) => {
+export const getPermisosByModuloId = async (cliente_id: bigint | null, id_modulo: number) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/modulo/${cliente_id}/${id_modulo}/permisos`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
        // Si la respuesta es un 404, retorna un array vacío
@@ -70,37 +78,33 @@ export const getPermisosByModuloId = async (cliente_id: BigInt, id_modulo: numbe
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to fetch tipo salida');
+        throw new Error('No se pudo obtener el tipo de salida');
       }
       return await response.json();
 
   };
 
   export const saveRolModulosPermisos = async (rolId: number, payload: any) => {
-    try {
-      const clienteId = getClienteId();
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/rol/${rolId}/${clienteId}/modulos-permisos`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-        throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
-      }
-      return await response.json();
-    } catch (error) {
-      throw new Error('Falló setear permisos');
-    } 
-
+    const clienteId = getClienteId();
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/rol/${rolId}/${clienteId}/modulos-permisos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      let msg = 'No se pudieron guardar los permisos del rol';
+      try { const e = await response.json(); msg = e?.error || e?.message || msg; } catch {}
+      throw new Error(msg);
+    }
+    return await response.json();
   };
 
 // ✅ Guardar los módulos y permisos asignados a un usuario
-export const saveUsuarioModulosPermisos  =  async (userId:Number,cliente_id:BigInt, data:any) => {
+export const saveUsuarioModulosPermisos  =  async (userId:Number,cliente_id: bigint | null, data:any) => {
   try {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/users/${userId}/${cliente_id}/modulos-permisos`, {
@@ -112,11 +116,12 @@ export const saveUsuarioModulosPermisos  =  async (userId:Number,cliente_id:BigI
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      const errorData = await response.json(); // Obtener el cuerpo de la respuesta
-      throw new Error(`Error: ${errorData.message || 'Error desconocido en la API'}`);
+      let msg = 'No se pudieron guardar los permisos del usuario';
+      try { const e = await response.json(); msg = e?.error || e?.message || msg; } catch {}
+      throw new Error(msg);
     }
     return await response.json();
-  } catch (error) {
-    throw new Error('Falló setear permisos');
-  } 
+  } catch (error: any) {
+    throw new Error(error?.message || 'No se pudieron guardar los permisos del usuario');
+  }
 }

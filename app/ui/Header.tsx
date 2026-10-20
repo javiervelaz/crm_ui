@@ -4,10 +4,16 @@ import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useClientePlan } from '@/app/lib/useClientePlan';
+import AdminSettingsMenu from '@/app/ui/AdminSettingsMenu';
+import { KeyRound } from 'lucide-react';
+import Link from 'next/link';
+import { RUTA_CAMBIO_PASSWORD } from '@/app/lib/modules';
 
 interface DecodedToken {
+  userId: string | number;
   username: string;
-  role: string;
+  role: string[];
+  modules?: string[];
 }
 
 type HeaderProps = {
@@ -16,6 +22,9 @@ type HeaderProps = {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [userName, setUserName] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | number | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [modules, setModules] = useState<string[]>([]);
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const router = useRouter();
@@ -45,19 +54,28 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
         setUserName(decodedToken.username);
+        setUserId(decodedToken.userId);
+        setIsAdmin(Array.isArray(decodedToken.role) && decodedToken.role.includes('admin'));
+        setModules(Array.isArray(decodedToken.modules) ? decodedToken.modules : []);
         setIsLoggedIn(true);
       } catch {
         setUserName(null);
+        setUserId(null);
+        setIsAdmin(false);
+        setModules([]);
         setIsLoggedIn(false);
       }
     } else {
       setUserName(null);
+      setUserId(null);
+      setIsAdmin(false);
+      setModules([]);
       setIsLoggedIn(false);
     }
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 px-4 md:px-6 flex justify-between items-center shadow-sm">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-brand-200 px-4 md:px-6 flex justify-between items-center shadow-card">
       <div className="flex items-center gap-3 min-w-0">
         {onMenuClick && (
           <button
@@ -67,10 +85,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             md:hidden
             inline-flex h-10 w-10 items-center justify-center
             rounded-md
-            bg-gray-200 text-gray-800
-            border border-gray-300
-            hover:bg-gray-300
-            active:bg-gray-400
+            bg-brand-100 text-brand-800
+            border border-brand-200
+            hover:bg-brand-200
+            active:bg-brand-300
           "
           aria-label="Abrir menú"
         >
@@ -83,14 +101,27 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
       {isLoggedIn && (
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          <span className="font-semibold text-gray-800 whitespace-nowrap hidden sm:inline">
+          <span className="font-semibold text-brand-800 whitespace-nowrap hidden sm:inline">
             {userName}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-sm whitespace-nowrap">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span className="hidden md:inline">Plan:</span>
-            <span className="font-medium">{loading ? '...' : (plan?.tierNombre ?? '-')}</span>
-          </span>
+          {isAdmin && userId != null && <AdminSettingsMenu userId={userId} modules={modules} />}
+          {!isAdmin && (
+            <Link
+              href={RUTA_CAMBIO_PASSWORD}
+              title="Cambiar contraseña"
+              aria-label="Cambiar contraseña"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100"
+            >
+              <KeyRound size={16} />
+            </Link>
+          )}
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 border border-brand-200 px-2.5 py-1 text-sm whitespace-nowrap">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="hidden md:inline">Plan:</span>
+              <span className="font-medium">{loading ? '...' : (plan?.tierNombre ?? '-')}</span>
+            </span>
+          )}
         </div>
       )}
     </header>

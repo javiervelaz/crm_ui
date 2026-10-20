@@ -1,32 +1,71 @@
 "use client";
 
-import { lusitana } from '@/app/ui/fonts';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation'; // Cambia 'next/router' por 'next/navigation'
 import { FormEvent, useState } from 'react';
 import styles from './page.module.css';
+import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
+import { landingForToken, SessionToken } from '@/app/lib/modules';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [noVerificado, setNoVerificado] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (event: FormEvent) => {
     event.preventDefault();
+    setError('');
+    setNoVerificado(false);
+
     try {
       const response = await axios.post(`${apiUrl}/auth/login`, { email, password });
-      //const response = await axios.post('https://comercios.vercel.app/login', { email, password });
-      localStorage.setItem('token', response.data.token);
-      router.push('/dashboard/orders'); // Redirige a tu pantalla de búsqueda o dashboard
-    } catch (err) {
-      setError('Invalid credentials');
+      const token: string = response.data.token;
+      localStorage.setItem('token', token);
+      window.dispatchEvent(new Event('storage'));
+      // Antes iba a '/dashboard/orders', una ruta que no existe.
+      router.push(landingForToken(jwtDecode<SessionToken>(token)));
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const code = err?.response?.data?.code;
+
+      // 403 EMAIL_NO_VERIFICADO: la contraseña está bien, falta activar la
+      // cuenta. Mostrar "credenciales inválidas" acá manda al usuario a
+      // resetear una contraseña que funciona perfecto.
+      if (status === 403 && code === 'EMAIL_NO_VERIFICADO') {
+        setNoVerificado(true);
+        return;
+      }
+
+      if (status === 403) {
+        setError(err?.response?.data?.error || 'Tu cuenta no está disponible.');
+        return;
+      }
+
+      setError('Email o contraseña incorrectos');
     }
   };
 
+  if (noVerificado) {
+    return (
+      <div className={`${styles.container} font-display`}>
+        <VerificacionPendiente email={email} conAvisoBloqueo />
+        <button
+          type="button"
+          onClick={() => setNoVerificado(false)}
+          className="mt-6 text-sm underline"
+        >
+          Volver al login
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${styles.container} ${lusitana.className}`}>
+    <div className={`${styles.container} font-display`}>
       <h1>Login</h1>
       <form onSubmit={handleLogin}>
       <div className={styles['form-group']}>

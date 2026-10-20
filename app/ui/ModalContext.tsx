@@ -1,5 +1,5 @@
 "use client"
-import { createContext, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 interface ModalContextProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ const ModalContext = createContext<ModalContextProps>({
   closeModal: () => {}, // Funciones vacías
 });
 
-export const ModalProvider = ({ children }) => {
+export const ModalProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const openModal = () => setIsOpen(true);

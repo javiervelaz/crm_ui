@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -19,7 +19,7 @@ export const CreateProductoButton = ({ disabled = false }: { disabled?: boolean 
       disabled={disabled}
       className={`w-full sm:w-auto whitespace-nowrap px-4 py-2 rounded-md text-white ${
 
-        disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+        disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-600'
       }`}
     >
       <FontAwesomeIcon icon={faPlus} className="mr-2" /> Producto

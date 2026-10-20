@@ -1,15 +1,24 @@
+'use client';
 
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
+import SinAcceso from '@/components/ui/SinAcceso';
+import { useAuthCheck } from '@/app/lib/useAuthCheck';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
-      
-      <div className="flex-grow p-6 md:overflow-y-auto md:p-12">
-        {children}</div>
-        <ToastContainer />
-    </div>
-    
-  );
+/**
+ * Guard único del dashboard (tarea 2.2).
+ *
+ * Antes este layout era un passthrough vacío y cada page.tsx llamaba a
+ * useAuthCheck() por su cuenta — 34 call sites, cada uno con su propio
+ * skeleton de divs grises. Resultado: doble parpadeo en cada navegación.
+ *
+ * Ahora la verificación pasa acá una sola vez. Las páginas hijas asumen
+ * sesión válida y ya no dibujan estados de carga de sesión.
+ */
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { status, fallback } = useAuthCheck();
+
+  if (status === 'checking' || status === 'anonymous') return <DashboardSkeleton />;
+  if (status === 'denied') return <SinAcceso fallback={fallback} />;
+
+  return <>{children}</>;
 }

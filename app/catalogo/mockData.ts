@@ -9,6 +9,7 @@ export const catalogProducts: CatalogProduct[] = [
     imageUrl:
       'https://images.pexels.com/photos/4109084/pexels-photo-4109084.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Pizzas',
+    permite_mitad: true,
     tags: ['Clásico', 'Promo'],
   },
   {
@@ -19,6 +20,7 @@ export const catalogProducts: CatalogProduct[] = [
     imageUrl:
       'https://images.pexels.com/photos/1120021/pexels-photo-1120021.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Pizzas',
+    permite_mitad: true,
     tags: ['Favorito'],
   },
     {
@@ -29,6 +31,7 @@ export const catalogProducts: CatalogProduct[] = [
     imageUrl:
       'https://images.pexels.com/photos/4109990/pexels-photo-4109990.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Empanadas',
+    permite_mitad: false,
     tags: ['Nuevo'],
   },
   {
@@ -39,6 +42,7 @@ export const catalogProducts: CatalogProduct[] = [
     imageUrl:
       'https://images.pexels.com/photos/4109992/pexels-photo-4109992.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Empanadas',
+    permite_mitad: false,
   },
   {
     id: '5',
@@ -48,6 +52,7 @@ export const catalogProducts: CatalogProduct[] = [
     imageUrl:
       'https://images.pexels.com/photos/8674159/pexels-photo-8674159.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Bebidas',
+    permite_mitad: false,
   },
   {
     id: '6',
@@ -57,6 +62,7 @@ export const catalogProducts: CatalogProduct[] = [
     imageUrl:
       'https://images.pexels.com/photos/670762/pexels-photo-670762.jpeg?auto=compress&cs=tinysrgb&w=800',
     category: 'Bebidas',
+    permite_mitad: false,
     tags: ['Sin azúcar'],
   },
 ];

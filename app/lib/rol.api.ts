@@ -1,10 +1,12 @@
 import { notifyError } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getRolList = async (cliente:BigInt) => {
+export const getRolList = async (cliente: bigint | null) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/rol/list/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -12,8 +14,62 @@ export const getRolList = async (cliente:BigInt) => {
         return [];
       }
     if (!response.ok) {
-        notifyError( 'Failed to load rol');
-        throw new Error('Failed to fetch rol list');
+        notifyError( 'No se pudo cargar el rol');
+        throw new Error('No se pudo obtener la lista de roles');
     }
     return await response.json();
   };
+
+export const getRolById = async (id: number, cliente: bigint | null) => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/rol/${id}/${cliente}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (response.status === 404) {
+      return null;
+    }
+    if (!response.ok) {
+      notifyError('No se pudo cargar el rol');
+      throw new Error('No se pudo obtener el rol');
+    }
+    return await response.json();
+  };
+export const createRol = async (descripcion: string, cliente: bigint | null) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${apiUrl}/rol`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ descripcion, cliente_id: cliente }),
+  });
+  if (!response.ok) {
+    let msg = 'No se pudo crear el rol';
+    try { const e = await response.json(); if (e?.error) msg = e.error; } catch {}
+    notifyError(msg);
+    throw new Error(msg);
+  }
+  return await response.json();
+};
+
+export const deleteRol = async (id: number, cliente: bigint | null) => {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${apiUrl}/rol/${id}/${cliente}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    let msg = 'No se pudo eliminar el rol';
+    try { const e = await response.json(); if (e?.error) msg = e.error; } catch {}
+    throw new Error(msg);
+  }
+  return await response.json();
+};

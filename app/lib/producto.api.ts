@@ -1,6 +1,6 @@
 import { notifyError, notifySuccess } from './notificationService';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getProductoList = async (cliente: BigInt) => {
+export const getProductoList = async (cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto/list/${cliente}`, {
       method: 'GET',
@@ -24,12 +24,12 @@ export const getProductoList = async (cliente: BigInt) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load producto list');
+        throw new Error('No se pudo cargar la lista de productos');
       }
       return await response.json();
   };
 
-  export const postProductoList = async (cliente: BigInt) => {
+  export const postProductoList = async (cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto/list/${cliente}`, {
       method: 'POST',
@@ -53,7 +53,7 @@ export const getProductoList = async (cliente: BigInt) => {
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load producto list');
+        throw new Error('No se pudo cargar la lista de productos');
       }
       return await response.json();
   };
@@ -82,17 +82,19 @@ export const getProductoList = async (cliente: BigInt) => {
 
     if (!response.ok) {
       const messageBackend = errorBody?.error || errorBody?.message;
-      throw new Error(messageBackend ||'Failed to create producto');
+      throw new Error(messageBackend ||'No se pudo crear el producto');
     }
-    notifySuccess('producto loaded successfully');
+    notifySuccess('Operación realizada correctamente');
     return await response.json();
   };
 
-  export const getProductoById = async (Id: number | string | string[], cliente: BigInt) => {
+  export const getProductoById = async (Id: number | string | string[], cliente: bigint | null) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto/${Id}/${cliente}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
      // Si la respuesta es un 404, retorna un array vacío
@@ -100,7 +102,7 @@ export const getProductoList = async (cliente: BigInt) => {
       return [];
     }
     if (!response.ok) {
-      throw new Error('Failed to fetch producto');
+      throw new Error('No se pudo obtener el producto');
     }
     return await response.json();
   };
@@ -126,12 +128,12 @@ export const getProductoList = async (cliente: BigInt) => {
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
     }
     if (!response.ok) {
-      throw new Error('Failed to update producto');
+      throw new Error(errorBody?.error || errorBody?.message || 'No se pudo actualizar el producto');
     }
     return await response.json();
   };
 
-  export const deleteProducto = async (id: number | string | string[],cliente: BigInt) => {
+  export const deleteProducto = async (id: number | string | string[],cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/producto/${id}/${cliente}`, {
       method: 'DELETE',
@@ -151,7 +153,7 @@ export const getProductoList = async (cliente: BigInt) => {
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
     }
     if (!response.ok) {
-      throw new Error('Failed to delete  producto');
+      throw new Error('No se pudo eliminar el producto');
     }
     return await response.json();
   };

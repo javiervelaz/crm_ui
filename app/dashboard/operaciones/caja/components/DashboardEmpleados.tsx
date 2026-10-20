@@ -1,11 +1,11 @@
-import { getClienteId } from "@/app/lib/authService";
+﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import { checkAperturaCaja, getPedidosByRegistroId } from "@/app/lib/operaciones.api";
 import { jwtDecode } from 'jwt-decode';
 import { useCallback, useEffect, useState } from 'react';
-import { getCurrentDate } from "../../../../../lib/utils";
 import Modal from './Modal';
-import PedidoForm from './PedidoForm';
-import PedidosGrid from './PedidosGrid';
+import PedidoForm from '@/app/features/pedidos/PedidoForm';
+import PedidosGrid from '@/app/features/pedidos/PedidosGrid';
 import AbrirCajaForm from "./abrirCajaForm";
 
 interface DecodedToken {
@@ -17,7 +17,7 @@ const DashboardEmpleados = () => {
   const [cajaAbierta, setCajaAbierta] = useState(false);
   const [fechaApertura, setFechaApertura] = useState('');
   const [registroDiario, setRegistroDiario] =  useState<number | null>(null);
-  const [pedidos, setPedidos] = useState([]);
+  const [pedidos, setPedidos] = useState<any[]>([]);
   const [showPedidoForm, setShowPedidoForm] = useState(false);
   const [showAbrirCajaForm, setShowAbrirCajaForm] = useState(false);
   const [usuario, setUsuario] = useState<number | null>(null);
@@ -27,18 +27,24 @@ useEffect(() => {
     try {
         const data = {cliente_id:getClienteId()} as any;
         const res = await checkAperturaCaja(data);
-        console.log("res:",res);
         if (res.caja_abierta) {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
           setRegistroDiario(res.registro_diario_id);
+        } else {
+          setCajaAbierta(false);
+          setRegistroDiario(null);
         }
     } catch (error) {
-      console.error('Error al verificar la caja:', error);
+      logError('Error al verificar la caja:', error);
     }
   };
 
   verificarCaja();
+  // bug 22: revalidar caja al abrir/cerrar sin recargar la pagina
+  const handler = () => verificarCaja();
+  window.addEventListener('caja-changed', handler);
+  return () => window.removeEventListener('caja-changed', handler);
 }, []); 
 
 
@@ -49,7 +55,7 @@ useEffect(() => {
       const response = await getPedidosByRegistroId(registroDiario,getClienteId());
       setPedidos(response);
     } catch (error) {
-      console.error('Error al cargar pedidos:', error);
+      logError('Error al cargar pedidos:', error);
     }
   }, [registroDiario]); // Solo se recrea cuando registroDiario cambia
 
@@ -89,9 +95,9 @@ useEffect(() => {
           )}
         </div>
       ) : (
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-bold">Pedidos del Día</h2>
-          <p className="text-gray-600">Caja abierta el: {new Date(fechaApertura).toLocaleString()}</p>
+          <p className="text-sm text-brand-300">Caja abierta el: {fechaApertura ? new Date(String(fechaApertura).slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR') : ''}</p>
         </div>
       )}
 
@@ -100,7 +106,7 @@ useEffect(() => {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowPedidoForm(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-600"
             >
               Alta de Pedido
             </button>
@@ -111,7 +117,7 @@ useEffect(() => {
           {showPedidoForm && (
             <Modal onClose={handlePedidoFormClose}>
               {registroDiario !== null  && usuario !== null && (
-                <PedidoForm onClose={handlePedidoFormClose} registroDiario={registroDiario} usuario_id={usuario}  />
+                <PedidoForm  modo="caja" onClose={handlePedidoFormClose} registroDiario={registroDiario} usuario_id={usuario}  />
               )}
                 </Modal>
           )}

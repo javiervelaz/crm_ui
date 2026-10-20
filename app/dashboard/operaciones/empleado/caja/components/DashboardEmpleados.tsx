@@ -1,4 +1,5 @@
-import { getClienteId } from "@/app/lib/authService";
+﻿import { getClienteId } from "@/app/lib/authService";
+import { logError } from '@/app/lib/logger';
 import {
   checkAperturaCaja,
   getPedidosByRegistroId,
@@ -6,8 +7,8 @@ import {
 import { jwtDecode } from "jwt-decode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "./Modal";
-import PedidoForm from "./PedidoForm";
-import PedidosGrid from "./PedidosGrid";
+import PedidoForm from '@/app/features/pedidos/PedidoForm';
+import PedidosGrid from '@/app/features/pedidos/PedidosGrid';
 import AbrirCajaForm from "./abrirCajaForm";
 
 interface DecodedToken {
@@ -18,7 +19,7 @@ interface DecodedToken {
 // Aseguramos el tipo de Pedido alineado con PedidosGrid
 interface Pedido {
   id: number;
-  status: boolean;
+  pedido_terminado: boolean;
   comanda_nro?: string;
   nombre?: string;
   telefono?: string;
@@ -49,13 +50,20 @@ const DashboardEmpleados = () => {
           setCajaAbierta(true);
           setFechaApertura(res.fecha);
           setRegistroDiario(res.registro_diario_id);
+        } else {
+          setCajaAbierta(false);
+          setRegistroDiario(null);
         }
       } catch (error) {
-        console.error("Error al verificar la caja:", error);
+        logError("Error al verificar la caja:", error);
       }
     };
 
     verificarCaja();
+    // bug 22: revalidar caja al abrir/cerrar sin recargar la pagina
+    const handler = () => verificarCaja();
+    window.addEventListener('caja-changed', handler);
+    return () => window.removeEventListener('caja-changed', handler);
   }, []);
 
   // 2) fetchPedidos por registro_diario (día actual)
@@ -70,7 +78,7 @@ const DashboardEmpleados = () => {
       setPedidos(response);
     
     } catch (error) {
-      console.error("Error al cargar pedidos:", error);
+      logError("Error al cargar pedidos:", error);
     } finally {
       setLoading(false);
     }
@@ -136,7 +144,7 @@ const DashboardEmpleados = () => {
               <p className="text-xs text-gray-500">
                 Caja abierta el:{" "}
                 <span className="font-medium">
-                  {new Date(fechaApertura).toLocaleString()}
+                  {fechaApertura ? new Date(String(fechaApertura).slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR') : ''}
                 </span>
               </p>
             </div>
@@ -169,7 +177,7 @@ const DashboardEmpleados = () => {
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => setShowPedidoForm(true)}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-600"
               >
                 Alta de Pedido
               </button>
@@ -204,6 +212,7 @@ const DashboardEmpleados = () => {
             <Modal onClose={handlePedidoFormClose}>
               {registroDiario !== null && usuario !== null && (
                 <PedidoForm
+                  modo="empleado"
                   onClose={handlePedidoFormClose}
                   registroDiario={registroDiario}
                   usuario_id={usuario}

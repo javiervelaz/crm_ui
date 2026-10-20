@@ -9,7 +9,7 @@ export const createOrder = async (orderDetails: any) => {
       body: JSON.stringify(orderDetails),
     });
     if (!response.ok) {
-      throw new Error('Failed to create order');
+      throw new Error('No se pudo crear order');
     }
     return await response.json();
   };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 
 const PedidoForm = () => {
   const [montoTotal, setMontoTotal] = useState(0);
@@ -21,7 +21,7 @@ const PedidoForm = () => {
         onChange={(e) => setMontoTotal(e.target.value)}
         className="p-2 border rounded"
       />
-      <button type="submit" className="mt-2 bg-blue-500 text-white p-2 rounded">Registrar</button>
+      <button type="submit" className="mt-2 bg-brand-600 text-white p-2 rounded">Registrar</button>
     </form>
   );
 };

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   faEdit,
@@ -115,177 +115,219 @@ export default function ProductosTable({
     p.imagen_url || p.image_url || p.imageUrl || undefined;
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
-      {/* Filtros */}
-      <div className="p-4 bg-gray-50 border-b">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <select
-            value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="all">Todos los tipos</option>
-            {getUniqueTipos().map((tipo) => (
-              <option key={tipo.id} value={tipo.id}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="rounded-xl border border-brand-100 bg-white shadow-card overflow-hidden">
+      {/* Filtro */}
+      <div className="flex items-center gap-3 border-b border-brand-100 bg-brand-50 px-4 py-3">
+        <select
+          value={filterTipo}
+          onChange={(e) => setFilterTipo(e.target.value)}
+          className="flex-1 min-w-0 rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
+        >
+          <option value="all">Todos los tipos</option>
+          {getUniqueTipos().map((tipo) => (
+            <option key={tipo.id} value={tipo.id}>
+              {tipo.nombre}
+            </option>
+          ))}
+        </select>
+        <span className="shrink-0 text-xs text-brand-300">
+          {sortedAndFilteredProductos.length} de {productos.length}
+        </span>
       </div>
 
-      {/* Tabla */}
-      <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
-        <table className="min-w-[760px] w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      {/* ── MOBILE: cards ─────────────────────────────── */}
+      <div className="md:hidden divide-y divide-brand-100">
+        {sortedAndFilteredProductos.length === 0 ? (
+          <p className="py-10 text-center text-sm text-brand-300">
+            No se encontraron productos
+          </p>
+        ) : (
+          sortedAndFilteredProductos.map((producto) => {
+            const imageUrl = getImageUrl(producto);
+            return (
+              <div key={producto.id} className="flex gap-3 px-4 py-3 hover:bg-brand-50 transition-colors">
+                {/* Thumbnail */}
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-brand-100 bg-brand-50 flex items-center justify-center">
+                  {imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`https://res.cloudinary.com/droqhxpim/image/upload/v1/${imageUrl}?_a=BAMAMifm0`}
+                      alt={producto.nombre}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[9px] text-brand-300 text-center leading-tight px-1">Sin imagen</span>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-brand-800 truncate">
+                    {producto.nombre}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600">
+                      {producto.tipo_producto_nombre || `Tipo ${producto.tipo_producto_id}`}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      producto.permite_mitad
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {producto.permite_mitad ? 'Mitad ✓' : 'Mitad ✗'}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-sm font-bold text-brand-800">
+                    ${Number(producto.precio_unitario).toLocaleString('es-AR')}
+                  </p>
+                </div>
+
+                {/* Actions column */}
+                <div className="flex flex-col justify-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => onView(producto.id)}
+                    className="h-8 w-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                    title="Ver detalle"
+                  >
+                    <FontAwesomeIcon icon={faEye} className="text-xs" />
+                  </button>
+                  <button
+                    onClick={() => onEdit(producto.id)}
+                    className="h-8 w-8 flex items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+                    title="Editar"
+                  >
+                    <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                  </button>
+                  <button
+                    onClick={() => onDelete(producto.id)}
+                    className="h-8 w-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                    title="Eliminar"
+                  >
+                    <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ── DESKTOP: table ────────────────────────────── */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-[700px] w-full divide-y divide-brand-100">
+          <thead className="bg-brand-50">
             <tr>
-              {/* Nueva columna: Imagen */}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">
                 Imagen
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider cursor-pointer hover:text-brand-800"
                 onClick={() => handleSort('nombre')}
               >
-                <div className="flex items-center">
-                  Producto
-                  <SortIcon field="nombre" />
+                <div className="flex items-center gap-1">
+                  Producto <SortIcon field="nombre" />
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider cursor-pointer hover:text-brand-800"
                 onClick={() => handleSort('precio')}
               >
-                <div className="flex items-center">
-                  Precio
-                  <SortIcon field="precio" />
+                <div className="flex items-center gap-1">
+                  Precio <SortIcon field="precio" />
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider cursor-pointer hover:text-brand-800"
                 onClick={() => handleSort('tipo')}
               >
-                <div className="flex items-center">
-                  Tipo
-                  <SortIcon field="tipo" />
+                <div className="flex items-center gap-1">
+                  Tipo <SortIcon field="tipo" />
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider cursor-pointer hover:text-brand-800"
                 onClick={() => handleSort('permite_mitad')}
               >
-                <div className="flex items-center">
-                  Permite Mitad
-                  <SortIcon field="permite_mitad" />
+                <div className="flex items-center gap-1">
+                  Permite Mitad <SortIcon field="permite_mitad" />
                 </div>
               </th>
-              <th className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex items-center gap-3">
-                  Acciones
-                </div>  
+              <th className="px-4 py-3 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider">
+                Acciones
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-brand-100">
             {sortedAndFilteredProductos.map((producto) => {
               const imageUrl = getImageUrl(producto);
-
               return (
-                <tr key={producto.id} className="hover:bg-gray-50">
-                  {/* Celda de imagen */}
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <div className="h-12 w-12 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                <tr key={producto.id} className="hover:bg-brand-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="h-11 w-11 overflow-hidden rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center">
                       {imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={'https://res.cloudinary.com/droqhxpim/image/upload/v1/'+imageUrl+'?_a=BAMAMifm0'}
+                          src={`https://res.cloudinary.com/droqhxpim/image/upload/v1/${imageUrl}?_a=BAMAMifm0`}
                           alt={producto.nombre}
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="text-[10px] text-gray-400">
-                          Sin imagen
-                        </span>
+                        <span className="text-[9px] text-brand-300">Sin img</span>
                       )}
                     </div>
                   </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {producto.nombre}
-                    </div>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-semibold text-brand-800">{producto.nombre}</p>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 font-mono">
-                      $
-                      {Number(
-                        producto.precio_unitario,
-                      ).toFixed(2)}
-                    </div>
+                  <td className="px-4 py-3">
+                    <p className="text-sm font-bold text-brand-800">
+                      ${Number(producto.precio_unitario).toLocaleString('es-AR')}
+                    </p>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                      {producto.tipo_producto_nombre ||
-                        `Tipo ${producto.tipo_producto_id}`}
+                  <td className="px-4 py-3">
+                    <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+                      {producto.tipo_producto_nombre || `Tipo ${producto.tipo_producto_id}`}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        producto.permite_mitad
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      producto.permite_mitad
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
                       {producto.permite_mitad ? 'Sí' : 'No'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => onView(producto.id)}
-                      className="text-green-600 hover:text-green-900"
-                      title="Ver detalle"
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                    </button>
-                    <button
-                      onClick={() => onEdit(producto.id)}
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Editar"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(producto.id)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Eliminar"
-                    >
-                      <FontAwesomeIcon icon={faTrashAlt} />
-                    </button>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onView(producto.id)}
+                        className="h-8 w-8 flex items-center justify-center rounded-full bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                        title="Ver detalle"
+                      >
+                        <FontAwesomeIcon icon={faEye} className="text-xs" />
+                      </button>
+                      <button
+                        onClick={() => onEdit(producto.id)}
+                        className="h-8 w-8 flex items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100 transition-colors"
+                        title="Editar"
+                      >
+                        <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(producto.id)}
+                        className="h-8 w-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        title="Eliminar"
+                      >
+                        <FontAwesomeIcon icon={faTrashAlt} className="text-xs" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-      </div>
-
-      {/* Paginación (implementar según necesidad) */}
-      <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-700">
-            Mostrando{' '}
-            <span className="font-medium">
-              {sortedAndFilteredProductos.length}
-            </span>{' '}
-            de{' '}
-            <span className="font-medium">
-              {productos.length}
-            </span>{' '}
-            productos
-          </div>
-          {/* Aquí iría la paginación */}
-        </div>
       </div>
     </div>
   );

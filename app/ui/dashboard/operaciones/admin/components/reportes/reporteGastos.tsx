@@ -1,8 +1,9 @@
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DatePicker from '@/components/ui/DatePicker';
-import axios from 'axios';
+import apiClient from '@/app/lib/apiClient';
 import { addDays, format, subDays } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -52,10 +53,10 @@ export default function ReporteGastosPage() {
   const fetchCategoriasTipo = useCallback(async () => {
     try {
       // Cambiar por tu endpoint real
-      const response = await axios.get(`${apiUrl}/reportes/salida/categoria-tipo`);
+      const response = await apiClient.get(`${apiUrl}/reportes/salida/categoria-tipo`);
       setCategoriasTipo(response.data);
     } catch (err) {
-      console.error('Error fetching categorías tipo:', err);
+      logError('Error fetching categorías tipo:', err);
     }
   }, [apiUrl]);
 
@@ -63,10 +64,10 @@ export default function ReporteGastosPage() {
   const fetchCategoriasSalida = useCallback(async () => {
     try {
       // Cambiar por tu endpoint real
-      const response = await axios.get(`${apiUrl}/reportes/salida/categoria-salida/${getClienteId()}`);
+      const response = await apiClient.get(`${apiUrl}/reportes/salida/categoria-salida/${getClienteId()}`);
       setCategoriasSalida(response.data);
     } catch (err) {
-      console.error('Error fetching categorías salida:', err);
+      logError('Error fetching categorías salida:', err);
     }
   }, [apiUrl]);
 
@@ -110,11 +111,10 @@ export default function ReporteGastosPage() {
 
       
 
-      const res = await axios.post(endpoint, payload);
-      console.log(res.data);
+      const res = await apiClient.post(endpoint, payload);
       setGastos(res.data);
     } catch (err) {
-      console.error('Error fetching gastos:', err);
+      logError('Error fetching gastos:', err);
     } finally {
       setLoading(false);
     }
@@ -124,6 +124,10 @@ export default function ReporteGastosPage() {
   const exportToExcel = () => {
     if (gastos.length === 0) {
       alert('No hay datos para exportar');
+      return;
+    }
+    if (!fechaDesde || !fechaHasta) {
+      alert('Seleccioná el rango de fechas');
       return;
     }
 

@@ -1,5 +1,5 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'dia',cliente:BigInt) => {
+export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'dia',cliente: bigint | null) => {
     
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${filtro}/${cliente}`, {
@@ -14,13 +14,13 @@ export const getRegistrosDiarios = async (filtro: 'dia' | 'semana' | 'mes' = 'di
         return [];
       }
       if (!response.ok) {
-        throw new Error('Failed to load tipo categoria list');
+        throw new Error('No se pudo cargar la lista de tipos de categoría');
       }
       return await response.json();
 
   };
   
-  export const getRegistroDiarioDetalle = async (id: number,cliente: BigInt) => {
+  export const getRegistroDiarioDetalle = async (id: number,cliente: bigint | null) => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${apiUrl}/operaciones/registros-diarios/${id}/detalle/${cliente}`, {
         method: 'GET',

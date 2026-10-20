@@ -1,14 +1,14 @@
 'use client';
 
-import { MODULE_PERMISSIONS } from '@/app/lib/modulePermissions';
+import { logError, logWarn } from '@/app/lib/logger';
+import { landingForToken, sessionModules, SessionToken } from '@/app/lib/modules';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
 import LoginForm from '@/app/ui/LoginForm';
 import { jwtDecode } from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-interface DecodedToken {
-  modules: string[];
+interface DecodedToken extends SessionToken {
   exp: number;
 }
 
@@ -21,27 +21,19 @@ export default function Page() {
     if (token) {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
-        console.log("🚀 Token detectado:", decodedToken);
+      
         const currentTime = Date.now() / 1000;
         if (decodedToken.exp < currentTime) {
-          console.warn('Token expirado');
+          logWarn('Token expirado');
           localStorage.removeItem('token');
           return;
         }
 
-        const modules = decodedToken.modules || [];
-
-        if (modules.length > 0) {
-          // 🔹 Buscar el primer módulo válido definido en modulePermissions
-          const firstValidModule = modules.find((m) => MODULE_PERMISSIONS[m]);
-          const defaultRoute =
-            (firstValidModule && MODULE_PERMISSIONS[firstValidModule]?.menu.href) ||
-            '/dashboard';
-
-          router.push(defaultRoute);
+        if (decodedToken.debeCambiarPassword || sessionModules(decodedToken).length > 0) {
+          router.push(landingForToken(decodedToken));
         }
       } catch (error) {
-        console.error('Error decoding token:', error);
+        logError('Error decoding token:', error);
         localStorage.removeItem('token');
       }
     }

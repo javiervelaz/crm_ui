@@ -1,6 +1,7 @@
 // app/reports/DailyOperationsReport.tsx
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { reporteDiario } from "@/app/lib/operaciones.api";
 import { useEffect, useState } from 'react';
 
@@ -22,7 +23,7 @@ const DailyOperationsReport: React.FC = () => {
         const res = await reporteDiario();
         setOperaciones(res); 
       } catch (error) {
-        console.error('Error al verificar la caja:', error);
+        logError('Error al verificar la caja:', error);
       }
     };
     registro();

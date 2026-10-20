@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,7 +15,7 @@ export default function Search({ placeholder, onSearch }: SearchProps) {
         <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
       </div>
       <input
-        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand-600 focus:border-brand-600"
         placeholder={placeholder}
         type="text"
         onChange={(e) => onSearch(e.target.value)}

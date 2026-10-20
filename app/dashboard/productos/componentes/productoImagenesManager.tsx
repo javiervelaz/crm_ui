@@ -74,7 +74,7 @@ export function ProductoImagenesManager({ productoId }: Props) {
         Imágenes del producto
       </h2>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           type="file"
           accept="image/*"
@@ -82,12 +82,13 @@ export function ProductoImagenesManager({ productoId }: Props) {
             const f = e.target.files?.[0] || null;
             setFile(f);
           }}
+          className="w-full text-sm text-brand-700 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-600 hover:file:bg-brand-100"
         />
         <button
           type="button"
           onClick={handleUpload}
           disabled={!file || loading}
-          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+          className="w-full sm:w-auto rounded-full bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-brand hover:bg-brand-700 disabled:opacity-60 transition-colors"
         >
           {loading ? 'Subiendo...' : 'Subir imagen'}
         </button>

@@ -11,27 +11,32 @@ const useCajaAbierta = () => {
   const [fechaApertura, setFechaApertura] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const verificarCaja = async () => {
-      try {
-        const data = {cliente_id:getClienteId()};
-        const res = await checkAperturaCaja(data);
-        if (res.caja_abierta) {
-          setCajaAbierta(true);
-          setRegistroDiarioId(res.registro_diario_id);
-          setFechaApertura(res.fecha);
-        } else {
-          setCajaAbierta(false);
-        }
-      } catch (error) {
-        console.error('Error al verificar apertura de caja:', error);
+  const verificarCaja = async () => {
+    try {
+      const data = { cliente_id: getClienteId() };
+      const res = await checkAperturaCaja(data);
+      if (res.caja_abierta) {
+        setCajaAbierta(true);
+        setRegistroDiarioId(res.registro_diario_id);
+        setFechaApertura(res.fecha);
+      } else {
         setCajaAbierta(false);
-      } finally {
-        setLoading(false);
+        setRegistroDiarioId(null);
       }
-    };
+    } catch (error) {
+      console.error('Error al verificar apertura de caja:', error);
+      setCajaAbierta(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     verificarCaja();
+    // bug 22: refrescar el estado de caja sin recargar la página cuando se abre/cierra
+    const handler = () => verificarCaja();
+    window.addEventListener('caja-changed', handler);
+    return () => window.removeEventListener('caja-changed', handler);
   }, []);
 
   return {
@@ -39,6 +44,7 @@ const useCajaAbierta = () => {
     registroDiarioId,
     fechaApertura,
     loading,
+    refetch: verificarCaja,
   };
 };
 

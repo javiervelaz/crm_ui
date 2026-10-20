@@ -1,4 +1,5 @@
 // app/api/cron/expire-tiers/route.ts
+import { logError } from '@/app/lib/logger';
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     const data = await res.json();
     return NextResponse.json({ downgraded: data.downgraded || 0 });
   } catch (err) {
-    console.error('[Cron] Error al degradar planes:', err);
+    logError('[Cron] Error al degradar planes:', err);
     return new Response('Error al degradar planes', { status: 500 });
   }
 }

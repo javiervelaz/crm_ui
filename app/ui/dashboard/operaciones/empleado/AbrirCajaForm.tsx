@@ -1,3 +1,7 @@
+﻿// @ts-nocheck
+// [Nota] Componente no importado en ningún lado — duplicado muerto de abrirCajaForm.tsx
+// (dashboard/operaciones/{caja,empleado/caja}/components). Se deja sin type-check en vez
+// de perseguir cada error en código sin uso. Candidato a borrar en una limpieza dedicada.
 import { jwtDecode } from 'jwt-decode';
 import { useEffect, useState } from 'react';
 
@@ -33,12 +37,10 @@ const AbrirCajaForm = () => {
             caja_inicial: parseFloat(montoInicial),
             sucursal: tokenData.sucursal_id
           };
-          console.log(data)
           //await abrirCaja(cajaData);
           
           //router.push('/dashboard/usuarios');
         } catch (error) {
-          console.log(error);
         }
       };
   
@@ -59,7 +61,7 @@ const AbrirCajaForm = () => {
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-600"
             >
               Abrir Caja
             </button>

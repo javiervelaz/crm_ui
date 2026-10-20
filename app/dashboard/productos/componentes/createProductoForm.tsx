@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { getClienteId } from "@/app/lib/authService";
 import { createProduct } from '@/app/lib/producto.api';
@@ -12,7 +12,7 @@ import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 
 const CreateUserPage = () => {
   useAuthCheck();
-  const [productoDetails, setUserDetails] = useState({
+  const [productoDetails, setUserDetails] = useState<any>({
     nombre: '',
     precio_unitario: null,
     tipo_producto_id: null,
@@ -22,7 +22,7 @@ const CreateUserPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  const [tipoProducto, setTipoProd] = useState([]); // Almacena los tipos de productos
+  const [tipoProducto, setTipoProd] = useState<any[]>([]); // Almacena los tipos de productos
   
   useEffect(() => {
       const fetchTipoProduto = async () => {
@@ -37,7 +37,7 @@ const CreateUserPage = () => {
       fetchTipoProduto();
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setUserDetails({
       ...productoDetails,
@@ -47,6 +47,17 @@ const CreateUserPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
+
+  // bugs 30/31: precio requerido (distinguiendo 0 de vacío) y mayor a 0
+  const precio = productoDetails.precio_unitario;
+  if (precio === null || precio === undefined || (precio as any) === '') {
+    notifyError('El precio es requerido');
+    return;
+  }
+  if (Number.isNaN(Number(precio)) || Number(precio) <= 0) {
+    notifyError('El precio debe ser mayor a 0');
+    return;
+  }
 
   try {
     setSubmitting(true);
@@ -86,7 +97,7 @@ const CreateUserPage = () => {
 
     // 3) Redirigir al listado
     router.push('/dashboard/productos');
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
     notifyError(error.message);
   } finally {
@@ -106,7 +117,7 @@ const CreateUserPage = () => {
   };
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-4 md:p-6">
       <h1 className="text-2xl mb-6">Crear nuevo producto</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -128,7 +139,9 @@ const CreateUserPage = () => {
           <input
             type="number"
             name="precio_unitario"
-            value={productoDetails.precio_unitario || ''}
+            min="0.01"
+            step="0.01"
+            value={productoDetails.precio_unitario ?? ''}
             onChange={handleChange}
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
           />
@@ -142,7 +155,7 @@ const CreateUserPage = () => {
             name="tipo_producto_id"
             value={productoDetails.tipo_producto_id || ''}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-600"
             required
           >
             <option value="">Seleccionar tipo...</option>
@@ -162,7 +175,7 @@ const CreateUserPage = () => {
               name="permite_mitad"
               checked={productoDetails.permite_mitad || false}
               onChange={handleChange}
-              className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+              className="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-200 focus:ring focus:ring-brand-100 focus:ring-opacity-50"
             />
             <span className="ml-2 text-sm font-medium text-gray-700">
               Permite venta por media unidad
@@ -203,7 +216,7 @@ const CreateUserPage = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-600 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? 'Guardando...' : 'Guardar'}
           </button>

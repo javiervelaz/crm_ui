@@ -4,7 +4,10 @@ import { getClienteId } from "@/app/lib/authService";
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { deleteUser, getUserList, getUserTypes } from '@/app/lib/usuario.api';
-import { lusitana } from '@/app/ui/fonts';
+import { MENSAJE_ACADEMIA, tiposDeStaff } from '@/app/lib/rolesStaff';
+import { sessionModules, type SessionToken } from '@/app/lib/modules';
+import { jwtDecode } from 'jwt-decode';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
@@ -41,6 +44,7 @@ export default function UsuariosPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [conAcademia, setConAcademia] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -50,6 +54,13 @@ export default function UsuariosPage() {
       return;
     }
   
+    // Academia (módulo alumnos): avisar dónde se gestionan profesores, tutores y alumnos.
+    try {
+      setConAcademia(sessionModules(jwtDecode<SessionToken>(token)).includes('alumnos'));
+    } catch {
+      setConAcademia(false);
+    }
+
     const fetchData = async () => {
      
       try {
@@ -59,8 +70,8 @@ export default function UsuariosPage() {
         ]);
         
         // Enriquecer usuarios con información del tipo
-      const enrichedUsers = usersData.map(user => {
-        const userType = typesData.find(type => type.id === user.user_type_id);
+      const enrichedUsers = usersData.map((user: any) => {
+        const userType = typesData.find((type: any) => type.id === user.user_type_id);
         return {
           ...user,
           user_type_codigo: userType?.codigo,
@@ -69,7 +80,7 @@ export default function UsuariosPage() {
       });
    
         setUsers(enrichedUsers);
-        setUserTypes(typesData);
+        setUserTypes(tiposDeStaff(typesData));
       } catch (err) {
         setError('Error al cargar datos');
       } finally {
@@ -99,8 +110,8 @@ export default function UsuariosPage() {
         ]);
         
         // Enriquecer usuarios con información del tipo
-        const enrichedUsers = usersData.map(user => {
-          const userType = typesData.find(type => type.id === user.user_type_id);
+        const enrichedUsers = usersData.map((user: any) => {
+          const userType = typesData.find((type: any) => type.id === user.user_type_id);
           return {
             ...user,
             user_type_codigo: userType?.codigo,
@@ -109,7 +120,7 @@ export default function UsuariosPage() {
         });
       
         setUsers(enrichedUsers);
-        setUserTypes(typesData);
+        setUserTypes(tiposDeStaff(typesData));
       
         notifySuccess('Usuario eliminado correctamente');
       } catch (error) {
@@ -144,15 +155,24 @@ export default function UsuariosPage() {
   });
 
   return (
-    <div className="w-full p-6">
-      <div className="flex w-full items-center justify-between mb-4">
-        <h1 className={`${lusitana.className} text-2xl`}>Usuarios</h1>
+    <div className="w-full">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-display text-2xl text-brand-800">Usuarios</h1>
       </div>
-      
-      <div className="mt-4 flex items-center justify-between gap-2 md:mt-8 mb-6">
-        <SearchUsuario placeholder="Buscar usuarios..." onSearch={handleSearch} />
+
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex-1 min-w-0">
+          <SearchUsuario placeholder="Buscar usuarios..." onSearch={handleSearch} />
+        </div>
         <CreateUsuarioButton />
       </div>
+
+      {conAcademia && (
+        <p className="mb-4 rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-700">
+          {MENSAJE_ACADEMIA}{' '}
+          <Link href="/dashboard/academia" className="font-semibold underline">Ir a Academia</Link>
+        </p>
+      )}
 
       {loading ? (
         <TableSkeleton />

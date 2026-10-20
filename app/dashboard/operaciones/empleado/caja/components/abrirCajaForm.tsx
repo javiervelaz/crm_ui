@@ -1,4 +1,5 @@
-"use client"
+﻿"use client"
+import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
 import { abrirCaja } from '@/app/lib/operaciones.api';
 import { jwtDecode } from 'jwt-decode';
@@ -33,6 +34,17 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setMensaje('');
+        // bug 34: validar monto inicial (requerido, no negativo)
+        const montoNum = parseFloat(montoInicial);
+        if (montoInicial === '' || Number.isNaN(montoNum)) {
+          setMensaje('Ingresá el monto inicial de caja.');
+          return;
+        }
+        if (montoNum < 0) {
+          setMensaje('El monto inicial no puede ser negativo.');
+          return;
+        }
         try {
           const client_id = getClienteId();
           const token = localStorage.getItem('token');
@@ -48,21 +60,18 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
             };
            
             await abrirCaja(data);
+            // bug 22: refrescar el estado de caja sin recargar la página
+            window.dispatchEvent(new Event('caja-changed'));
             if (typeof onClose === 'function') {
-              onClose();  // Verifica si onClose es una función antes de llamarla
-              setTimeout(() => {
-                window.location.href = '/dashboard/operaciones/empleado';
-                window.location.reload();
-              }, 500);
-             
+              onClose();
             } else {
-              console.error('onClose no es una función');
+              logError('onClose no es una función');
             }
            
           }
           
-        } catch (error) {
-          console.log(error);
+        } catch (error: any) {
+          setMensaje(error?.message || 'No se pudo abrir la caja.');
         }
       };
   
@@ -74,16 +83,24 @@ const AbrirCajaForm = ({onClose}:AbrirCajaFormProps) => {
             <div className="mb-4">
               <label className="block text-gray-700">Monto Inicial:</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={montoInicial}
-                onChange={(e) => setMontoInicial(e.target.value)}
+                onChange={(e) => {
+                  // bug 36: normalizar -> solo dígitos y un punto, sin ceros a la izquierda
+                  let v = e.target.value.replace(/[^\d.]/g, '');
+                  const parts = v.split('.');
+                  v = parts.shift() + (parts.length ? '.' + parts.join('') : '');
+                  v = v.replace(/^0+(?=\d)/, '');
+                  setMontoInicial(v);
+                }}
                 className="w-full px-3 py-2 border rounded"
                 required
               />
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-600"
             >
               Abrir Caja
             </button>

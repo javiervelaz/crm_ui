@@ -3,7 +3,6 @@
 import { getClienteId } from "@/app/lib/authService";
 import { deleteProducto, getProductoList } from '@/app/lib/producto.api';
 import useAuthCheck from '@/app/lib/useAuthCheck';
-import { lusitana } from '@/app/ui/fonts';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { TableSkeleton } from '../../../ui/TableSkeleton';
@@ -33,7 +32,7 @@ export default function ProductosPage() {
   const [query, setQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const [tipos, setTipos] = useState([]);
+  const [tipos, setTipos] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -69,7 +68,7 @@ export default function ProductosPage() {
         permite_mitad: producto.permite_mitad || false
       }));
       setProductos(productosConDatos);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       console.error(err);
     } finally {
@@ -95,7 +94,7 @@ export default function ProductosPage() {
         await deleteProducto(id, getClienteId());
         setProductos(productos.filter(producto => producto.id !== id));
         notifySuccess('Producto eliminado correctamente');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error eliminando producto:', error);
         notifyError(error.message);
       }
@@ -108,30 +107,28 @@ export default function ProductosPage() {
   );
 
   return (
-  <div className="w-full p-4 md:p-6">
-    <div className="flex w-full items-center justify-between mb-4">
-      <h1 className={`${lusitana.className} text-2xl`}>Productos</h1>
+  <div className="w-full">
+    {/* Header */}
+    <div className="mb-4 flex items-center justify-between">
+      <h1 className="font-display text-2xl text-brand-800">Productos</h1>
     </div>
 
-    {/* Toolbar responsive */}
-    <div className="mt-4 mb-6 flex flex-col gap-3 md:mt-8 sm:flex-row sm:items-center sm:justify-between">
-      {/* Search ocupa todo y no empuja */}
-      <div className="flex-1 min-w-0">
-        <SearchProducto placeholder="Buscar producto..." onSearch={handleSearch} />
-      </div>
+    {/* Toolbar */}
+    <div className="mb-5 flex flex-col gap-3">
+      {/* Fila 1: search */}
+      <SearchProducto placeholder="Buscar producto..." onSearch={handleSearch} />
 
-      {/* Mensaje de warning: que no rompa el layout */}
-      {tipos.length === 0 && (
-        <p className="text-sm text-red-600 sm:max-w-[260px]">
-          Creá al menos una Categoria de producto para habilitar esta opción.
-        </p>
-      )}
-
-      {/* Botones: en mobile van en fila y wrappean */}
-      <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:justify-end">
+      {/* Fila 2: botones + warning */}
+      <div className="flex items-center gap-2">
         <CreateProductoButton disabled={tipos.length === 0} />
         <CreateTipoProductoButton />
       </div>
+
+      {tipos.length === 0 && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          Creá al menos una categoría de producto para habilitar el botón &quot;Producto&quot;.
+        </p>
+      )}
     </div>
 
     {loading ? (

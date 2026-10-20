@@ -1,6 +1,7 @@
 // app/catalogo/medioPagoApi.ts
 'use client';
 
+import { logError } from '@/app/lib/logger';
 import { getApiBaseUrl } from './catalogConfig';
 
 const API_BASE_URL = getApiBaseUrl();
@@ -35,7 +36,7 @@ export async function fetchMedioPagoList(): Promise<MedioPago[]> {
 
     return data as MedioPago[];
   } catch (error) {
-    console.error('Error al obtener el medio de pago', error);
+    logError('Error al obtener el medio de pago', error);
     // Igual que en el CRM: ante error, devolvemos []
     return [];
   }
