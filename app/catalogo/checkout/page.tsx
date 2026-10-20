@@ -40,19 +40,22 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [ticket, setTicket] = useState<CheckoutTicket | null>(null);
 
-  const deliveryCost = 1000; // demo
+  // El servidor no cobra envío todavía: mostrar $1000 inventados hacía que el
+  // total del cliente no coincidiera con el pedido que ve el comercio.
+  const deliveryCost = 0;
   const grandTotal = total + deliveryCost;
 
   useEffect(() => {
     let cancelled = false;
     if (!session) {
-      notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
+      notifyError('La sesión ya no es válida. Pedile un link nuevo al comercio.');
       return;
     }
-    setPhone(session?.userPhoneE164);
+    if (!session.pideTelefono) setPhone(session.userPhoneE164);
+    const token = session.token;
 
     async function loadMediosPago() {
-      const data = await fetchMedioPagoList();
+      const data = await fetchMedioPagoList(token);
       if (!cancelled) {
         setMedioPagoList(data);
         const defaultMedio =
@@ -70,7 +73,7 @@ export default function CheckoutPage() {
 
     loadMediosPago();
     return () => { cancelled = true; };
-  }, []);
+  }, [session]);
 
   const isEfectivoSelected = useMemo(() => {
     if (!selectedMedioPagoId) return false;
@@ -125,10 +128,12 @@ export default function CheckoutPage() {
               <span>Subtotal</span>
               <span>${ticket.total.toLocaleString('es-AR')}</span>
             </div>
-            <div className="flex justify-between text-xs text-brand-300">
-              <span>Delivery (demo)</span>
-              <span>${ticket.deliveryCost.toLocaleString('es-AR')}</span>
-            </div>
+            {ticket.deliveryCost > 0 && (
+              <div className="flex justify-between text-xs text-brand-300">
+                <span>Envío</span>
+                <span>${ticket.deliveryCost.toLocaleString('es-AR')}</span>
+              </div>
+            )}
             <div className="flex justify-between pt-1 text-sm font-bold text-brand-800">
               <span>Total</span>
               <span>${ticket.grandTotal.toLocaleString('es-AR')}</span>
@@ -195,8 +200,10 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    if (!session) { notifyError('El link ya no es válido. Pedile uno nuevo al comercio.'); return; }
     if (!items.length) { notifyError('No tenés productos en el carrito.'); return; }
     if (!name.trim() || !phone.trim()) { notifyError('Completá al menos nombre y teléfono.'); return; }
+    if (session.pideTelefono && phone.replace(/\D/g, '').length < 8) { notifyError('Revisá el teléfono: poné el código de área.'); return; }
     if (deliveryType === 'delivery' && !address.trim()) { notifyError('Para delivery necesitamos una dirección.'); return; }
     if (!selectedMedioPagoId) { notifyError('Seleccioná un medio de pago.'); return; }
 
@@ -215,19 +222,16 @@ export default function CheckoutPage() {
 
     try {
       setSubmitting(true);
-      await crearPedidoDesdeMicrositio({
+      const result = await crearPedidoDesdeMicrositio({
+        token: session.token,
         name: name.trim(),
-        phone: phone.trim(),
+        phone: session.pideTelefono ? phone.trim() : undefined,
         address: address.trim(),
         deliveryType,
         extraNotes: extraNotes.trim(),
         items,
-        total,
         medio_pago_id: selectedMedioPagoId,
-        paga_efectivo: pagaEfectivoNum,
-        vuelto_pago_efectivo: vueltoNum,
-        clienteId: session?.clienteId,
-        conversation_id: session?.conversationId,
+        paga_efectivo: isEfectivoSelected ? pagaEfectivoNum : undefined,
       });
 
       notifySuccess('Pedido registrado. El local va a gestionar tu pedido.');
@@ -240,12 +244,13 @@ export default function CheckoutPage() {
         deliveryType,
         extraNotes: extraNotes.trim(),
         items: [...items],
-        total,
+        // Lo que quedó registrado en el comercio, no lo que calculó el browser
+        total: result.total,
         deliveryCost,
-        grandTotal: total + deliveryCost,
+        grandTotal: result.total + deliveryCost,
         medioPagoDescripcion: medioSeleccionado?.descripcion ?? null,
         pagaEfectivo: pagaEfectivoNum,
-        vuelto: vueltoNum,
+        vuelto: isEfectivoSelected ? result.vuelto : vueltoNum,
       });
 
       clearCart();
@@ -284,10 +289,12 @@ export default function CheckoutPage() {
           <span>Subtotal</span>
           <span>${total.toLocaleString('es-AR')}</span>
         </div>
-        <div className="flex justify-between text-xs text-brand-300">
-          <span>Delivery (demo)</span>
-          <span>${deliveryCost.toLocaleString('es-AR')}</span>
-        </div>
+        {deliveryCost > 0 && (
+          <div className="flex justify-between text-xs text-brand-300">
+            <span>Envío</span>
+            <span>${deliveryCost.toLocaleString('es-AR')}</span>
+          </div>
+        )}
         <div className="flex justify-between pt-1 text-sm font-bold text-brand-800">
           <span>Total aprox.</span>
           <span>${grandTotal.toLocaleString('es-AR')}</span>
@@ -310,14 +317,29 @@ export default function CheckoutPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-brand-600">Teléfono (WhatsApp)</label>
-          <input
-            type="tel"
-            required
-            value={phone}
-            disabled
-            className="w-full rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-sm text-brand-300 outline-none"
-          />
+          <label className="text-xs font-medium text-brand-600">
+            {session?.pideTelefono ? 'Teléfono (con código de área)' : 'Teléfono (WhatsApp)'}
+          </label>
+          {session?.pideTelefono ? (
+            <input
+              type="tel"
+              inputMode="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="351 555-1234"
+              autoComplete="tel"
+              className="w-full rounded-2xl border border-brand-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-600/20"
+            />
+          ) : (
+            <input
+              type="tel"
+              required
+              value={phone}
+              disabled
+              className="w-full rounded-2xl border border-brand-200 bg-brand-50 px-3 py-2.5 text-sm text-brand-300 outline-none"
+            />
+          )}
         </div>
 
         {/* Método de entrega */}

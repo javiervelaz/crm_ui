@@ -6,7 +6,6 @@ import type { CatalogProduct } from './types';
 import { fetchCatalogProducts } from './catalogApi';
 import ProductCard from './ProductCard';
 import { useHandoffSession } from './HandoffSessionContext';
-import { setMicrositeSession } from './catalogConfig';
 
 export default function CatalogPage() {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -17,26 +16,19 @@ export default function CatalogPage() {
   const [category, setCategory] = useState<string>('Todas');
 
   useEffect(() => {
-    if (!session) return;
-    setMicrositeSession({
-      cliente_id: session.clienteId,
-      ...session,
-    });
-  }, [session]);
-
-  useEffect(() => {
     let cancelled = false;
 
     if (!session) {
       setLoading(false);
       return;
     }
+    const token = session.token;
 
     async function loadProducts() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchCatalogProducts(session);
+        const data = await fetchCatalogProducts(token);
         if (!cancelled) {
           setProducts(data);
         }
@@ -84,7 +76,7 @@ export default function CatalogPage() {
     return (
       <main className="p-4">
         <p className="text-sm text-red-500">
-          El enlace no es válido o la sesión expiró. Volvé a pedir el link desde WhatsApp.
+          El enlace no es válido o la sesión expiró. Pedile un link nuevo al comercio.
         </p>
       </main>
     );
