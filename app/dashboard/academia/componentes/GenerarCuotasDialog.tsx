@@ -47,6 +47,12 @@ export default function GenerarCuotasDialog({
               para las inscripciones activas. Las que ya existen no se
               modifican.
             </p>
+            <p className="text-brand-500 text-xs">
+              Esto no hace falta todos los meses: las cuotas se generan solas el
+              día 1. Usalo para adelantar un mes o recuperar uno. Si una clase
+              no tiene precio vigente para ese mes, queda afuera: cargá el
+              precio y volvé a generar.
+            </p>
             {futuro && (
               <p className="text-amber-700">
                 Es un mes futuro: las altas posteriores no se incluyen todavía.
