@@ -4,6 +4,7 @@ import {
   CreditCard,
   GraduationCap,
   KeyRound,
+  MessageCircle,
   DollarSign,
   Package,
   ShieldCheck,
@@ -141,6 +142,19 @@ export const MODULES = {
     href: '/dashboard/plan',
     prefix: true, // faltaba en MODULE_PERMISSIONS
     hidden: true, // se accede desde el menú de configuración del admin (Header)
+  },
+
+  // Link de pedidos, bot de Telegram y (más adelante) WhatsApp. Se entra desde
+  // el menú de configuración del admin; la API rechaza a quien no es admin.
+  canales: {
+    order: 10,
+    label: 'Canales de pedidos',
+    description: 'Link de pedidos online, bot de Telegram y WhatsApp',
+    icon: MessageCircle,
+    href: '/dashboard/canales',
+    prefix: true,
+    hidden: true,
+    alwaysOpen: true,
   },
 
   // --- Auxiliares: accesibles siempre, fuera del menú ---

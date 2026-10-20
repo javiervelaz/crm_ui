@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useCart } from '../../CartContext';
 import type { CatalogProduct } from '../../types';
 import { fetchProductById } from '../../catalogApi';
+import { useHandoffSession } from '../../HandoffSessionContext';
 
 interface Props {
   params: { id: string };
@@ -14,6 +15,8 @@ interface Props {
 export default function ProductDetailPage({ params }: Props) {
   const router = useRouter();
   const { addItem } = useCart();
+  const { session } = useHandoffSession();
+  const token = session?.token;
   const [notes, setNotes] = useState('');
   const [product, setProduct] = useState<CatalogProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,12 +24,13 @@ export default function ProductDetailPage({ params }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    if (!token) return;
 
     async function loadProduct() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchProductById(params.id);
+        const data = await fetchProductById(params.id, token as string);
 
         if (cancelled) return;
 
@@ -53,7 +57,7 @@ export default function ProductDetailPage({ params }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [params.id, token]);
 
   if (loading) {
     return (

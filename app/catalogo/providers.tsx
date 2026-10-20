@@ -17,29 +17,34 @@ export default function CatalogoProviders({ children }: { children: ReactNode })
 }
 
 function CatalogGuard({ children }: { children: ReactNode }) {
-  const { session, loading } = useHandoffSession();
+  const { session, loading, errorCode, errorMessage } = useHandoffSession();
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-50">
         <div className="rounded-xl border border-brand-200 bg-white px-6 py-4 text-sm text-brand-700 shadow-card">
-          Validando link de WhatsApp...
+          Abriendo el catálogo...
         </div>
       </div>
     );
   }
 
   if (!session) {
+    const planInactivo = errorCode === 'PLAN_INACTIVE';
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-50 px-4">
         <div className="max-w-md rounded-xl border border-brand-200 bg-white p-6 text-center shadow-card">
           <h1 className="mb-2 text-lg font-semibold text-brand-800">
-            Link no válido
+            {planInactivo ? 'Pedidos online no disponibles' : 'Link no válido'}
           </h1>
           <p className="text-sm text-brand-300">
-            El link que usaste ya no es válido o expiró.
-            <br />
-            Pedí un nuevo acceso por WhatsApp para seguir haciendo pedidos.
+            {errorMessage ?? (
+              <>
+                El link que usaste ya no es válido o expiró.
+                <br />
+                Pedile un link nuevo al comercio para seguir haciendo pedidos.
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -58,8 +63,8 @@ function CatalogGuard({ children }: { children: ReactNode }) {
             className="object-contain"
             priority
           />
-          <div className="rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white">
-            Pedidos online
+          <div className="max-w-[55%] truncate rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white">
+            {session.comercio ?? 'Pedidos online'}
           </div>
         </div>
       </header>
