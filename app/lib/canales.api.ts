@@ -16,14 +16,34 @@ export interface CanalLink {
   status: CanalStatus;
 }
 
+export interface UsuarioVinculado {
+  id: number; // id del vínculo
+  user_id: number;
+  nombre: string;
+  avisos: boolean;
+  /** avisos prendidos Y el usuario tiene acceso a Pedidos */
+  recibe_avisos: boolean;
+  created_at: string;
+  ultimo_uso_at: string | null;
+}
+
 export interface CanalTelegram {
   id: number;
   provider: 'telegram';
   nombre: string; // @username del bot
   status: CanalStatus;
   url_bot: string | null;
-  url_avisos: string | null;
-  chats_avisos: number;
+  vinculados?: UsuarioVinculado[];
+}
+
+export interface MiTelegram {
+  bot: Pick<CanalTelegram, 'id' | 'nombre' | 'url_bot'> | null;
+  vinculo: {
+    id: number;
+    avisos: boolean;
+    created_at: string;
+    ultimo_uso_at: string | null;
+  } | null;
 }
 
 export interface CanalesEstado {
@@ -46,6 +66,28 @@ export const conectarTelegram = async (token: string): Promise<CanalTelegram> =>
 
 export const desconectarCanal = async (id: number) =>
   (await apiClient.delete(`/canales/${id}`)).data;
+
+/** Admin: le saca el Telegram vinculado a un usuario del comercio. */
+export const quitarVinculado = async (vinculoId: number) =>
+  (await apiClient.delete(`/canales/vinculados/${vinculoId}`)).data;
+
+// ─── Mi Telegram (cada usuario, su propio chat) ─────────────────────────────
+
+export const getMiTelegram = async (): Promise<MiTelegram> =>
+  (await apiClient.get('/mi-telegram')).data;
+
+/** Link de un solo uso (10 min) para abrir en Telegram y vincular el chat. */
+export const generarVinculacion = async (): Promise<{
+  url: string;
+  expira_en: number;
+  bot: string;
+}> => (await apiClient.post('/mi-telegram/vinculacion')).data;
+
+export const setMisAvisos = async (avisos: boolean) =>
+  (await apiClient.patch('/mi-telegram', { avisos })).data;
+
+export const desvincularMiTelegram = async () =>
+  (await apiClient.delete('/mi-telegram')).data;
 
 /** Mensaje legible de un error de axios contra /api/canales. */
 export function mensajeError(

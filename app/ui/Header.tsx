@@ -5,15 +5,16 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import AdminSettingsMenu from '@/app/ui/AdminSettingsMenu';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Send } from 'lucide-react';
 import Link from 'next/link';
-import { RUTA_CAMBIO_PASSWORD } from '@/app/lib/modules';
+import { esExterno, MODULES, RUTA_CAMBIO_PASSWORD } from '@/app/lib/modules';
 
 interface DecodedToken {
   userId: string | number;
   username: string;
   role: string[];
   modules?: string[];
+  tipo?: string | null;
 }
 
 type HeaderProps = {
@@ -24,6 +25,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [userName, setUserName] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | number | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  // Staff no admin (cajero, cocina): acceso directo a Mi Telegram. Los externos
+  // de la academia no se vinculan al bot del comercio.
+  const [esStaff, setEsStaff] = useState<boolean>(false);
   const [modules, setModules] = useState<string[]>([]);
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -56,6 +60,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         setUserName(decodedToken.username);
         setUserId(decodedToken.userId);
         setIsAdmin(Array.isArray(decodedToken.role) && decodedToken.role.includes('admin'));
+        setEsStaff(!esExterno(decodedToken));
         setModules(Array.isArray(decodedToken.modules) ? decodedToken.modules : []);
         setIsLoggedIn(true);
       } catch {
@@ -105,6 +110,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             {userName}
           </span>
           {isAdmin && userId != null && <AdminSettingsMenu userId={userId} modules={modules} />}
+          {!isAdmin && esStaff && plan?.features?.canUseBot === true && (
+            <Link
+              href={MODULES['mi-telegram'].href}
+              title="Mi Telegram"
+              aria-label="Mi Telegram"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-brand-600 hover:bg-brand-100"
+            >
+              <Send size={16} />
+            </Link>
+          )}
           {!isAdmin && (
             <Link
               href={RUTA_CAMBIO_PASSWORD}

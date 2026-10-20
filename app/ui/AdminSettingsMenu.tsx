@@ -37,6 +37,7 @@ const AdminSettingsMenu: React.FC<AdminSettingsMenuProps> = ({ userId, modules }
   const items = [
     ...settingsModules(modules).map((k) => porModulo[k]),
     { href: MODULES.canales.href, label: 'Canales de pedidos', icon: MODULES.canales.icon, description: MODULES.canales.description },
+    { href: MODULES['mi-telegram'].href, label: 'Mi Telegram', icon: MODULES['mi-telegram'].icon, description: MODULES['mi-telegram'].description },
     { href: `/dashboard/profile/${userId}/edit`, label: 'Mi perfil', icon: UserCog, description: 'Mi perfil' },
     { href: MODULES.cuenta.href + '/password', label: 'Cambiar contraseña', icon: MODULES.cuenta.icon, description: MODULES.cuenta.description },
   ];
