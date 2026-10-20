@@ -1,53 +1,46 @@
 'use client';
 
 import { logError } from '@/app/lib/logger';
-import { getApiBaseUrl } from './catalogConfig';
-
-const API_BASE_URL = getApiBaseUrl();
+import { micrositioFetch, MicrositioError } from './micrositioApi';
 
 export interface HandoffSessionPayload {
   token: string;
   clienteId: number;
   userPhoneE164: string;
-  waPhoneId: string;
-  conversationId: number;
+  conversationId: number | null;
   expiresIn: number | null; // segundos
-  exp: number | null;       // epoch seg, opcional
+  exp: number | null; // epoch seg
 }
 
+export type HandoffValidation =
+  | { ok: true; session: HandoffSessionPayload }
+  | { ok: false; code: string; message: string };
+
+/**
+ * Valida el token contra /micrositio/sesion: además de la firma chequea que
+ * el plan del comercio incluya el bot (PLAN_INACTIVE).
+ */
 export async function validateHandoffToken(
   token: string,
-): Promise<HandoffSessionPayload | null> {
+): Promise<HandoffValidation> {
   try {
-    const res = await fetch(`${API_BASE_URL}/handoff/resolve?c=${token}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      //body: JSON.stringify({ token }),
-    });
-
-    if (!res.ok) {
-      // 401 o lo que sea → token inválido o expirado
-      return null;
-    }
-
-    const data = await res.json();
-    if (!data.valid) {
-      return null;
-    }
-
+    const data = await micrositioFetch<any>('/sesion', token);
     return {
-      token,
-      clienteId: data.clienteId,
-      userPhoneE164: data.userPhoneE164,
-      waPhoneId: data.waPhoneId,
-      conversationId: data.conversationId,
-      expiresIn: data.expiresIn ?? null,
-      exp: data.exp ?? null,
+      ok: true,
+      session: {
+        token,
+        clienteId: data.clienteId,
+        userPhoneE164: data.userPhoneE164 ?? '',
+        conversationId: data.conversationId ?? null,
+        expiresIn: data.expiresIn ?? null,
+        exp: data.exp ?? null,
+      },
     };
   } catch (err) {
+    if (err instanceof MicrositioError) {
+      return { ok: false, code: err.code || 'ERROR', message: err.message };
+    }
     logError('Error validating handoff token', err);
-    return null;
+    return { ok: false, code: 'ERROR', message: 'No pudimos validar el link.' };
   }
 }

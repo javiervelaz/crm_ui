@@ -40,7 +40,9 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [ticket, setTicket] = useState<CheckoutTicket | null>(null);
 
-  const deliveryCost = 1000; // demo
+  // El servidor no cobra envío todavía: mostrar $1000 inventados hacía que el
+  // total del cliente no coincidiera con el pedido que ve el comercio.
+  const deliveryCost = 0;
   const grandTotal = total + deliveryCost;
 
   useEffect(() => {
@@ -49,10 +51,11 @@ export default function CheckoutPage() {
       notifyError('La sesión del link ya no es válida. Pedí un nuevo enlace por WhatsApp.');
       return;
     }
-    setPhone(session?.userPhoneE164);
+    setPhone(session.userPhoneE164);
+    const token = session.token;
 
     async function loadMediosPago() {
-      const data = await fetchMedioPagoList();
+      const data = await fetchMedioPagoList(token);
       if (!cancelled) {
         setMedioPagoList(data);
         const defaultMedio =
@@ -70,7 +73,7 @@ export default function CheckoutPage() {
 
     loadMediosPago();
     return () => { cancelled = true; };
-  }, []);
+  }, [session]);
 
   const isEfectivoSelected = useMemo(() => {
     if (!selectedMedioPagoId) return false;
@@ -195,6 +198,7 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    if (!session) { notifyError('El link ya no es válido. Pedí uno nuevo por WhatsApp.'); return; }
     if (!items.length) { notifyError('No tenés productos en el carrito.'); return; }
     if (!name.trim() || !phone.trim()) { notifyError('Completá al menos nombre y teléfono.'); return; }
     if (deliveryType === 'delivery' && !address.trim()) { notifyError('Para delivery necesitamos una dirección.'); return; }
@@ -215,19 +219,15 @@ export default function CheckoutPage() {
 
     try {
       setSubmitting(true);
-      await crearPedidoDesdeMicrositio({
+      const result = await crearPedidoDesdeMicrositio({
+        token: session.token,
         name: name.trim(),
-        phone: phone.trim(),
         address: address.trim(),
         deliveryType,
         extraNotes: extraNotes.trim(),
         items,
-        total,
         medio_pago_id: selectedMedioPagoId,
-        paga_efectivo: pagaEfectivoNum,
-        vuelto_pago_efectivo: vueltoNum,
-        clienteId: session?.clienteId,
-        conversation_id: session?.conversationId,
+        paga_efectivo: isEfectivoSelected ? pagaEfectivoNum : undefined,
       });
 
       notifySuccess('Pedido registrado. El local va a gestionar tu pedido.');
@@ -240,12 +240,13 @@ export default function CheckoutPage() {
         deliveryType,
         extraNotes: extraNotes.trim(),
         items: [...items],
-        total,
+        // Lo que quedó registrado en el comercio, no lo que calculó el browser
+        total: result.total,
         deliveryCost,
-        grandTotal: total + deliveryCost,
+        grandTotal: result.total + deliveryCost,
         medioPagoDescripcion: medioSeleccionado?.descripcion ?? null,
         pagaEfectivo: pagaEfectivoNum,
-        vuelto: vueltoNum,
+        vuelto: isEfectivoSelected ? result.vuelto : vueltoNum,
       });
 
       clearCart();

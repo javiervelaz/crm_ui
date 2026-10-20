@@ -7,7 +7,7 @@ export default function CartPage() {
   const router = useRouter();
   const { items, total, updateQuantity, removeItem } = useCart();
 
-  const deliveryCost = 1000; // demo
+  const deliveryCost = 0; // el servidor todavía no cobra envío
   const grandTotal = total + deliveryCost;
 
   return (

@@ -2,42 +2,20 @@
 'use client';
 
 import { logError } from '@/app/lib/logger';
-import { getApiBaseUrl } from './catalogConfig';
-
-const API_BASE_URL = getApiBaseUrl();
+import { micrositioFetch } from './micrositioApi';
 
 export interface MedioPago {
   id: number;
   descripcion: string;
-  codigo?: string; // en el CRM usan mp.codigo === 'EFE'
-  [key: string]: any;
+  codigo?: string; // 'EFE' = efectivo
 }
 
-export async function fetchMedioPagoList(): Promise<MedioPago[]> {
+export async function fetchMedioPagoList(token: string): Promise<MedioPago[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/medioPago/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
-
-    if (res.status === 404) {
-      return [];
-    }
-
-    if (!res.ok) {
-      throw new Error('Error al obtener medios de pago');
-    }
-
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-
-    return data as MedioPago[];
+    const data = await micrositioFetch<any>('/medios-pago', token);
+    return Array.isArray(data) ? (data as MedioPago[]) : [];
   } catch (error) {
-    logError('Error al obtener el medio de pago', error);
-    // Igual que en el CRM: ante error, devolvemos []
+    logError('Error al obtener los medios de pago', error);
     return [];
   }
 }

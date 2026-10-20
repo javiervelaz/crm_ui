@@ -17,7 +17,7 @@ export default function CatalogoProviders({ children }: { children: ReactNode })
 }
 
 function CatalogGuard({ children }: { children: ReactNode }) {
-  const { session, loading } = useHandoffSession();
+  const { session, loading, errorCode, errorMessage } = useHandoffSession();
 
   if (loading) {
     return (
@@ -30,16 +30,21 @@ function CatalogGuard({ children }: { children: ReactNode }) {
   }
 
   if (!session) {
+    const planInactivo = errorCode === 'PLAN_INACTIVE';
     return (
       <div className="flex min-h-screen items-center justify-center bg-brand-50 px-4">
         <div className="max-w-md rounded-xl border border-brand-200 bg-white p-6 text-center shadow-card">
           <h1 className="mb-2 text-lg font-semibold text-brand-800">
-            Link no válido
+            {planInactivo ? 'Pedidos online no disponibles' : 'Link no válido'}
           </h1>
           <p className="text-sm text-brand-300">
-            El link que usaste ya no es válido o expiró.
-            <br />
-            Pedí un nuevo acceso por WhatsApp para seguir haciendo pedidos.
+            {errorMessage ?? (
+              <>
+                El link que usaste ya no es válido o expiró.
+                <br />
+                Pedí un nuevo acceso por WhatsApp para seguir haciendo pedidos.
+              </>
+            )}
           </p>
         </div>
       </div>
