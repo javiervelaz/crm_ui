@@ -128,10 +128,12 @@ export default function CheckoutPage() {
               <span>Subtotal</span>
               <span>${ticket.total.toLocaleString('es-AR')}</span>
             </div>
-            <div className="flex justify-between text-xs text-brand-300">
-              <span>Delivery (demo)</span>
-              <span>${ticket.deliveryCost.toLocaleString('es-AR')}</span>
-            </div>
+            {ticket.deliveryCost > 0 && (
+              <div className="flex justify-between text-xs text-brand-300">
+                <span>Envío</span>
+                <span>${ticket.deliveryCost.toLocaleString('es-AR')}</span>
+              </div>
+            )}
             <div className="flex justify-between pt-1 text-sm font-bold text-brand-800">
               <span>Total</span>
               <span>${ticket.grandTotal.toLocaleString('es-AR')}</span>
@@ -285,10 +287,12 @@ export default function CheckoutPage() {
           <span>Subtotal</span>
           <span>${total.toLocaleString('es-AR')}</span>
         </div>
-        <div className="flex justify-between text-xs text-brand-300">
-          <span>Delivery (demo)</span>
-          <span>${deliveryCost.toLocaleString('es-AR')}</span>
-        </div>
+        {deliveryCost > 0 && (
+          <div className="flex justify-between text-xs text-brand-300">
+            <span>Envío</span>
+            <span>${deliveryCost.toLocaleString('es-AR')}</span>
+          </div>
+        )}
         <div className="flex justify-between pt-1 text-sm font-bold text-brand-800">
           <span>Total aprox.</span>
           <span>${grandTotal.toLocaleString('es-AR')}</span>

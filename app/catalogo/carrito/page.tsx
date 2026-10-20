@@ -107,10 +107,12 @@ export default function CartPage() {
               <span>Subtotal</span>
               <span>${total.toLocaleString('es-AR')}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Delivery (demo)</span>
-              <span>${deliveryCost.toLocaleString('es-AR')}</span>
-            </div>
+            {deliveryCost > 0 && (
+              <div className="flex justify-between">
+                <span>Envío</span>
+                <span>${deliveryCost.toLocaleString('es-AR')}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-brand-100 pt-2 text-base font-bold text-brand-800">
               <span>Total</span>
               <span>${grandTotal.toLocaleString('es-AR')}</span>
