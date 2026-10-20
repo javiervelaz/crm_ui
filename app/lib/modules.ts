@@ -5,6 +5,7 @@ import {
   GraduationCap,
   KeyRound,
   MessageCircle,
+  Send,
   DollarSign,
   Package,
   ShieldCheck,
@@ -152,6 +153,19 @@ export const MODULES = {
     description: 'Link de pedidos online, bot de Telegram y WhatsApp',
     icon: MessageCircle,
     href: '/dashboard/canales',
+    prefix: true,
+    hidden: true,
+    alwaysOpen: true,
+  },
+
+  // Cada usuario vincula SU Telegram con el bot del comercio (avisos de
+  // pedidos y, más adelante, consultas al harness interno).
+  'mi-telegram': {
+    order: 11,
+    label: 'Mi Telegram',
+    description: 'Vinculá tu Telegram para recibir los pedidos nuevos',
+    icon: Send,
+    href: '/dashboard/mi-telegram',
     prefix: true,
     hidden: true,
     alwaysOpen: true,
