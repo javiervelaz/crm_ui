@@ -73,6 +73,8 @@ export default function CanalesPage() {
   }, [cargar]);
 
   const puedeBot = plan?.features?.canUseBot === true;
+  // El link de pedidos depende del rubro (p. ej. educación no lo tiene). Mientras carga el plan, se muestra.
+  const tieneLinkPedidos = plan?.features?.canUsePedidosOnline !== false;
 
   return (
     <main className="mx-auto max-w-3xl space-y-5">
@@ -93,7 +95,7 @@ export default function CanalesPage() {
 
       {estado && (
         <>
-          <LinkPublico estado={estado} onCambio={cargar} />
+          {tieneLinkPedidos && <LinkPublico estado={estado} onCambio={cargar} />}
           <Telegram estado={estado} puedeBot={puedeBot} onCambio={cargar} />
           <Seccion icon={MessageCircle} titulo="WhatsApp">
             {estado.whatsapp.habilitado ? (
@@ -105,8 +107,9 @@ export default function CanalesPage() {
             ) : (
               <p className="text-sm text-brand-300">
                 Próximamente: el bot va a contestar desde tu propio número de
-                WhatsApp. Mientras tanto, mandá tu link de pedidos como
-                respuesta rápida desde WhatsApp Business.
+                WhatsApp.
+                {tieneLinkPedidos &&
+                  ' Mientras tanto, mandá tu link de pedidos como respuesta rápida desde WhatsApp Business.'}
               </p>
             )}
           </Seccion>

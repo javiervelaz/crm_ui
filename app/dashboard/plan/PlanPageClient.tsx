@@ -3,6 +3,7 @@
 
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import { useTiers } from '@/app/lib/useTiers';
+import { beneficiosDe, esPagable, etiquetaPrecio } from '@/app/lib/planBeneficios';
 import { createBillingCheckout, simulateBillingMock } from '@/app/lib/billing.api';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
@@ -11,7 +12,10 @@ const IS_MOCK = process.env.NEXT_PUBLIC_MP_MOCK === 'true';
 
 export function PlanPageClient() {
   const { plan, loading: loadingPlan, error: errorPlan } = useClientePlan();
-  const { tiers, loading: loadingTiers, error: errorTiers } = useTiers();
+  // Precios y beneficios del rubro del tenant: hasta saber el rubro no se pide nada
+  const { tiers, loading: loadingTiers, error: errorTiers } = useTiers(
+    loadingPlan ? null : plan?.rubroCodigo || 'gastronomia',
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const searchParams = useSearchParams();
   const statusParam = searchParams?.get('status') ?? null;
@@ -95,8 +99,8 @@ export function PlanPageClient() {
                   {plan.features.canUseReports ? 'Habilitados' : 'No disponible en este plan'}
                 </li>
                 <li>
-                  • Bot WhatsApp:{' '}
-                  {plan.features.canUseWhatsappBot
+                  • Bot de Telegram:{' '}
+                  {plan.features.canUseBot
                     ? 'Habilitado'
                     : 'No disponible en este plan'}
                 </li>
@@ -109,8 +113,9 @@ export function PlanPageClient() {
                 title={tier.nombre_publico}
                 tierCode={tier.code}
                 description={tier.descripcion}
-                features={[]}
-                price={tier.precio_mensual}
+                features={beneficiosDe(tier.features)}
+                priceLabel={etiquetaPrecio(tier)}
+                pagable={esPagable(tier)}
                 currentTier={currentTier}
                 onUpgrade={handleUpgrade}
                 isProcessing={isProcessing}
@@ -129,8 +134,9 @@ export function PlanPageClient() {
                     title={tier.nombre_publico}
                     tierCode={tier.code}
                     description={tier.descripcion}
-                    features={[]}
-                    price={tier.precio_mensual}
+                    features={beneficiosDe(tier.features)}
+                    priceLabel={etiquetaPrecio(tier)}
+                    pagable={esPagable(tier)}
                     currentTier={currentTier}
                     onUpgrade={handleUpgrade}
                     isProcessing={isProcessing}
@@ -154,7 +160,8 @@ interface PlanCardProps {
   currentTier: string;
   onUpgrade: (tierCode: string) => void;
   isProcessing: boolean;
-  price: number | null;
+  priceLabel: string;
+  pagable: boolean;
   duracion: number | null;
 }
 
@@ -166,13 +173,12 @@ function PlanCard({
   currentTier,
   onUpgrade,
   isProcessing,
-  price,
+  priceLabel,
+  pagable,
   duracion
 }: PlanCardProps) {
   const isCurrent = currentTier === tierCode;
   const isHigher = currentTier === 'FREE' || currentTier === 'BASIC';
-
-  const priceLabel = price == null ? 'Consultar' : `$ ${price.toLocaleString('es-AR')} / mes`;
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -192,6 +198,10 @@ function PlanCard({
         {isCurrent ? (
           <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
             Plan actual
+          </span>
+        ) : !pagable ? (
+          <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
+            Próximamente para tu rubro
           </span>
         ) : isHigher ? (
           <button

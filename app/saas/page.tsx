@@ -4,7 +4,8 @@
 import { useEffect, useRef, useState, FormEvent, Suspense } from 'react';
 import Image from 'next/image';
 import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
-import { useTiers } from '@/app/lib/useTiers';   // 👈 NUEVO
+import { useTiers } from '@/app/lib/useTiers';
+import { beneficiosDe, esContratable, etiquetaPrecio } from '@/app/lib/planBeneficios';
 import { useRubros } from '@/app/lib/useRubros';
 import { rubroInicial } from '@/app/lib/rubros';
 import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
@@ -19,10 +20,10 @@ const PLAN_LABELS: Record<PlanTier, string> = {
   CUSTOM: 'Plan anual'
 };
 
-const formatPrice = (price: number | null | undefined) => {
-  if (price == null) return '(definir precio)';
-  if (price === 0) return 'Sin costo';
-  return `$ ${price.toLocaleString('es-AR')} / mes`;
+// Beneficios del rubro (vienen de la API); si no hay, el texto por defecto
+const beneficiosO = (t: { features?: Record<string, unknown> } | undefined, porDefecto: string[]) => {
+  const b = beneficiosDe(t?.features);
+  return b.length ? b : porDefecto;
 };
 
 function SaasLandingPage() {
@@ -59,8 +60,8 @@ function SaasLandingPage() {
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
-  // 🔹 Traemos los planes desde la API (/api/tiers)
-  const { tiers, loading: tiersLoading, error: tiersError } = useTiers();
+  // Precios y beneficios del rubro elegido (cambian por rubro)
+  const { tiers, loading: tiersLoading, error: tiersError } = useTiers(rubro || null);
 
   const freeTier = tiers.find((t) => t.code.toUpperCase() === 'FREE');
   const basicTier = tiers.find((t) => t.code.toUpperCase() === 'BASIC');
@@ -349,14 +350,15 @@ function SaasLandingPage() {
             <PlanCard
               title="Free"
               description="Para probar el sistema en tu comercio."
-              price={formatPrice(freeTier?.precio_mensual ?? 0)}
-              features={[
+              price={freeTier ? etiquetaPrecio(freeTier, { gratis: true }) : 'Sin costo'}
+              features={beneficiosO(freeTier, [
                 'Registro de pedidos del día',
                 'Gestión básica de productos',
                 'Caja diaria simple',
-              ]}
+              ])}
               plan="FREE"
               selected={selectedPlan === 'FREE'}
+              disabled={!!freeTier && !esContratable(freeTier)}
               onSelect={handleSelectPlan}
             />
 
@@ -364,13 +366,13 @@ function SaasLandingPage() {
             <PlanCard
               title="Básico"
               description="Para comercios que usan el CRM todos los días."
-              price={formatPrice(basicTier?.precio_mensual)}
+              price={etiquetaPrecio(basicTier)}
               highlight
-              features={[
+              features={beneficiosO(basicTier, [
                 'Todo lo del plan Free',
                 'Pedidos y productos sin límite',
                 'Cierre de caja y gastos',
-              ]}
+              ])}
               plan="BASIC"
               selected={selectedPlan === 'BASIC'}
               disabled
@@ -381,12 +383,12 @@ function SaasLandingPage() {
             <PlanCard
               title="Premium"
               description="Para dueños que quieren ver el negocio completo."
-              price={formatPrice(premiumTier?.precio_mensual)}
-              features={[
+              price={etiquetaPrecio(premiumTier)}
+              features={beneficiosO(premiumTier, [
                 'Todo lo del plan Básico',
                 'Reportes diarios y por medio de pago',
                 'Micrositio y bot de pedidos por WhatsApp',
-              ]}
+              ])}
               plan="PREMIUM"
               selected={selectedPlan === 'PREMIUM'}
               disabled
@@ -396,12 +398,12 @@ function SaasLandingPage() {
             <PlanCard
               title="Plan anual"
               description="Paga menos abonando en un solo pago anual."
-              price={formatPrice(customTier?.precio_mensual)}
-              features={[
+              price={etiquetaPrecio(customTier)}
+              features={beneficiosO(customTier, [
                 'Todo lo del plan Básico',
                 'Reportes diarios y por medio de pago',
                 'Micrositio y bot de pedidos por WhatsApp',
-              ]}
+              ])}
               plan="CUSTOM"
               selected={selectedPlan === 'CUSTOM'}
               disabled
