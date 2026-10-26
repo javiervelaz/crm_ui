@@ -9,6 +9,7 @@ interface ClientePlan {
   clienteNombre: string;
   tierCode: 'FREE' | 'BASIC' | 'PREMIUM' | string;
   tierNombre: string;
+  rubroCodigo?: string | null;
   features: {
     canUseReports?: boolean;
     canUseWhatsappBot?: boolean;
