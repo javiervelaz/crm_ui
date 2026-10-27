@@ -14,6 +14,8 @@ export interface PlanFeatures {
 
 export interface OfertaPlan {
   precio_mensual: number | null;
+  /** > 1 → pago único: precio_mensual es el total del período */
+  duracion_meses?: number | null;
   disponible?: boolean;
   features?: PlanFeatures;
 }
@@ -57,5 +59,7 @@ export function etiquetaPrecio(
   const p = t.precio_mensual;
   if (p == null) return 'Consultar';
   if (p === 0) return gratis ? 'Sin costo' : 'Próximamente';
-  return `$ ${p.toLocaleString('es-AR')} / mes`;
+  const meses = Number(t.duracion_meses) || 1;
+  const monto = `$ ${p.toLocaleString('es-AR')}`;
+  return meses > 1 ? `${monto} por ${meses} meses` : `${monto} / mes`;
 }

@@ -187,7 +187,11 @@ function PlanCard({
         <h3 className="mt-1 text-lg font-semibold text-gray-900">Plan {title}</h3>
         <p className="mt-1 text-xl font-bold text-gray-900">{priceLabel}</p>
         <p className="mt-2 text-sm text-gray-600">{description}</p>
-        <p className="mt-2 text-sm text-gray-600">{duracion} meses</p>
+        <p className="mt-2 text-sm text-gray-600">
+          {(duracion ?? 1) > 1
+            ? `Pago único por ${duracion} meses`
+            : 'Suscripción mensual, cancelás cuando quieras'}
+        </p>
         <ul className="mt-3 space-y-1 text-sm text-gray-700">
           {features.map((f) => (
             <li key={f}>• {f}</li>
