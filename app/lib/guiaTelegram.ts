@@ -194,6 +194,15 @@ export interface VideoGuia {
 /**
  * Videos de la guía (en public/assets/guias). Antes de publicar uno: recortar
  * la ventana a la conversación y difuminar tokens, links con credenciales y
- * chats privados. Pendiente: grabación de la creación del bot con BotFather.
+ * chats privados.
  */
-export const VIDEOS_GUIA: VideoGuia[] = [];
+export const VIDEOS_GUIA: VideoGuia[] = [
+  {
+    id: 'crear-bot',
+    titulo: 'Mirá todo el proceso en 1 minuto y medio',
+    descripcion:
+      'Crear el bot con BotFather, copiar el token, pegarlo en Counter, conectar y vincular tu Telegram. En el video el token está difuminado a propósito: el tuyo va a ser distinto y no hay que mostrarlo ni compartirlo.',
+    src: '/assets/guias/guia-telegram-crear-bot.mp4',
+    poster: '/assets/guias/guia-telegram-crear-bot.jpg',
+  },
+];

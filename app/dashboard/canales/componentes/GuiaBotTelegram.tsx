@@ -72,6 +72,28 @@ export default function GuiaBotTelegram({
             </p>
           )}
 
+          {!tieneBot &&
+            VIDEOS_GUIA.map((v) => (
+              <figure key={v.id} className="space-y-2">
+                <video
+                  controls
+                  playsInline
+                  preload="metadata"
+                  poster={v.poster}
+                  className="w-full max-w-xl rounded-xl border border-brand-100 bg-black"
+                >
+                  <source src={v.src} type="video/mp4" />
+                  Tu navegador no puede reproducir el video.
+                </video>
+                <figcaption className="text-xs">
+                  <span className="font-semibold text-brand-800">
+                    {v.titulo}.
+                  </span>{' '}
+                  {v.descripcion}
+                </figcaption>
+              </figure>
+            ))}
+
           <ol className="space-y-4">
             {pasos.map((p, i) => (
               <li key={p.id} className="flex gap-3">
@@ -130,27 +152,6 @@ export default function GuiaBotTelegram({
             <p>• {QUE_HACE_EL_BOT.equipo}</p>
             {mostrarConsultas && <p>• {QUE_HACE_EL_BOT.consultas}</p>}
           </div>
-
-          {VIDEOS_GUIA.map((v) => (
-            <figure key={v.id} className="space-y-2">
-              <video
-                controls
-                playsInline
-                preload="metadata"
-                poster={v.poster}
-                className="w-full max-w-xl rounded-xl border border-brand-100 bg-black"
-              >
-                <source src={v.src} type="video/mp4" />
-                Tu navegador no puede reproducir el video.
-              </video>
-              <figcaption className="text-xs">
-                <span className="font-semibold text-brand-800">
-                  {v.titulo}.
-                </span>{' '}
-                {v.descripcion}
-              </figcaption>
-            </figure>
-          ))}
 
           <div>
             <p className="mb-2 font-semibold text-brand-800">

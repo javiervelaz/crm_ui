@@ -99,6 +99,7 @@ describe('videos de la guía', () => {
   it('cada video y su poster declarados existen en public/ y pesan poco', async () => {
     const { existsSync, statSync } = await import('node:fs');
     const { VIDEOS_GUIA } = await import('@/app/lib/guiaTelegram');
+    expect(VIDEOS_GUIA.length).toBeGreaterThan(0);
     for (const v of VIDEOS_GUIA) {
       for (const ruta of [v.src, v.poster]) {
         expect(ruta.startsWith('/assets/guias/')).toBe(true);
@@ -107,5 +108,20 @@ describe('videos de la guía', () => {
         expect(statSync(archivo).size).toBeLessThan(3 * 1024 * 1024);
       }
     }
+  });
+
+  it('sin bot el render muestra el video con su poster antes de los pasos; con bot no', async () => {
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: Guia } = await import(
+      '@/app/dashboard/canales/componentes/GuiaBotTelegram'
+    );
+    const sin = renderToStaticMarkup(createElement(Guia, { tieneBot: false }));
+    expect(sin).toContain('/assets/guias/guia-telegram-crear-bot.mp4');
+    expect(sin).toContain('poster="/assets/guias/guia-telegram-crear-bot.jpg"');
+    expect(sin.indexOf('<video')).toBeLessThan(sin.indexOf('<ol'));
+    // la guía abre cerrada con bot, pero aun abierta no repetiría el video de creación
+    const con = renderToStaticMarkup(createElement(Guia, { tieneBot: true }));
+    expect(con).not.toContain('<video');
   });
 });
