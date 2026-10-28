@@ -88,3 +88,32 @@ describe('GuiaBotTelegram (render)', () => {
     expect(html).not.toContain('Preguntas frecuentes');
   });
 });
+
+describe('videos de la guía', () => {
+  it('cada video y su poster existen en public/', async () => {
+    const { existsSync, statSync } = await import('node:fs');
+    const { VIDEOS_GUIA } = await import('@/app/lib/guiaTelegram');
+    expect(VIDEOS_GUIA.length).toBeGreaterThan(0);
+    for (const v of VIDEOS_GUIA) {
+      for (const ruta of [v.src, v.poster]) {
+        expect(ruta.startsWith('/assets/guias/')).toBe(true);
+        const archivo = `public${ruta}`;
+        expect(existsSync(archivo), archivo).toBe(true);
+        // livianos: se sirven desde la app, no desde un CDN de video
+        expect(statSync(archivo).size).toBeLessThan(3 * 1024 * 1024);
+      }
+    }
+  });
+
+  it('el render incluye el reproductor con su poster', async () => {
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: Guia } = await import(
+      '@/app/dashboard/canales/componentes/GuiaBotTelegram'
+    );
+    const html = renderToStaticMarkup(createElement(Guia, { tieneBot: false }));
+    expect(html).toContain('<video');
+    expect(html).toContain('/assets/guias/guia-telegram-pedir.mp4');
+    expect(html).toContain('poster="/assets/guias/guia-telegram-pedir.jpg"');
+  });
+});

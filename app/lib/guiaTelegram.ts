@@ -124,3 +124,27 @@ export const pasosPendientes = (tieneBot: boolean): PasoGuia[] =>
   tieneBot
     ? PASOS_GUIA.filter((p) => p.fase !== 'telegram' && p.id !== 'conectar')
     : PASOS_GUIA;
+
+export interface VideoGuia {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  src: string;
+  poster: string;
+}
+
+/**
+ * Videos de la guía (en public/assets/guias). Antes de publicar uno: recortar
+ * la ventana a la conversación y difuminar tokens, links con credenciales y
+ * chats privados.
+ */
+export const VIDEOS_GUIA: VideoGuia[] = [
+  {
+    id: 'pedir',
+    titulo: 'Así se ve tu bot en Telegram',
+    descripcion:
+      'Le escribís al bot, mandás /pedir y te muestra el link de pedidos tal como lo ve un cliente, con el botón “Hacer mi pedido”.',
+    src: '/assets/guias/guia-telegram-pedir.mp4',
+    poster: '/assets/guias/guia-telegram-pedir.jpg',
+  },
+];
