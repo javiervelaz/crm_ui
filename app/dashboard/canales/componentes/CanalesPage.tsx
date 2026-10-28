@@ -96,8 +96,15 @@ export default function CanalesPage() {
 
       {estado && (
         <>
-          {tieneLinkPedidos && <LinkPublico estado={estado} onCambio={cargar} />}
-          <Telegram estado={estado} puedeBot={puedeBot} plan={plan} onCambio={cargar} />
+          {tieneLinkPedidos && (
+            <LinkPublico estado={estado} onCambio={cargar} />
+          )}
+          <Telegram
+            estado={estado}
+            puedeBot={puedeBot}
+            plan={plan}
+            onCambio={cargar}
+          />
           <Seccion icon={MessageCircle} titulo="WhatsApp">
             {estado.whatsapp.habilitado ? (
               <p className="text-sm text-brand-600">
@@ -291,31 +298,38 @@ function Telegram({
     <Seccion icon={Send} titulo="Bot de Telegram">
       {!bot ? (
         <div className="space-y-3 text-sm text-brand-600">
-          <GuiaBotTelegram tieneBot={false} mostrarConsultas={consultas} />
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="123456789:AA…"
-              autoComplete="off"
-              spellCheck={false}
-              className="w-full rounded-xl border border-brand-200 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-brand-600/20"
-            />
-            <button
-              type="button"
-              onClick={conectar}
-              disabled={!tokenOk || conectando}
-              className="shrink-0 rounded-full bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-400 disabled:opacity-50"
-            >
-              {conectando ? 'Conectando…' : 'Conectar bot'}
-            </button>
-          </div>
-          {token && !tokenOk && (
-            <p className="text-xs text-red-600">
-              Eso no parece un token de @BotFather.
-            </p>
-          )}
+          <GuiaBotTelegram
+            tieneBot={false}
+            mostrarConsultas={consultas}
+            formularioToken={
+              <div className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    placeholder="123456789:AA…"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full rounded-xl border border-brand-200 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-brand-600/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={conectar}
+                    disabled={!tokenOk || conectando}
+                    className="shrink-0 rounded-full bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-400 disabled:opacity-50"
+                  >
+                    {conectando ? 'Conectando…' : 'Conectar bot'}
+                  </button>
+                </div>
+                {token && !tokenOk && (
+                  <p className="text-xs text-red-600">
+                    Eso no parece un token de @BotFather.
+                  </p>
+                )}
+              </div>
+            }
+          />
         </div>
       ) : (
         <div className="space-y-4 text-sm text-brand-600">
@@ -425,7 +439,11 @@ function Vinculados({
               <span className="min-w-0 truncate">
                 {v.nombre}
                 <span className="ml-2 text-xs text-brand-300">
-                  {v.recibe_avisos ? 'recibe avisos' : v.avisos ? 'sin acceso a Pedidos' : 'avisos apagados'}
+                  {v.recibe_avisos
+                    ? 'recibe avisos'
+                    : v.avisos
+                      ? 'sin acceso a Pedidos'
+                      : 'avisos apagados'}
                 </span>
               </span>
               <button

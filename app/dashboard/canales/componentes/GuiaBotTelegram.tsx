@@ -14,7 +14,7 @@ import {
   ExternalLink,
   ShieldAlert,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 async function copiar(texto: string) {
   try {
@@ -35,9 +35,12 @@ async function copiar(texto: string) {
 export default function GuiaBotTelegram({
   tieneBot,
   mostrarConsultas = false,
+  formularioToken,
 }: {
   tieneBot: boolean;
   mostrarConsultas?: boolean;
+  /** Campo del token + "Conectar bot": va dentro del paso "Pegalo en Counter" (o debajo del encabezado si la guía está cerrada). */
+  formularioToken?: ReactNode;
 }) {
   const [abierta, setAbierta] = useState(!tieneBot);
   const pasos = pasosPendientes(tieneBot);
@@ -61,6 +64,12 @@ export default function GuiaBotTelegram({
           className={`text-brand-600 transition-transform ${abierta ? 'rotate-180' : ''}`}
         />
       </button>
+
+      {!abierta && formularioToken && (
+        <div className="border-t border-brand-100 px-4 py-3">
+          {formularioToken}
+        </div>
+      )}
 
       {abierta && (
         <div className="space-y-5 border-t border-brand-100 px-4 py-4 text-sm text-brand-600">
@@ -127,6 +136,7 @@ export default function GuiaBotTelegram({
                       </button>
                     </div>
                   )}
+                  {p.id === 'conectar' && formularioToken}
                   {p.veras && (
                     <p className="rounded-lg bg-white p-2 text-xs">
                       <span className="font-semibold text-brand-800">

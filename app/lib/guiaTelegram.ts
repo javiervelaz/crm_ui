@@ -97,7 +97,7 @@ export const PASOS_GUIA: PasoGuia[] = [
     fase: 'counter',
     titulo: 'Pegalo en Counter y conectá',
     detalle:
-      'Volvé a esta pantalla, pegá el token en el campo de abajo (en el celular, mantené apretado el campo y tocá “Pegar”; en la compu, Ctrl+V) y tocá “Conectar bot”. Counter deja el bot listo solo: no tenés que configurar nada más en Telegram.',
+      'Volvé a esta pantalla, pegá el token en el campo de acá abajo (en el celular, mantené apretado el campo y tocá “Pegar”; en la compu, Ctrl+V) y tocá “Conectar bot”. Counter deja el bot listo solo: no tenés que configurar nada más en Telegram.',
     veras: 'Arriba aparece “Conectado” con el nombre de tu bot.',
   },
   {

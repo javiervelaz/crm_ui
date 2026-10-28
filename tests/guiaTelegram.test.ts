@@ -124,4 +124,21 @@ describe('videos de la guía', () => {
     const con = renderToStaticMarkup(createElement(Guia, { tieneBot: true }));
     expect(con).not.toContain('<video');
   });
+
+  it('el formulario del token va dentro del paso "Pegalo en Counter", no al final de la guía', async () => {
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: Guia } = await import(
+      '@/app/dashboard/canales/componentes/GuiaBotTelegram'
+    );
+    const form = createElement('input', { id: 'campo-token' });
+    const html = renderToStaticMarkup(
+      createElement(Guia, { tieneBot: false, formularioToken: form }),
+    );
+    expect(html.match(/id="campo-token"/g)).toHaveLength(1);
+    const i = html.indexOf('id="campo-token"');
+    expect(i).toBeGreaterThan(html.indexOf('Pegalo en Counter'));
+    expect(i).toBeLessThan(html.indexOf('Vinculá tu propio Telegram'));
+    expect(i).toBeLessThan(html.indexOf('Preguntas frecuentes'));
+  });
 });
