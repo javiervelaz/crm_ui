@@ -78,7 +78,6 @@ NEXT_PUBLIC_API_URL                 # Backend Express API base URL
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME   # Image uploads
 NEXT_PUBLIC_MP_MOCK                 # Toggle Mercado Pago mock mode
 NEXT_PUBLIC_MICROSITIO_CLIENTE_ID   # Multi-tenant public catalog IDs
-CRON_SECRET                         # Validates cron job requests
 ```
 
 ### Integrations
