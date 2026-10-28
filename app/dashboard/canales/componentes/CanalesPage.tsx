@@ -14,6 +14,7 @@ import {
 } from '@/app/lib/canales.api';
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
+import GuiaBotTelegram from '@/app/dashboard/canales/componentes/GuiaBotTelegram';
 import MiTelegramCard from '@/app/dashboard/mi-telegram/componentes/MiTelegramCard';
 import { Copy, ExternalLink, Link2, MessageCircle, Send } from 'lucide-react';
 import Link from 'next/link';
@@ -95,8 +96,15 @@ export default function CanalesPage() {
 
       {estado && (
         <>
-          {tieneLinkPedidos && <LinkPublico estado={estado} onCambio={cargar} />}
-          <Telegram estado={estado} puedeBot={puedeBot} onCambio={cargar} />
+          {tieneLinkPedidos && (
+            <LinkPublico estado={estado} onCambio={cargar} />
+          )}
+          <Telegram
+            estado={estado}
+            puedeBot={puedeBot}
+            plan={plan}
+            onCambio={cargar}
+          />
           <Seccion icon={MessageCircle} titulo="WhatsApp">
             {estado.whatsapp.habilitado ? (
               <p className="text-sm text-brand-600">
@@ -222,10 +230,12 @@ function LinkPublico({
 function Telegram({
   estado,
   puedeBot,
+  plan,
   onCambio,
 }: {
   estado: CanalesEstado;
   puedeBot: boolean;
+  plan?: { rubroCodigo?: string | null } | null;
   onCambio: () => void;
 }) {
   const [token, setToken] = useState('');
@@ -233,6 +243,8 @@ function Telegram({
   const [aDesconectar, setADesconectar] = useState<CanalTelegram | null>(null);
   const [desconectando, setDesconectando] = useState(false);
   const bot = estado.telegram.find((t) => t.status === 'active') || null;
+  // Las consultas del negocio por chat existen sólo para gastronomía (harness interno).
+  const consultas = plan?.rubroCodigo === 'gastronomia';
 
   if (!puedeBot) {
     return (
@@ -286,50 +298,38 @@ function Telegram({
     <Seccion icon={Send} titulo="Bot de Telegram">
       {!bot ? (
         <div className="space-y-3 text-sm text-brand-600">
-          <ol className="list-decimal space-y-1 pl-5">
-            <li>
-              En Telegram abrí{' '}
-              <a
-                href="https://t.me/BotFather"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-accent-500 underline"
-              >
-                @BotFather
-              </a>{' '}
-              y mandale{' '}
-              <code className="rounded bg-brand-50 px-1">/newbot</code>.
-            </li>
-            <li>
-              Elegí el nombre (ej. “Pizzería Don José”) y un usuario que termine
-              en “bot”.
-            </li>
-            <li>Copiá el token que te da y pegalo acá.</li>
-          </ol>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="123456789:AA…"
-              autoComplete="off"
-              spellCheck={false}
-              className="w-full rounded-xl border border-brand-200 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-brand-600/20"
-            />
-            <button
-              type="button"
-              onClick={conectar}
-              disabled={!tokenOk || conectando}
-              className="shrink-0 rounded-full bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-400 disabled:opacity-50"
-            >
-              {conectando ? 'Conectando…' : 'Conectar bot'}
-            </button>
-          </div>
-          {token && !tokenOk && (
-            <p className="text-xs text-red-600">
-              Eso no parece un token de @BotFather.
-            </p>
-          )}
+          <GuiaBotTelegram
+            tieneBot={false}
+            mostrarConsultas={consultas}
+            formularioToken={
+              <div className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    placeholder="123456789:AA…"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="w-full rounded-xl border border-brand-200 px-3 py-2 font-mono text-xs outline-none focus:ring-2 focus:ring-brand-600/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={conectar}
+                    disabled={!tokenOk || conectando}
+                    className="shrink-0 rounded-full bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-400 disabled:opacity-50"
+                  >
+                    {conectando ? 'Conectando…' : 'Conectar bot'}
+                  </button>
+                </div>
+                {token && !tokenOk && (
+                  <p className="text-xs text-red-600">
+                    Eso no parece un token de @BotFather.
+                  </p>
+                )}
+              </div>
+            }
+          />
         </div>
       ) : (
         <div className="space-y-4 text-sm text-brand-600">
@@ -347,6 +347,7 @@ function Telegram({
             pedido”.
           </p>
           <MiTelegramCard compacto />
+          <GuiaBotTelegram tieneBot mostrarConsultas={consultas} />
           <Vinculados vinculados={bot.vinculados ?? []} onCambio={onCambio} />
           <button
             type="button"
@@ -438,7 +439,11 @@ function Vinculados({
               <span className="min-w-0 truncate">
                 {v.nombre}
                 <span className="ml-2 text-xs text-brand-300">
-                  {v.recibe_avisos ? 'recibe avisos' : v.avisos ? 'sin acceso a Pedidos' : 'avisos apagados'}
+                  {v.recibe_avisos
+                    ? 'recibe avisos'
+                    : v.avisos
+                      ? 'sin acceso a Pedidos'
+                      : 'avisos apagados'}
                 </span>
               </span>
               <button
