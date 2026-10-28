@@ -77,7 +77,7 @@ describe('GuiaBotTelegram (render)', () => {
     expect(html).toContain('/newbot');
     expect(html).toContain('/revoke');
     expect(html).toContain('¿cuánto vendí hoy?');
-    expect(html.match(/<li class="flex gap-3">/g)).toHaveLength(10);
+    expect(html.match(/<li class="flex gap-3[ "]/g)).toHaveLength(10);
     expect(html).toContain('Preguntas frecuentes');
     expect(html).toContain('https://telegram.org/apps');
     expect(html).toContain('Vas a ver:');
@@ -136,6 +136,8 @@ describe('videos de la guía', () => {
       createElement(Guia, { tieneBot: false, formularioToken: form }),
     );
     expect(html.match(/id="campo-token"/g)).toHaveLength(1);
+    // sólo el paso con acción se resalta
+    expect(html.match(/data-accion="true"/g)).toHaveLength(1);
     const i = html.indexOf('id="campo-token"');
     expect(i).toBeGreaterThan(html.indexOf('Pegalo en Counter'));
     expect(i).toBeLessThan(html.indexOf('Vinculá tu propio Telegram'));

@@ -105,8 +105,24 @@ export default function GuiaBotTelegram({
 
           <ol className="space-y-4">
             {pasos.map((p, i) => (
-              <li key={p.id} className="flex gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+              <li
+                key={p.id}
+                data-accion={
+                  p.id === 'conectar' && formularioToken ? 'true' : undefined
+                }
+                className={
+                  p.id === 'conectar' && formularioToken
+                    ? 'flex gap-3 rounded-xl bg-accent-400/10 p-3 ring-1 ring-accent-400/40'
+                    : 'flex gap-3'
+                }
+              >
+                <span
+                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${
+                    p.id === 'conectar' && formularioToken
+                      ? 'bg-accent-500'
+                      : 'bg-brand-600'
+                  }`}
+                >
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1 space-y-2">
