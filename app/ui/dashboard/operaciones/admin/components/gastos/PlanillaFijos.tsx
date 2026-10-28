@@ -1,19 +1,23 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import SelectMedioPagoGasto from "./SelectMedioPagoGasto";
+import { MedioPagoOpcion } from "@/app/lib/medioPagoGasto";
 
 interface Fijo {
   servicio: string;
   monto: number;
+  medio_pago_id?: number;
 }
 
 interface Props {
   data: Fijo[];
   onUpdate: (data: Fijo[]) => void;
   categorias: any[];
+  medios?: MedioPagoOpcion[];
 }
 
-export default function PlanillaFijos({ data = [], onUpdate, categorias = [] }: Props) {
+export default function PlanillaFijos({ data = [], onUpdate, categorias = [], medios = [] }: Props) {
   const [items, setItems] = useState<Fijo[]>(data || []);
   const memoizedOnUpdate = useCallback(onUpdate, [onUpdate]);
 
@@ -78,6 +82,17 @@ export default function PlanillaFijos({ data = [], onUpdate, categorias = [] }: 
                 placeholder="0"
               />
             </div>
+            {medios.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-brand-400 shrink-0">Pagado con</span>
+                <SelectMedioPagoGasto
+                  medios={medios}
+                  value={row.medio_pago_id}
+                  onChange={(id) => updateRow(i, "medio_pago_id", id)}
+                  className="flex-1"
+                />
+              </div>
+            )}
           </div>
         ))}
         {items.length > 0 && (
@@ -95,6 +110,9 @@ export default function PlanillaFijos({ data = [], onUpdate, categorias = [] }: 
             <tr className="bg-brand-50">
               <th className="px-4 py-2 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider border-b border-brand-100">Servicio</th>
               <th className="px-4 py-2 text-right text-xs font-semibold text-brand-600 uppercase tracking-wider border-b border-brand-100">Monto</th>
+              {medios.length > 0 && (
+                <th className="px-4 py-2 text-left text-xs font-semibold text-brand-600 uppercase tracking-wider border-b border-brand-100">Pagado con</th>
+              )}
               <th className="px-4 py-2 border-b border-brand-100"></th>
             </tr>
           </thead>
@@ -121,6 +139,16 @@ export default function PlanillaFijos({ data = [], onUpdate, categorias = [] }: 
                     className="w-full rounded-lg border border-brand-200 px-2 py-1.5 text-sm text-right text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-600/20"
                   />
                 </td>
+                {medios.length > 0 && (
+                  <td className="px-4 py-2">
+                    <SelectMedioPagoGasto
+                      medios={medios}
+                      value={row.medio_pago_id}
+                      onChange={(id) => updateRow(i, "medio_pago_id", id)}
+                      className="w-full"
+                    />
+                  </td>
+                )}
                 <td className="px-4 py-2 text-center">
                   <button
                     onClick={() => deleteRow(i)}
@@ -135,6 +163,7 @@ export default function PlanillaFijos({ data = [], onUpdate, categorias = [] }: 
             <tr className="bg-brand-50 font-bold">
               <td className="px-4 py-2 text-right text-sm text-brand-700">Subtotal:</td>
               <td className="px-4 py-2 text-right text-sm text-brand-800">${subtotal.toLocaleString('es-AR')}</td>
+              {medios.length > 0 && <td />}
               <td />
             </tr>
           </tfoot>

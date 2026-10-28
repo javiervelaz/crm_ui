@@ -2,7 +2,7 @@
 
 import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
-import { gatosMontoTotalDiario } from "@/app/lib/gasto";
+import { gatosMontoTotalDiario, getGastosEfectivoDiario } from "@/app/lib/gasto";
 import {
   cerrarCaja,
   checkAperturaCaja,
@@ -35,6 +35,7 @@ const CerrarCajaForm = () => {
   const [montoCajaInicial, setMontoCajaInicial] = useState(0);
   const [ingresosTotales, setIngresosTotales] = useState(0);
   const [otrosEgresos, setOtrosEgresos] = useState(0);
+  const [gastosEfectivo, setGastosEfectivo] = useState(0); // la parte de las salidas pagada en efectivo
   const [montoContadoCaja, setMontoContadoCaja] = useState<string>(""); // efectivo contado
 
   const router = useRouter();
@@ -121,6 +122,15 @@ const CerrarCajaForm = () => {
       }
     };
 
+    const obtenerGastosEfectivo = async () => {
+      try {
+        setGastosEfectivo(await getGastosEfectivoDiario(registroDiario));
+      } catch (error) {
+        logError("Error al obtener gastos en efectivo", error);
+        setGastosEfectivo(0);
+      }
+    };
+
     const obtenerCajaInicial = async () => {
       try {
         const monto = await getCajaInicial(registroDiario, getClienteId());
@@ -136,6 +146,7 @@ const CerrarCajaForm = () => {
     obtenerMontoGastoSueldos();
     obtenerMontoGastoFijo();
     obtenerMontoGastoVariable();
+    obtenerGastosEfectivo();
     obtenerCajaInicial();
   }, [registroDiario]);
 
@@ -185,7 +196,7 @@ const CerrarCajaForm = () => {
     cajaInicial: montoCajaInicial,
     ventasEfectivo,
     otrosIngresos,
-    egresos: otrosEgresos,
+    egresos: gastosEfectivo, // sólo lo pagado en efectivo sale del cajón
     gastosAdministrativos,
   });
   const diferenciaCaja = diferenciaEfectivo(montoContadoCaja, efectivoEsperadoCaja);
@@ -380,6 +391,11 @@ const CerrarCajaForm = () => {
                 ${(otrosEgresos + gastosAdministrativos).toFixed(2)}
               </span>
             </div>
+            {otrosEgresos - gastosEfectivo > 0.004 && (
+              <p className="mt-1 text-[11px] text-slate-500">
+                ${(otrosEgresos - gastosEfectivo).toFixed(2)} se pagaron con otro medio y no salen del cajón.
+              </p>
+            )}
           </div>
         </div>
 

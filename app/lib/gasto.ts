@@ -198,3 +198,21 @@ export const getGastoCategorias = async (cliente: bigint | null) => {
     }
     return await response.json();
   };
+
+
+  /** Gastos del día pagados en efectivo: los únicos que descuentan del cajón al cerrar caja. */
+  export const getGastosEfectivoDiario = async (registroDiarioId: number): Promise<number> => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${apiUrl}/salida-caja/efectivo/${registroDiarioId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('No se pudo obtener los gastos en efectivo');
+    }
+    const monto = Number(await response.json());
+    return Number.isFinite(monto) ? monto : 0;
+  };
