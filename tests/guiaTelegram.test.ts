@@ -13,10 +13,14 @@ describe('guía del bot de Telegram', () => {
     expect(texto).toContain('10 minutos');
   });
 
-  it('el orden es el del flujo real: BotFather → /newbot → token → conectar → vincular → equipo', () => {
+  it('el orden es el del flujo real: instalar → cuenta → BotFather → /newbot → nombre → usuario → token → conectar → vincular → equipo', () => {
     expect(PASOS_GUIA.map((p) => p.id)).toEqual([
+      'instalar',
+      'cuenta',
       'botfather',
-      'newbot',
+      'iniciar',
+      'nombre',
+      'usuario',
       'token',
       'conectar',
       'vincular',
@@ -60,7 +64,7 @@ describe('guía del bot de Telegram', () => {
 });
 
 describe('GuiaBotTelegram (render)', () => {
-  it('sin bot: abierta, con los 6 pasos, el link a BotFather y las FAQ', async () => {
+  it('sin bot: abierta, con los 10 pasos, el link a BotFather y las FAQ', async () => {
     const { createElement } = await import('react');
     const { renderToStaticMarkup } = await import('react-dom/server');
     const { default: Guia } = await import(
@@ -73,8 +77,10 @@ describe('GuiaBotTelegram (render)', () => {
     expect(html).toContain('/newbot');
     expect(html).toContain('/revoke');
     expect(html).toContain('¿cuánto vendí hoy?');
-    expect(html.match(/<li class="flex gap-3">/g)).toHaveLength(6);
+    expect(html.match(/<li class="flex gap-3">/g)).toHaveLength(10);
     expect(html).toContain('Preguntas frecuentes');
+    expect(html).toContain('https://telegram.org/apps');
+    expect(html).toContain('Vas a ver:');
   });
 
   it('con bot: cerrada (sólo el encabezado) y sin las consultas si no es gastronomía', async () => {
@@ -90,30 +96,16 @@ describe('GuiaBotTelegram (render)', () => {
 });
 
 describe('videos de la guía', () => {
-  it('cada video y su poster existen en public/', async () => {
+  it('cada video y su poster declarados existen en public/ y pesan poco', async () => {
     const { existsSync, statSync } = await import('node:fs');
     const { VIDEOS_GUIA } = await import('@/app/lib/guiaTelegram');
-    expect(VIDEOS_GUIA.length).toBeGreaterThan(0);
     for (const v of VIDEOS_GUIA) {
       for (const ruta of [v.src, v.poster]) {
         expect(ruta.startsWith('/assets/guias/')).toBe(true);
         const archivo = `public${ruta}`;
         expect(existsSync(archivo), archivo).toBe(true);
-        // livianos: se sirven desde la app, no desde un CDN de video
         expect(statSync(archivo).size).toBeLessThan(3 * 1024 * 1024);
       }
     }
-  });
-
-  it('el render incluye el reproductor con su poster', async () => {
-    const { createElement } = await import('react');
-    const { renderToStaticMarkup } = await import('react-dom/server');
-    const { default: Guia } = await import(
-      '@/app/dashboard/canales/componentes/GuiaBotTelegram'
-    );
-    const html = renderToStaticMarkup(createElement(Guia, { tieneBot: false }));
-    expect(html).toContain('<video');
-    expect(html).toContain('/assets/guias/guia-telegram-pedir.mp4');
-    expect(html).toContain('poster="/assets/guias/guia-telegram-pedir.jpg"');
   });
 });

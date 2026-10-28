@@ -66,8 +66,9 @@ export default function GuiaBotTelegram({
         <div className="space-y-5 border-t border-brand-100 px-4 py-4 text-sm text-brand-600">
           {!tieneBot && (
             <p>
-              Son 5 minutos y no hace falta saber de programación. Vas a crear
-              un bot propio en Telegram y conectarlo a tu cuenta.
+              Son 10 minutos y no hace falta saber de programación. Vas a crear
+              un bot propio en Telegram y conectarlo a tu cuenta. Si nunca
+              usaste Telegram, arrancá por el paso 1.
             </p>
           )}
 
@@ -80,14 +81,14 @@ export default function GuiaBotTelegram({
                 <div className="min-w-0 flex-1 space-y-2">
                   <p className="font-medium text-brand-800">{p.titulo}</p>
                   <p>{p.detalle}</p>
-                  {p.id === 'botfather' && (
+                  {p.enlace && (
                     <a
-                      href="https://t.me/BotFather"
+                      href={p.enlace.href}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
                     >
-                      <ExternalLink size={14} /> Abrir @BotFather
+                      <ExternalLink size={14} /> {p.enlace.texto}
                     </a>
                   )}
                   {p.codigo && (
@@ -103,6 +104,14 @@ export default function GuiaBotTelegram({
                         <Copy size={12} /> Copiar
                       </button>
                     </div>
+                  )}
+                  {p.veras && (
+                    <p className="rounded-lg bg-white p-2 text-xs">
+                      <span className="font-semibold text-brand-800">
+                        Vas a ver:
+                      </span>{' '}
+                      {p.veras}
+                    </p>
                   )}
                   {p.aviso && (
                     <p className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">

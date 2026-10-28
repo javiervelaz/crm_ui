@@ -16,6 +16,10 @@ export interface PasoGuia {
   codigo?: string;
   /** Aviso destacado (seguridad). */
   aviso?: string;
+  /** Qué tiene que ver la persona en pantalla al hacer el paso (para confirmar que va bien). */
+  veras?: string;
+  /** Botón de enlace externo. */
+  enlace?: { texto: string; href: string };
   /** 'conectar' = pasos que se hacen en Telegram y se cierran al conectar el bot. */
   fase: 'telegram' | 'counter' | 'equipo';
 }
@@ -27,35 +31,74 @@ export interface PreguntaGuia {
 
 export const PASOS_GUIA: PasoGuia[] = [
   {
-    id: 'botfather',
+    id: 'instalar',
     fase: 'telegram',
-    titulo: 'Abrí @BotFather en Telegram',
+    titulo: 'Instalá Telegram',
     detalle:
-      'BotFather es el bot oficial de Telegram para crear bots. Buscalo como @BotFather (tiene la tilde azul de verificado) o abrí el link de abajo desde tu celular o la versión web.',
+      'Telegram es una app de mensajes, como WhatsApp, y es gratis. Descargala en tu celular desde la tienda de aplicaciones (Play Store en Android, App Store en iPhone) o usala desde la compu sin instalar nada. Si ya la tenés, pasá al paso 3.',
+    enlace: { texto: 'Descargar Telegram', href: 'https://telegram.org/apps' },
   },
   {
-    id: 'newbot',
+    id: 'cuenta',
     fase: 'telegram',
-    titulo: 'Creá el bot con /newbot',
+    titulo: 'Creá tu cuenta',
+    detalle:
+      'Abrí la app, tocá “Empezar” e ingresá tu número de celular. Telegram te manda un código de 5 números (por SMS o dentro de la misma app): escribilo y listo. Después te pide tu nombre; poné el que quieras.',
+    veras:
+      'Una pantalla con tu lista de chats, vacía o con algún mensaje de bienvenida de Telegram.',
+  },
+  {
+    id: 'botfather',
+    fase: 'telegram',
+    titulo: 'Buscá a BotFather',
+    detalle:
+      'BotFather es el bot oficial de Telegram para crear bots. Tocá la lupa de arriba, escribí BotFather y elegí el que tiene una tilde azul al lado del nombre (es el verdadero; hay imitadores sin tilde). O tocá el botón de abajo, que lo abre directo.',
+    enlace: { texto: 'Abrir @BotFather', href: 'https://t.me/BotFather' },
+    veras: 'Un chat con “BotFather” y un botón “Iniciar” (o “Start”) abajo.',
+  },
+  {
+    id: 'iniciar',
+    fase: 'telegram',
+    titulo: 'Tocá “Iniciar” y pedile un bot nuevo',
     codigo: '/newbot',
     detalle:
-      'BotFather te pregunta dos cosas. Primero el nombre, que ven tus clientes (ej. “Pizzería Don José”). Después el usuario, que tiene que ser único, sin espacios y terminar en “bot” (ej. pizzeriadonjose_bot).',
+      'Tocá “Iniciar” (Start). BotFather te manda una lista de comandos. Después escribí /newbot en el espacio para mensajes y envialo, como si le mandaras un WhatsApp.',
+    veras:
+      'BotFather responde: “Alright, a new bot. How are we going to call it?”. Está en inglés, es normal.',
+  },
+  {
+    id: 'nombre',
+    fase: 'telegram',
+    titulo: 'Elegí el nombre del bot',
+    detalle:
+      'Escribí el nombre que van a ver tus clientes, con espacios y mayúsculas si querés. Por ejemplo, el nombre de tu comercio: “Pizzería Don José”. Lo podés cambiar después.',
+    veras: 'BotFather pregunta por el “username” del bot.',
+  },
+  {
+    id: 'usuario',
+    fase: 'telegram',
+    titulo: 'Elegí el usuario del bot',
+    detalle:
+      'Es como una dirección única: sin espacios ni tildes y tiene que terminar en “bot”. Por ejemplo, pizzeriadonjose_bot. Si ya está usado, BotFather te avisa y probás con otro (por ejemplo agregando tu ciudad).',
+    veras:
+      'Un mensaje que empieza con “Done! Congratulations on your new bot” y tiene una línea larga con números, dos puntos y letras: ese es el token.',
   },
   {
     id: 'token',
     fase: 'telegram',
     titulo: 'Copiá el token',
     detalle:
-      'Al terminar, BotFather te manda un mensaje con el token: una línea larga con dos puntos en el medio, parecida a 123456789:AAH… Copiala entera, sin espacios.',
+      'El token es la línea larga de ese mensaje (algo como 123456789:AAH…, con los dos puntos en el medio). En el celular: mantené apretado el token hasta que se marque y tocá “Copiar”. En la compu: tocá el token una vez y se copia solo, o seleccionalo con el mouse y apretá Ctrl+C. Tiene que quedar completo, sin espacios.',
     aviso:
-      'El token es la llave del bot: quien lo tenga puede controlarlo. No lo compartas ni lo pegues en otro lado que no sea esta pantalla. Si se filtra, mandá /revoke a BotFather para generar uno nuevo.',
+      'El token es la llave del bot: quien lo tenga puede controlarlo. No lo compartas con nadie ni lo pegues en otro lado que no sea esta pantalla. Si se filtra, escribile /revoke a BotFather para generar uno nuevo.',
   },
   {
     id: 'conectar',
     fase: 'counter',
     titulo: 'Pegalo en Counter y conectá',
     detalle:
-      'Pegá el token en el campo de abajo y tocá “Conectar bot”. Counter deja el bot listo solo: no tenés que configurar nada más en Telegram.',
+      'Volvé a esta pantalla, pegá el token en el campo de abajo (en el celular, mantené apretado el campo y tocá “Pegar”; en la compu, Ctrl+V) y tocá “Conectar bot”. Counter deja el bot listo solo: no tenés que configurar nada más en Telegram.',
+    veras: 'Arriba aparece “Conectado” con el nombre de tu bot.',
   },
   {
     id: 'vincular',
@@ -68,7 +111,7 @@ export const PASOS_GUIA: PasoGuia[] = [
     fase: 'equipo',
     titulo: 'Sumá a tu equipo',
     detalle:
-      'Cada persona que quiera usar el bot (cajeros, encargados) entra a Counter con su propio usuario, toca el ícono de Telegram arriba a la derecha y repite el paso anterior. Lo que ve cada uno depende de los permisos de su usuario, no del bot.',
+      'Cada persona que quiera usar el bot (cajeros, encargados) necesita tener Telegram (pasos 1 y 2), entrar a Counter con su propio usuario, tocar el ícono de Telegram arriba a la derecha y repetir el paso anterior. Lo que ve cada uno depende de los permisos de su usuario, no del bot.',
   },
 ];
 
@@ -83,6 +126,21 @@ export const QUE_HACE_EL_BOT = {
 };
 
 export const PREGUNTAS_FRECUENTES: PreguntaGuia[] = [
+  {
+    pregunta: 'No me llega el código de Telegram',
+    respuesta:
+      'Esperá un minuto y revisá los SMS. Si ya tenías Telegram en otro dispositivo, el código llega como mensaje dentro de esa app, en el chat “Telegram”. Si no llega, tocá “Enviar el código por llamada” o volvé a pedirlo.',
+  },
+  {
+    pregunta: 'No encuentro a BotFather en el buscador',
+    respuesta:
+      'Escribí BotFather todo junto y buscá el que tiene la tilde azul. Si no aparece, usá el botón “Abrir @BotFather” de esta guía, que lo abre directo.',
+  },
+  {
+    pregunta: 'BotFather me contesta en inglés',
+    respuesta:
+      'Es normal: Telegram no lo traduce. Lo único que tenés que hacer es responderle lo que te pregunta (el nombre y después el usuario) y copiar el token del mensaje final.',
+  },
   {
     pregunta: 'BotFather dice que el usuario ya está en uso',
     respuesta:
@@ -136,15 +194,6 @@ export interface VideoGuia {
 /**
  * Videos de la guía (en public/assets/guias). Antes de publicar uno: recortar
  * la ventana a la conversación y difuminar tokens, links con credenciales y
- * chats privados.
+ * chats privados. Pendiente: grabación de la creación del bot con BotFather.
  */
-export const VIDEOS_GUIA: VideoGuia[] = [
-  {
-    id: 'pedir',
-    titulo: 'Así se ve tu bot en Telegram',
-    descripcion:
-      'Le escribís al bot, mandás /pedir y te muestra el link de pedidos tal como lo ve un cliente, con el botón “Hacer mi pedido”.',
-    src: '/assets/guias/guia-telegram-pedir.mp4',
-    poster: '/assets/guias/guia-telegram-pedir.jpg',
-  },
-];
+export const VIDEOS_GUIA: VideoGuia[] = [];
