@@ -51,6 +51,13 @@ describe('planBeneficios', () => {
       /150/,
     );
     expect(etiquetaPrecio(undefined)).toBe('—');
+    expect(
+      etiquetaPrecio({
+        precio_mensual: 120000,
+        duracion_meses: 12,
+        disponible: true,
+      }),
+    ).toMatch(/por 12 meses$/);
   });
 
   it('pagable solo si está disponible y tiene precio', () => {
