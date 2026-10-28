@@ -14,6 +14,7 @@ import {
 } from '@/app/lib/canales.api';
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
+import GuiaBotTelegram from '@/app/dashboard/canales/componentes/GuiaBotTelegram';
 import MiTelegramCard from '@/app/dashboard/mi-telegram/componentes/MiTelegramCard';
 import { Copy, ExternalLink, Link2, MessageCircle, Send } from 'lucide-react';
 import Link from 'next/link';
@@ -96,7 +97,7 @@ export default function CanalesPage() {
       {estado && (
         <>
           {tieneLinkPedidos && <LinkPublico estado={estado} onCambio={cargar} />}
-          <Telegram estado={estado} puedeBot={puedeBot} onCambio={cargar} />
+          <Telegram estado={estado} puedeBot={puedeBot} plan={plan} onCambio={cargar} />
           <Seccion icon={MessageCircle} titulo="WhatsApp">
             {estado.whatsapp.habilitado ? (
               <p className="text-sm text-brand-600">
@@ -222,10 +223,12 @@ function LinkPublico({
 function Telegram({
   estado,
   puedeBot,
+  plan,
   onCambio,
 }: {
   estado: CanalesEstado;
   puedeBot: boolean;
+  plan?: { rubroCodigo?: string | null } | null;
   onCambio: () => void;
 }) {
   const [token, setToken] = useState('');
@@ -233,6 +236,8 @@ function Telegram({
   const [aDesconectar, setADesconectar] = useState<CanalTelegram | null>(null);
   const [desconectando, setDesconectando] = useState(false);
   const bot = estado.telegram.find((t) => t.status === 'active') || null;
+  // Las consultas del negocio por chat existen sólo para gastronomía (harness interno).
+  const consultas = plan?.rubroCodigo === 'gastronomia';
 
   if (!puedeBot) {
     return (
@@ -286,26 +291,7 @@ function Telegram({
     <Seccion icon={Send} titulo="Bot de Telegram">
       {!bot ? (
         <div className="space-y-3 text-sm text-brand-600">
-          <ol className="list-decimal space-y-1 pl-5">
-            <li>
-              En Telegram abrí{' '}
-              <a
-                href="https://t.me/BotFather"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-accent-500 underline"
-              >
-                @BotFather
-              </a>{' '}
-              y mandale{' '}
-              <code className="rounded bg-brand-50 px-1">/newbot</code>.
-            </li>
-            <li>
-              Elegí el nombre (ej. “Pizzería Don José”) y un usuario que termine
-              en “bot”.
-            </li>
-            <li>Copiá el token que te da y pegalo acá.</li>
-          </ol>
+          <GuiaBotTelegram tieneBot={false} mostrarConsultas={consultas} />
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
               type="text"
@@ -347,6 +333,7 @@ function Telegram({
             pedido”.
           </p>
           <MiTelegramCard compacto />
+          <GuiaBotTelegram tieneBot mostrarConsultas={consultas} />
           <Vinculados vinculados={bot.vinculados ?? []} onCambio={onCambio} />
           <button
             type="button"

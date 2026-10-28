@@ -1,0 +1,90 @@
+import { describe, expect, it } from 'vitest';
+import {
+  MINUTOS_LINK_VINCULACION,
+  PASOS_GUIA,
+  pasosPendientes,
+  PREGUNTAS_FRECUENTES,
+} from '@/app/lib/guiaTelegram';
+
+describe('guía del bot de Telegram', () => {
+  it('el link de vinculación dura lo mismo que en el backend (600 s)', () => {
+    expect(MINUTOS_LINK_VINCULACION).toBe(10);
+    const texto = JSON.stringify([PASOS_GUIA, PREGUNTAS_FRECUENTES]);
+    expect(texto).toContain('10 minutos');
+  });
+
+  it('el orden es el del flujo real: BotFather → /newbot → token → conectar → vincular → equipo', () => {
+    expect(PASOS_GUIA.map((p) => p.id)).toEqual([
+      'botfather',
+      'newbot',
+      'token',
+      'conectar',
+      'vincular',
+      'equipo',
+    ]);
+  });
+
+  it('ids únicos y todos con título y detalle', () => {
+    const ids = PASOS_GUIA.map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const p of PASOS_GUIA) {
+      expect(p.titulo.length).toBeGreaterThan(3);
+      expect(p.detalle.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('advierte que el token es secreto y cómo revocarlo', () => {
+    const token = PASOS_GUIA.find((p) => p.id === 'token')!;
+    expect(token.aviso).toMatch(/no lo compartas/i);
+    expect(token.aviso).toContain('/revoke');
+  });
+
+  it('nunca incluye un token de ejemplo con formato válido (no se puede copiar uno real por error)', () => {
+    const texto = JSON.stringify([PASOS_GUIA, PREGUNTAS_FRECUENTES]);
+    expect(texto).not.toMatch(/\d{8,}:[A-Za-z0-9_-]{30,}/);
+  });
+
+  it('con el bot ya conectado quedan sólo los pasos de vincular y de equipo', () => {
+    expect(pasosPendientes(true).map((p) => p.id)).toEqual([
+      'vincular',
+      'equipo',
+    ]);
+    expect(pasosPendientes(false)).toHaveLength(PASOS_GUIA.length);
+  });
+
+  it('cada problema común tiene respuesta', () => {
+    expect(PREGUNTAS_FRECUENTES.length).toBeGreaterThanOrEqual(6);
+    for (const f of PREGUNTAS_FRECUENTES)
+      expect(f.respuesta.length).toBeGreaterThan(30);
+  });
+});
+
+describe('GuiaBotTelegram (render)', () => {
+  it('sin bot: abierta, con los 6 pasos, el link a BotFather y las FAQ', async () => {
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: Guia } = await import(
+      '@/app/dashboard/canales/componentes/GuiaBotTelegram'
+    );
+    const html = renderToStaticMarkup(
+      createElement(Guia, { tieneBot: false, mostrarConsultas: true }),
+    );
+    expect(html).toContain('https://t.me/BotFather');
+    expect(html).toContain('/newbot');
+    expect(html).toContain('/revoke');
+    expect(html).toContain('¿cuánto vendí hoy?');
+    expect(html.match(/<li class="flex gap-3">/g)).toHaveLength(6);
+    expect(html).toContain('Preguntas frecuentes');
+  });
+
+  it('con bot: cerrada (sólo el encabezado) y sin las consultas si no es gastronomía', async () => {
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: Guia } = await import(
+      '@/app/dashboard/canales/componentes/GuiaBotTelegram'
+    );
+    const html = renderToStaticMarkup(createElement(Guia, { tieneBot: true }));
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('Preguntas frecuentes');
+  });
+});
