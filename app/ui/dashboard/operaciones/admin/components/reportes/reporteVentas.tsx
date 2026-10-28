@@ -9,6 +9,7 @@ import  apiClient  from '@/app/lib/apiClient';
 import { addDays, format, subDays } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ventasPorDia } from '@/app/lib/ventasGrafico';
 import * as XLSX from 'xlsx';
 
 export default function ReporteVentasPage() {
@@ -226,8 +227,8 @@ export default function ReporteVentasPage() {
 
       {ventas?.length > 0 ? (
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={ventas}>
-            <XAxis dataKey={(entry) => format(new Date(entry.fecha), 'MM-dd')} />
+          <BarChart data={ventasPorDia(ventas, (d) => format(d, 'yyyy-MM-dd'))}>
+            <XAxis dataKey="etiqueta" />
             <YAxis />
             <Tooltip formatter={(value) => `$${Number(value).toFixed(2)}`} />
             <Bar dataKey="total_vendido" fill="#3b82f6" />
