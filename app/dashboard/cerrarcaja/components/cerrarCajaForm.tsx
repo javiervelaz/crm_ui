@@ -2,7 +2,7 @@
 
 import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
-import { gatosMontoTotalDiario } from "@/app/lib/gasto";
+import { gatosMontoTotalDiario, getGastosEfectivoDiario } from "@/app/lib/gasto";
 import {
   cerrarCaja,
   checkAperturaCaja,
@@ -13,6 +13,7 @@ import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getCurrentDate } from "@/app/lib/utils";
+import { diferenciaEfectivo, efectivoEsperado } from "@/app/lib/cierreCaja";
 
 interface DecodedToken {
   userId: number;
@@ -20,7 +21,8 @@ interface DecodedToken {
 }
 
 const CerrarCajaForm = () => {
-  const [montoFinal, setMontoFinal] = useState(0); // ventas del día
+  const [montoFinal, setMontoFinal] = useState(0); // ventas del día (todos los medios de pago)
+  const [ventasEfectivo, setVentasEfectivo] = useState(0); // la parte cobrada en efectivo
   const [gastosAdministrativos, setGastosAdministrativos] = useState(0); // egreso manual
   const [otrosIngresos, setOtrosIngresos] = useState(0); // ingreso manual
   const [mensaje, setMensaje] = useState("");
@@ -33,6 +35,7 @@ const CerrarCajaForm = () => {
   const [montoCajaInicial, setMontoCajaInicial] = useState(0);
   const [ingresosTotales, setIngresosTotales] = useState(0);
   const [otrosEgresos, setOtrosEgresos] = useState(0);
+  const [gastosEfectivo, setGastosEfectivo] = useState(0); // la parte de las salidas pagada en efectivo
   const [montoContadoCaja, setMontoContadoCaja] = useState<string>(""); // efectivo contado
 
   const router = useRouter();
@@ -66,9 +69,11 @@ const CerrarCajaForm = () => {
           getClienteId(),
         );
         setMontoFinal(Number(montoPedidos.sum) || 0);
+        setVentasEfectivo(Number(montoPedidos.efectivo) || 0);
       } catch (error) {
         logError("Error al obtener pedidos del día:", error);
         setMontoFinal(0);
+        setVentasEfectivo(0);
       }
     };
 
@@ -117,6 +122,15 @@ const CerrarCajaForm = () => {
       }
     };
 
+    const obtenerGastosEfectivo = async () => {
+      try {
+        setGastosEfectivo(await getGastosEfectivoDiario(registroDiario));
+      } catch (error) {
+        logError("Error al obtener gastos en efectivo", error);
+        setGastosEfectivo(0);
+      }
+    };
+
     const obtenerCajaInicial = async () => {
       try {
         const monto = await getCajaInicial(registroDiario, getClienteId());
@@ -132,6 +146,7 @@ const CerrarCajaForm = () => {
     obtenerMontoGastoSueldos();
     obtenerMontoGastoFijo();
     obtenerMontoGastoVariable();
+    obtenerGastosEfectivo();
     obtenerCajaInicial();
   }, [registroDiario]);
 
@@ -176,10 +191,15 @@ const CerrarCajaForm = () => {
   };
 
   const montoFinalTeorico = Number(calcularMontoFinal());
-  const diferenciaCaja =
-    montoContadoCaja !== ""
-      ? (Number(montoContadoCaja) - montoFinalTeorico).toFixed(2)
-      : null;
+  // El cajón sólo tiene el efectivo: las ventas con tarjeta/transferencia no cuentan.
+  const efectivoEsperadoCaja = efectivoEsperado({
+    cajaInicial: montoCajaInicial,
+    ventasEfectivo,
+    otrosIngresos,
+    egresos: gastosEfectivo, // sólo lo pagado en efectivo sale del cajón
+    gastosAdministrativos,
+  });
+  const diferenciaCaja = diferenciaEfectivo(montoContadoCaja, efectivoEsperadoCaja);
 
   const handleRedirect = () => {
     router.push("/dashboard/operaciones/empleado");
@@ -199,16 +219,15 @@ const CerrarCajaForm = () => {
           usuario_cierre_id: decoded.userId,
           sucursal_id: decoded.sucursal,
           cliente_id: getClienteId(),
+          // el servidor recalcula la diferencia con sus propios totales
+          efectivo_contado:
+            montoContadoCaja.trim() === "" ? null : Number(montoContadoCaja),
           detalles: {
             gastos_administrativos: parseFloat(
               gastosAdministrativos.toFixed(2),
             ),
             otros_ingresos: parseFloat(otrosIngresos.toFixed(2)),
             otros_egresos: parseFloat(otrosEgresos.toFixed(2)),
-            // si después querés guardar efectivo contado / diferencia,
-            // podés agregar estos campos y ajustamos backend
-            // efectivo_contado: montoContadoCaja ? Number(montoContadoCaja) : null,
-            // diferencia_caja: diferenciaCaja ? Number(diferenciaCaja) : null,
           },
         };
 
@@ -372,6 +391,11 @@ const CerrarCajaForm = () => {
                 ${(otrosEgresos + gastosAdministrativos).toFixed(2)}
               </span>
             </div>
+            {otrosEgresos - gastosEfectivo > 0.004 && (
+              <p className="mt-1 text-[11px] text-slate-500">
+                ${(otrosEgresos - gastosEfectivo).toFixed(2)} se pagaron con otro medio y no salen del cajón.
+              </p>
+            )}
           </div>
         </div>
 
@@ -383,11 +407,23 @@ const CerrarCajaForm = () => {
 
           <div className="mb-3 space-y-1 text-xs">
             <label className="block text-slate-600">
-              Monto final teórico (según sistema)
+              Total del día según sistema (incluye cobros digitales)
             </label>
             <input
               type="number"
               value={montoFinalTeorico.toFixed(2)}
+              readOnly
+              className="w-full rounded border border-slate-200 px-3 py-2 text-sm bg-slate-50"
+            />
+          </div>
+
+          <div className="mb-3 space-y-1 text-xs">
+            <label className="block text-slate-600">
+              Efectivo esperado en caja (sin tarjeta ni transferencias)
+            </label>
+            <input
+              type="number"
+              value={efectivoEsperadoCaja.toFixed(2)}
               readOnly
               className="w-full rounded border border-slate-200 px-3 py-2 text-sm bg-slate-50"
             />
@@ -409,14 +445,14 @@ const CerrarCajaForm = () => {
           {diferenciaCaja !== null && (
             <p
               className={`mt-1 text-xs font-medium ${
-                Number(diferenciaCaja) === 0
+                diferenciaCaja === 0
                   ? "text-green-600"
                   : "text-amber-600"
               }`}
             >
-              {Number(diferenciaCaja) === 0
+              {diferenciaCaja === 0
                 ? "Sin diferencias de caja."
-                : `Diferencia de caja: $${diferenciaCaja}`}
+                : `Diferencia de caja: $${diferenciaCaja.toFixed(2)}`}
             </p>
           )}
         </div>
