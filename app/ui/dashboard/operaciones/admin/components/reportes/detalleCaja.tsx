@@ -18,7 +18,8 @@ interface DetalleRegistro {
     ventas_digital: number;
     retiros_total: number;
     gastos_total: number;
-    diferencias_caja: number;
+    /** null: la caja se cerró sin contar el efectivo (o es anterior a este dato) */
+    diferencias_caja: number | null;
     caja_cerrada: boolean;
   };
   entradas: Array<{
@@ -73,6 +74,12 @@ export default function DetalleCajaPage() {
       currency: 'ARS'
     }).format(amount);
   };
+
+  // null = caja cerrada sin contar el efectivo (o anterior a que se guardara la diferencia)
+  const difInfo = (d: number | null | undefined) =>
+    d === null || d === undefined
+      ? { texto: 'Sin contar', neutro: true }
+      : { texto: formatCurrency(d), neutro: d === 0 };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-AR', {
@@ -141,13 +148,13 @@ export default function DetalleCajaPage() {
         </div>
         
         <div className={`p-4 rounded-lg ${
-          detalle.registro.diferencias_caja === 0 ? 'bg-gray-50' : 'bg-yellow-50'
+          difInfo(detalle.registro.diferencias_caja).neutro ? 'bg-gray-50' : 'bg-yellow-50'
         }`}>
           <div className="font-semibold">Diferencias</div>
           <div className={`text-2xl ${
-            detalle.registro.diferencias_caja === 0 ? 'text-gray-600' : 'text-yellow-600'
+            difInfo(detalle.registro.diferencias_caja).neutro ? 'text-gray-600' : 'text-yellow-600'
           }`}>
-            {formatCurrency(detalle.registro.diferencias_caja)}
+            {difInfo(detalle.registro.diferencias_caja).texto}
           </div>
         </div>
       </div>
@@ -268,9 +275,9 @@ export default function DetalleCajaPage() {
             <div className="text-right">
               <div className="text-sm text-gray-600">Diferencia</div>
               <div className={`text-lg font-semibold ${
-                detalle.registro.diferencias_caja === 0 ? 'text-gray-600' : 'text-yellow-600'
+                difInfo(detalle.registro.diferencias_caja).neutro ? 'text-gray-600' : 'text-yellow-600'
               }`}>
-                {formatCurrency(detalle.registro.diferencias_caja)}
+                {difInfo(detalle.registro.diferencias_caja).texto}
               </div>
             </div>
           </div>

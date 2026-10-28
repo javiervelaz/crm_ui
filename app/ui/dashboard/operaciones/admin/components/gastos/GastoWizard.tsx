@@ -2,6 +2,8 @@
 
 import { logError } from '@/app/lib/logger';
 import { getClienteId } from "@/app/lib/authService";
+import { medioDeFila, MedioPagoOpcion } from '@/app/lib/medioPagoGasto';
+import { getMedioPagoList } from '@/app/lib/mediopago.api';
 import { crearGasto, getGastoCategorias, getGastosPorRegistro, eliminarGasto, getRegistrosDiarios } from '@/app/lib/gasto';
 import { Trash2 } from 'lucide-react';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
@@ -44,6 +46,7 @@ export default function GastoWizard() {
   const [categoriasCompletas, setCategoriasCompletas] = useState<any[]>([]);
   const [categoriasFiltradas, setCategoriasFiltradas] = useState<any[]>([]);
   const [gastosExistentes, setGastosExistentes] = useState<any[]>([]);
+  const [medios, setMedios] = useState<MedioPagoOpcion[]>([]);
   const { cajaAbierta, registroDiarioId } = useCajaAbierta();
   const router = useRouter();
 
@@ -89,9 +92,9 @@ export default function GastoWizard() {
   const [histLoading, setHistLoading] = useState(false);
 
   const INITIAL_FORM = {
-    fijos:       [] as { servicio: string; monto: number }[],
-    sueldos:     [] as { empleado: string; monto: number }[],
-    variables:   [] as { concepto: string; monto: number }[],
+    fijos:       [] as { servicio: string; monto: number; medio_pago_id?: number }[],
+    sueldos:     [] as { empleado: string; monto: number; medio_pago_id?: number }[],
+    variables:   [] as { concepto: string; monto: number; medio_pago_id?: number }[],
     cajaInicial: { inicio: 0, ventas: 0 },
   };
 
@@ -108,6 +111,7 @@ export default function GastoWizard() {
           conCaja ? pedidoMontoTotalDiario(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
           conCaja ? getCajaInicial(registroDiarioId, getClienteId()) : Promise.resolve({ sum: 0 }),
         ]);
+        getMedioPagoList().then((m: MedioPagoOpcion[]) => setMedios(Array.isArray(m) ? m : []));
         setCategoriasCompletas(categoriasData);
         setGastosExistentes(gastosData);
         setForm(prev => ({
@@ -182,18 +186,21 @@ export default function GastoWizard() {
           descripcion: g.servicio, monto: g.monto,
           categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
           usuario_id, cliente_id: getClienteId(),
+          medio_pago_id: medioDeFila(g.medio_pago_id, medios) ?? null,
         }));
       } else if (tipo === 'sueldos') {
         payload = form.sueldos.filter((g: any) => g.empleado && g.monto).map((g: any) => ({
           descripcion: g.empleado, monto: g.monto,
           categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
           usuario_id, cliente_id: getClienteId(),
+          medio_pago_id: medioDeFila(g.medio_pago_id, medios) ?? null,
         }));
       } else if (tipo === 'variables') {
         payload = form.variables.filter((g: any) => g.concepto && g.monto).map((g: any) => ({
           descripcion: g.concepto, monto: g.monto,
           categoria_salida_id: categoriaId, registro_diario_id: sinCaja ? null : registroDiarioId,
           usuario_id, cliente_id: getClienteId(),
+          medio_pago_id: medioDeFila(g.medio_pago_id, medios) ?? null,
         }));
       }
 
@@ -300,6 +307,11 @@ export default function GastoWizard() {
                                 {g.categoria_nombre}
                               </span>
                             )}
+                            {g.medio_pago_codigo && g.medio_pago_codigo !== 'EFE' && (
+                              <span className="ml-1.5 rounded-full bg-accent-400/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600">
+                                {g.medio_pago}
+                              </span>
+                            )}
                           </span>
                           <span className="shrink-0 font-bold text-brand-800">${g.monto}</span>
                         </li>
@@ -359,6 +371,7 @@ export default function GastoWizard() {
             data={form.fijos}
             onUpdate={(val) => setForm(p => ({ ...p, fijos: val }))}
             categorias={categoriasFiltradas}
+            medios={medios}
           />
         )}
         {activeTab === "sueldos"     && (
@@ -366,6 +379,7 @@ export default function GastoWizard() {
             data={form.sueldos}
             onUpdate={(val) => setForm(p => ({ ...p, sueldos: val }))}
             categorias={categoriasFiltradas}
+            medios={medios}
           />
         )}
         {activeTab === "variables"   && (
@@ -373,6 +387,7 @@ export default function GastoWizard() {
             data={form.variables}
             onUpdate={(val) => setForm(p => ({ ...p, variables: val }))}
             categorias={categoriasFiltradas}
+            medios={medios}
           />
         )}
         {activeTab === "resumen"     && (
