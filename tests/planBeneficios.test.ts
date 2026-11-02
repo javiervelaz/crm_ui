@@ -32,6 +32,36 @@ describe('planBeneficios', () => {
     ).toEqual(['Bot de Telegram para vos y tu equipo', 'Reportes']);
   });
 
+  it('inventario: BASIC con tope y sin recetas; PREMIUM sin tope y con recetas; FREE sin inventario', () => {
+    expect(
+      beneficiosDe({
+        canUseInventario: true,
+        canUseRecetas: false,
+        maxStockItems: 50,
+      }),
+    ).toEqual([
+      'Inventario: stock, compras y faltantes (hasta 50 ítems)',
+      'Lo que vendés tal cual (gaseosas, bebidas) descuenta stock solo',
+    ]);
+    expect(
+      beneficiosDe({
+        canUseInventario: true,
+        canUseRecetas: true,
+        maxStockItems: null,
+      }),
+    ).toEqual([
+      'Inventario: stock, compras y faltantes sin límite',
+      'Recetas: cada venta descuenta sus insumos',
+    ]);
+    expect(
+      beneficiosDe({
+        canUseInventario: false,
+        canUseRecetas: false,
+        canUseReports: true,
+      }),
+    ).toEqual(['Reportes']);
+  });
+
   it('sin features → vacío (el caller usa su texto)', () => {
     expect(beneficiosDe(undefined)).toEqual([]);
     expect(beneficiosDe({})).toEqual([]);
