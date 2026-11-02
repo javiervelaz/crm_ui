@@ -157,3 +157,39 @@ export function validarCantidad(
     return { ok: false, error: 'Tiene que ser mayor a cero' };
   return { ok: true, valor: n };
 }
+
+/** "Mozzarella 250 g · Masa 300 g" para la lista de productos. */
+export function resumenReceta(
+  receta: { nombre: string; unidad: UnidadItem; cantidad_por_unidad: number }[],
+): string {
+  return receta
+    .map(
+      (l) => `${l.nombre} ${formatCantidad(l.cantidad_por_unidad, l.unidad)}`,
+    )
+    .join(' · ');
+}
+
+/**
+ * Unidad y número con los que se muestra una línea de receta para editarla:
+ * 0,25 kg se edita como 250 g.
+ */
+export function cantidadParaEditar(
+  cantidad: number,
+  unidad: UnidadItem,
+): { valor: string; unidad: UnidadIngreso } {
+  if ((unidad === 'kg' || unidad === 'l') && cantidad > 0 && cantidad < 1) {
+    const chica = Math.round(cantidad * 1000 * 10) / 10;
+    return {
+      valor: String(chica).replace('.', ','),
+      unidad: unidad === 'kg' ? 'g' : 'ml',
+    };
+  }
+  return { valor: String(cantidad).replace('.', ','), unidad };
+}
+
+/** Un producto terminado sólo puede vincularse 1:1 con un ítem tipo producto medido en unidades. */
+export const esVinculable = (item: {
+  tipo: TipoItem;
+  unidad: UnidadItem;
+  activo?: boolean;
+}) => item.tipo === 'producto' && item.unidad === 'u' && item.activo !== false;

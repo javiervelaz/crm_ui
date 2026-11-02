@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cantidadParaEditar,
+  esVinculable,
   formatCantidad,
+  resumenReceta,
   formatDelta,
   ordenarPorUrgencia,
   parseNumero,
@@ -91,5 +94,40 @@ describe('inventario — módulo', () => {
   it('sin el módulo no entra por URL', () => {
     expect(canAccess('/dashboard/inventario', ['gasto'])).toBe(false);
     expect(canAccess('/dashboard/inventario', ['inventario'])).toBe(true);
+  });
+});
+
+describe('inventario — recetas', () => {
+  it('resumen legible, con gramos para menos de 1 kg', () => {
+    expect(
+      resumenReceta([
+        { nombre: 'Mozzarella', unidad: 'kg', cantidad_por_unidad: 0.25 },
+        { nombre: 'Gaseosa', unidad: 'u', cantidad_por_unidad: 1 },
+      ]),
+    ).toBe('Mozzarella 250 g · Gaseosa 1 u');
+  });
+
+  it('0,25 kg se edita como 250 g; 1,5 kg queda en kg', () => {
+    expect(cantidadParaEditar(0.25, 'kg')).toEqual({
+      valor: '250',
+      unidad: 'g',
+    });
+    expect(cantidadParaEditar(1.5, 'kg')).toEqual({
+      valor: '1,5',
+      unidad: 'kg',
+    });
+    expect(cantidadParaEditar(0.05, 'l')).toEqual({
+      valor: '50',
+      unidad: 'ml',
+    });
+  });
+
+  it('sólo productos terminados en unidades se vinculan 1:1', () => {
+    expect(esVinculable({ tipo: 'producto', unidad: 'u' })).toBe(true);
+    expect(esVinculable({ tipo: 'insumo', unidad: 'u' })).toBe(false);
+    expect(esVinculable({ tipo: 'producto', unidad: 'l' })).toBe(false);
+    expect(esVinculable({ tipo: 'producto', unidad: 'u', activo: false })).toBe(
+      false,
+    );
   });
 });
