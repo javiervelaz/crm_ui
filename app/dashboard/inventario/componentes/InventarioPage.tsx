@@ -29,8 +29,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import ItemDialog from './ItemDialog';
 import MovimientoDialog, { TipoAccion } from './MovimientoDialog';
 import MovimientosLista from './MovimientosLista';
+import RecetasLista from './RecetasLista';
+import { useClientePlan } from '@/app/lib/useClientePlan';
 
-type Pestana = 'stock' | 'movimientos';
+type Pestana = 'stock' | 'movimientos' | 'recetas';
+
+const PESTANAS: { key: Pestana; label: string }[] = [
+  { key: 'stock', label: 'Stock' },
+  { key: 'recetas', label: 'Recetas' },
+  { key: 'movimientos', label: 'Movimientos' },
+];
 
 type Modal =
   | { tipo: 'movimiento'; accion: TipoAccion; item: StockItem | null }
@@ -122,6 +130,8 @@ export default function InventarioPage() {
   const [soloBajos, setSoloBajos] = useState(false);
   const [modal, setModal] = useState<Modal>(null);
   const [versionMovs, setVersionMovs] = useState(0);
+  const { plan } = useClientePlan();
+  const puedeRecetas = plan?.features?.canUseRecetas === true;
 
   const cargar = useCallback(async () => {
     try {
@@ -202,7 +212,7 @@ export default function InventarioPage() {
         className="mb-4 flex gap-1 rounded-xl bg-brand-50 p-1"
         role="tablist"
       >
-        {(['stock', 'movimientos'] as Pestana[]).map((p) => (
+        {PESTANAS.map(({ key: p, label }) => (
           <button
             key={p}
             role="tab"
@@ -210,7 +220,7 @@ export default function InventarioPage() {
             onClick={() => setPestana(p)}
             className={`min-h-[40px] flex-1 rounded-lg text-sm font-medium ${pestana === p ? 'bg-white text-brand-800 shadow-card' : 'text-brand-300'}`}
           >
-            {p === 'stock' ? 'Stock' : 'Movimientos'}
+            {label}
           </button>
         ))}
       </div>
@@ -281,6 +291,12 @@ export default function InventarioPage() {
             )}
           </>
         )
+      ) : pestana === 'recetas' ? (
+        <RecetasLista
+          items={items}
+          puedeRecetas={puedeRecetas}
+          onCambio={() => setVersionMovs((v) => v + 1)}
+        />
       ) : (
         <MovimientosLista version={versionMovs} />
       )}

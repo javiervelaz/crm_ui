@@ -114,6 +114,45 @@ export const getMovimientos = async (
 export const getAlertas = async () =>
   (await apiClient.get<StockItem[]>('/inventario/alertas')).data;
 
+// ─── Recetas (Fase 2) ─────────────────────────────────────────────────────
+
+export interface LineaReceta {
+  stock_item_id: number;
+  nombre: string;
+  tipo: TipoItem;
+  unidad: UnidadItem;
+  activo: boolean;
+  /** En la unidad del ítem (kg, l, u) por UNA unidad vendida del producto. */
+  cantidad_por_unidad: number;
+}
+
+export interface ProductoConReceta {
+  id: number;
+  nombre: string;
+  permite_mitad: boolean | null;
+  receta: LineaReceta[];
+}
+
+export interface LineaRecetaInput {
+  stock_item_id: number;
+  cantidad: number;
+  unidad?: UnidadIngreso;
+}
+
+export const getProductosConReceta = async () =>
+  (await apiClient.get<ProductoConReceta[]>('/inventario/recetas')).data;
+
+export const guardarReceta = async (
+  productoId: number,
+  lineas: LineaRecetaInput[],
+) =>
+  (
+    await apiClient.put<{
+      producto: { id: number; nombre: string };
+      receta: LineaReceta[];
+    }>(`/inventario/recetas/${productoId}`, { lineas })
+  ).data;
+
 /** Mensaje del backend, o el genérico. Los 403 de plan ya los mostró el interceptor. */
 export function mensajeError(
   err: any,
