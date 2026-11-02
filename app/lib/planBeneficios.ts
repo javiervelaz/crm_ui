@@ -9,6 +9,9 @@ export interface PlanFeatures {
   canUsePedidosOnline?: boolean;
   maxProductos?: number | null;
   maxPedidosMensuales?: number | null;
+  canUseInventario?: boolean;
+  canUseRecetas?: boolean;
+  maxStockItems?: number | null;
   [key: string]: unknown;
 }
 
@@ -40,6 +43,19 @@ export function beneficiosDe(features?: PlanFeatures | null): string[] {
   if (features.canUseBot) out.push('Bot de Telegram para vos y tu equipo');
   if (features.canUseWhatsappBot) out.push('Bot de WhatsApp');
   if (features.canUseReports) out.push('Reportes');
+  if (features.canUseInventario) {
+    const max = features.maxStockItems;
+    out.push(
+      max
+        ? `Inventario: stock, compras y faltantes (hasta ${max} ítems)`
+        : 'Inventario: stock, compras y faltantes sin límite',
+    );
+    out.push(
+      features.canUseRecetas
+        ? 'Recetas: cada venta descuenta sus insumos'
+        : 'Lo que vendés tal cual (gaseosas, bebidas) descuenta stock solo',
+    );
+  }
   return out;
 }
 
