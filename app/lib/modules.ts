@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Boxes,
   CalendarDays,
   CreditCard,
   GraduationCap,
@@ -64,6 +65,16 @@ export const MODULES = {
     description: 'Catálogo, precios y stock de productos',
     icon: Package, // antes: Pizza — herencia de pizzeria-ui
     href: '/dashboard/productos',
+    prefix: true,
+  },
+  // Stock de insumos y productos (crm_api 025): gastronomía, gateado por plan
+  // (canUseInventario) en app/dashboard/inventario/layout.tsx.
+  inventario: {
+    order: 2.5,
+    label: 'Inventario',
+    description: 'Stock de insumos, compras y faltantes',
+    icon: Boxes,
+    href: '/dashboard/inventario',
     prefix: true,
   },
   roles: {

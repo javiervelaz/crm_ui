@@ -2,6 +2,7 @@
 
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import ResumenCard from './components/ResumenCard';
+import AlertaStockCard from '@/app/dashboard/inventario/componentes/AlertaStockCard';
 
 const ventasData = [
   { label: 'Efectivo', value: 3500 },
@@ -48,6 +49,9 @@ const Page = () => {
       <div className="min-h-screen bg-gray-100">
         <div className="flex">
           <main className="flex-1 p-4">
+            <div className="mb-4 empty:hidden">
+              <AlertaStockCard />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ResumenCard
                 title="Resumen de Ventas"
