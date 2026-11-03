@@ -1,6 +1,7 @@
 'use client';
 
 import { emitPlanLimite } from '@/app/lib/planLimiteEvents';
+import { refrescarSesion } from '@/app/lib/sesion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -20,9 +21,12 @@ function esErrorDePlan(msg: string): boolean {
   return m.includes('tu plan actual') || (m.includes('plan') && m.includes('no tiene acceso'));
 }
 
+/** 403 por módulo o permiso: puede ser un token viejo (el dueño cambió el rol). */
+const CODIGOS_PERMISO = ['SIN_MODULO', 'SIN_PERMISO'];
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (!error.response) {
       toast.error('Error de conexión con el servidor.');
       return Promise.reject(error);
@@ -35,6 +39,14 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('token');
       window.location.href = '/';
       return Promise.reject(error);
+    }
+
+    // Token con permisos viejos: se pide uno nuevo y, si cambió algo, se
+    // reintenta UNA vez (el interceptor de request pone el token nuevo).
+    if (status === 403 && CODIGOS_PERMISO.includes(data?.code) && error.config && !error.config._reintentoSesion) {
+      if (await refrescarSesion(15_000)) {
+        return apiClient({ ...error.config, _reintentoSesion: true } as typeof error.config);
+      }
     }
 
     if (status === 403) {

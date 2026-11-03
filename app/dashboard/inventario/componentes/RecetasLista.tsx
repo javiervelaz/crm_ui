@@ -17,10 +17,13 @@ import RecetaDialog from './RecetaDialog';
 export default function RecetasLista({
   items,
   puedeRecetas,
+  puedeEditar = true,
   onCambio,
 }: {
   items: StockItem[];
   puedeRecetas: boolean;
+  /** inventario.update: sin él la lista se ve pero no se edita. */
+  puedeEditar?: boolean;
   onCambio: () => void;
 }) {
   const [productos, setProductos] = useState<ProductoConReceta[]>([]);
@@ -65,16 +68,19 @@ export default function RecetasLista({
       <p className="mb-3 text-sm text-brand-300">
         {conReceta} de {productos.length} productos descuentan stock al
         venderse.{' '}
-        {!puedeRecetas &&
-          'En tu plan podés vincular productos que vendés tal cual.'}
+        {!puedeEditar
+          ? 'Las recetas las arma quien administra el inventario.'
+          : !puedeRecetas &&
+            'En tu plan podés vincular productos que vendés tal cual.'}
       </p>
       <ul className="divide-y divide-brand-50 rounded-xl border border-brand-100 bg-white shadow-card">
         {productos.map((p) => (
           <li key={p.id}>
             <button
               type="button"
-              onClick={() => setEditando(p)}
-              className="flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left hover:bg-brand-50"
+              onClick={() => puedeEditar && setEditando(p)}
+              disabled={!puedeEditar}
+              className="flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left hover:bg-brand-50 disabled:cursor-default disabled:hover:bg-transparent"
             >
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium text-brand-800">
@@ -88,7 +94,9 @@ export default function RecetasLista({
                     : 'Sin receta: no descuenta stock'}
                 </span>
               </span>
-              <ChevronRight size={18} className="shrink-0 text-brand-300" />
+              {puedeEditar && (
+                <ChevronRight size={18} className="shrink-0 text-brand-300" />
+              )}
             </button>
           </li>
         ))}
