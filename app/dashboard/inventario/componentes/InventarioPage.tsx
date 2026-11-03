@@ -31,6 +31,7 @@ import MovimientoDialog, { TipoAccion } from './MovimientoDialog';
 import MovimientosLista from './MovimientosLista';
 import RecetasLista from './RecetasLista';
 import { useClientePlan } from '@/app/lib/useClientePlan';
+import { usePermisos } from '@/app/lib/permisos';
 
 type Pestana = 'stock' | 'movimientos' | 'recetas';
 
@@ -132,6 +133,11 @@ export default function InventarioPage() {
   const [versionMovs, setVersionMovs] = useState(0);
   const { plan } = useClientePlan();
   const puedeRecetas = plan?.features?.canUseRecetas === true;
+  // Un empleado carga compras, mermas y conteos; editar ítems, darlos de baja
+  // y armar recetas queda para quien tenga esos permisos (la API igual los pide).
+  const { puede } = usePermisos();
+  const puedeEditar = puede('inventario.update');
+  const puedeBorrar = puede('inventario.delete');
 
   const cargar = useCallback(async () => {
     try {
@@ -295,6 +301,7 @@ export default function InventarioPage() {
         <RecetasLista
           items={items}
           puedeRecetas={puedeRecetas}
+          puedeEditar={puedeEditar}
           onCambio={() => setVersionMovs((v) => v + 1)}
         />
       ) : (
@@ -384,16 +391,24 @@ export default function InventarioPage() {
                   'Registrar merma',
                   () => abrir('merma', modal.item),
                 ],
-                [
-                  Pencil,
-                  'Editar',
-                  () => setModal({ tipo: 'item', item: modal.item }),
-                ],
-                [
-                  Trash2,
-                  'Dar de baja',
-                  () => setModal({ tipo: 'baja', item: modal.item }),
-                ],
+                ...(puedeEditar
+                  ? ([
+                      [
+                        Pencil,
+                        'Editar',
+                        () => setModal({ tipo: 'item', item: modal.item }),
+                      ],
+                    ] as const)
+                  : []),
+                ...(puedeBorrar
+                  ? ([
+                      [
+                        Trash2,
+                        'Dar de baja',
+                        () => setModal({ tipo: 'baja', item: modal.item }),
+                      ],
+                    ] as const)
+                  : []),
               ] as const
             ).map(([Icon, label, fn]) => (
               <button

@@ -132,7 +132,9 @@ export default function RolPermisosForm({ rolId }: { rolId: number }) {
           permisos: m.permisos?.filter((p) => p.selected).map((p) => p.id) || []
         }));
       await saveRolModulosPermisos(Number(rolId), payload);
-      notifySuccess('Permisos del rol actualizados correctamente');
+      // Los permisos viajan en la sesión: los usuarios del rol los reciben
+      // al volver a la app o en los próximos minutos (app/lib/sesion.ts).
+      notifySuccess('Permisos guardados. Quienes tienen este rol los ven en unos minutos, o al recargar la página.');
     } catch (error: any) {
       logError('Error guardando permisos del rol:', error);
       const msg = error?.message || 'Error al guardar permisos';

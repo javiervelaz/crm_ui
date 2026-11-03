@@ -2,7 +2,9 @@
 
 import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
 import SinAcceso from '@/components/ui/SinAcceso';
+import { iniciarRefrescoSesion } from '@/app/lib/sesion';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
+import { useEffect } from 'react';
 
 /**
  * Guard único del dashboard (tarea 2.2).
@@ -16,6 +18,9 @@ import { useAuthCheck } from '@/app/lib/useAuthCheck';
  */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { status, fallback } = useAuthCheck();
+
+  // Permisos al día sin volver a loguearse (cambios de rol del dueño).
+  useEffect(() => (status === 'ok' ? iniciarRefrescoSesion() : undefined), [status]);
 
   if (status === 'checking' || status === 'anonymous') return <DashboardSkeleton />;
   if (status === 'denied') return <SinAcceso fallback={fallback} />;
