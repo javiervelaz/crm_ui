@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, FormEvent, Suspense } from 'react';
 import Image from 'next/image';
 import { registerSaasCliente, PlanTier } from '@/app/lib/saas.api';
 import { useTiers } from '@/app/lib/useTiers';
-import { beneficiosDe, esContratable, etiquetaPrecio } from '@/app/lib/planBeneficios';
+import { beneficiosDe, esContratable, esPagable, etiquetaPrecio } from '@/app/lib/planBeneficios';
 import { useRubros } from '@/app/lib/useRubros';
 import { rubroInicial } from '@/app/lib/rubros';
 import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
@@ -67,6 +67,14 @@ function SaasLandingPage() {
   const basicTier = tiers.find((t) => t.code.toUpperCase() === 'BASIC');
   const premiumTier = tiers.find((t) => t.code.toUpperCase() === 'PREMIUM');
   const customTier = tiers.find((t) => t.code.toUpperCase() === 'CUSTOM');
+
+  // Si el plan elegido (por ?plan= o por click) no se vende en este rubro, se vuelve
+  // a FREE: si no, el alta pide un plan no disponible y la API responde 400.
+  useEffect(() => {
+    if (tiersLoading || !tiers.length || selectedPlan === 'FREE') return;
+    const oferta = tiers.find((t) => t.code.toUpperCase() === selectedPlan);
+    if (!oferta || !esPagable(oferta)) setSelectedPlan('FREE');
+  }, [tiers, tiersLoading, selectedPlan]);
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -375,7 +383,7 @@ function SaasLandingPage() {
               ])}
               plan="BASIC"
               selected={selectedPlan === 'BASIC'}
-              disabled
+              disabled={!basicTier || !esPagable(basicTier)}
               onSelect={handleSelectPlan}
             />
 
@@ -391,7 +399,7 @@ function SaasLandingPage() {
               ])}
               plan="PREMIUM"
               selected={selectedPlan === 'PREMIUM'}
-              disabled
+              disabled={!premiumTier || !esPagable(premiumTier)}
               onSelect={handleSelectPlan}
             />
             {/* CUSTOM */}
@@ -406,7 +414,7 @@ function SaasLandingPage() {
               ])}
               plan="CUSTOM"
               selected={selectedPlan === 'CUSTOM'}
-              disabled
+              disabled={!customTier || !esPagable(customTier)}
               onSelect={handleSelectPlan}
             />
           </div>

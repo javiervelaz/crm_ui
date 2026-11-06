@@ -3,6 +3,7 @@ import {
   beneficiosDe,
   esPagable,
   etiquetaPrecio,
+  puedeCambiarA,
 } from '@/app/lib/planBeneficios';
 
 describe('planBeneficios', () => {
@@ -95,5 +96,26 @@ describe('planBeneficios', () => {
     expect(esPagable({ precio_mensual: 150 })).toBe(true); // API vieja sin `disponible`
     expect(esPagable({ precio_mensual: 0, disponible: true })).toBe(false);
     expect(esPagable({ precio_mensual: 150, disponible: false })).toBe(false);
+  });
+
+  it('puedeCambiarA: solo hacia arriba, y de PREMIUM mensual al anual sí', () => {
+    expect(puedeCambiarA('FREE', 'BASIC')).toBe(true);
+    expect(puedeCambiarA('FREE', 'CUSTOM')).toBe(true);
+    expect(puedeCambiarA('BASIC', 'PREMIUM')).toBe(true);
+    expect(puedeCambiarA('PREMIUM', 'CUSTOM')).toBe(true);
+    expect(puedeCambiarA('PREMIUM', 'BASIC')).toBe(false);
+    expect(puedeCambiarA('CUSTOM', 'PREMIUM')).toBe(false);
+    expect(puedeCambiarA('BASIC', 'BASIC')).toBe(false);
+    expect(puedeCambiarA(null, 'BASIC')).toBe(true);
+    expect(puedeCambiarA('basic', 'premium')).toBe(true);
+    expect(puedeCambiarA('FREE', 'INVENTADO')).toBe(false);
+  });
+
+  it('con los precios de lanzamiento, los planes pagos se pueden contratar', () => {
+    expect(esPagable({ precio_mensual: 1000, duracion_meses: 1, disponible: true })).toBe(true);
+    expect(esPagable({ precio_mensual: 10000, duracion_meses: 12, disponible: true })).toBe(true);
+    expect(esPagable({ precio_mensual: 1000, duracion_meses: 1, disponible: false })).toBe(false);
+    expect(esPagable({ precio_mensual: 0, duracion_meses: 1, disponible: true })).toBe(false);
+    expect(etiquetaPrecio({ precio_mensual: 10000, duracion_meses: 12, disponible: true })).toBe('$ 10.000 por 12 meses');
   });
 });
