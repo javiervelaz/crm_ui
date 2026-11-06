@@ -20,7 +20,11 @@ function PagoResultado() {
     },
     pending: {
       title: 'Pago pendiente',
-      body: 'MercadoPago todavía está procesando. Te avisamos por mail cuando se acredite.',
+      body: 'MercadoPago todavía está procesando el pago. Tu plan se activa apenas se acredite.',
+    },
+    confirmando: {
+      title: 'Recibimos tu suscripción',
+      body: 'Estamos confirmando el pago con MercadoPago. Tu plan se activa en un par de minutos.',
     },
     failure: {
       title: 'No se pudo procesar el pago',
@@ -40,7 +44,7 @@ function PagoResultado() {
           email=""
           titulo="Falta un paso: activá tu cuenta"
           descripcion={
-            status === 'success'
+            status === 'success' || status === 'confirmando'
               ? 'El pago salió bien, pero todavía no confirmaste tu email. Poné tu dirección y te reenviamos el enlace de activación'
               : 'Todavía no confirmaste tu email. Poné tu dirección y te reenviamos el enlace de activación'
           }
@@ -53,10 +57,10 @@ function PagoResultado() {
 
         {!faltaVerificar && (
           <Link
-            href="/dashboard"
+            href="/dashboard/plan"
             className="mt-8 inline-block rounded-full bg-brand-600 px-6 py-3 font-semibold text-white transition hover:bg-brand-700"
           >
-            Ir a mi panel
+            Ver mi plan
           </Link>
         )}
       </div>
