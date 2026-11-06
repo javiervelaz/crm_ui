@@ -3,7 +3,7 @@
 
 import { useClientePlan } from '@/app/lib/useClientePlan';
 import { useTiers } from '@/app/lib/useTiers';
-import { beneficiosDe, esPagable, etiquetaPrecio } from '@/app/lib/planBeneficios';
+import { beneficiosDe, esPagable, etiquetaPrecio, puedeCambiarA } from '@/app/lib/planBeneficios';
 import { createBillingCheckout, simulateBillingMock } from '@/app/lib/billing.api';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
@@ -178,7 +178,7 @@ function PlanCard({
   duracion
 }: PlanCardProps) {
   const isCurrent = currentTier === tierCode;
-  const isHigher = currentTier === 'FREE' || currentTier === 'BASIC';
+  const isHigher = puedeCambiarA(currentTier, tierCode);
 
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -221,7 +221,7 @@ function PlanCard({
           </button>
         ) : (
           <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
-            No tiene sentido bajar de plan acá (manejar downgrades aparte)
+            Para cambiar a este plan, escribinos
           </span>
         )}
       </div>

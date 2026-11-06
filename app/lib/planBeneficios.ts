@@ -79,3 +79,18 @@ export function etiquetaPrecio(
   const monto = `$ ${p.toLocaleString('es-AR')}`;
   return meses > 1 ? `${monto} por ${meses} meses` : `${monto} / mes`;
 }
+
+/**
+ * Orden de los planes para decidir qué se puede contratar desde el panel.
+ * CUSTOM (anual) queda arriba de PREMIUM: tiene lo mismo pero pagado por un año,
+ * así que pasar de PREMIUM mensual al anual es válido. Al revés (o bajar de
+ * plan) no se hace desde el panel: cancelar o cambiar de plan con meses ya
+ * pagados lo maneja Counter a mano.
+ */
+const ORDEN_PLAN: Record<string, number> = { FREE: 0, BASIC: 1, PREMIUM: 2, CUSTOM: 3 };
+
+export function puedeCambiarA(actual: string | null | undefined, destino: string): boolean {
+  const a = ORDEN_PLAN[String(actual || 'FREE').toUpperCase()] ?? 0;
+  const d = ORDEN_PLAN[String(destino).toUpperCase()];
+  return d !== undefined && d > a;
+}
