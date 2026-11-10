@@ -1,6 +1,7 @@
 'use client';
 
 import { PLAN_LIMITE_EVENT, PlanLimiteDetail } from '@/app/lib/planLimiteEvents';
+import { AYUDA_LIMITE, esLimitKey } from '@/app/lib/planUso';
 import { Sparkles, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -14,27 +15,34 @@ import { useEffect, useState } from 'react';
  * Reemplaza el redirect automático de apiClient. El usuario decide si va a ver
  * los planes o sigue donde estaba — y en el segundo caso no pierde lo que tenía
  * cargado en el formulario.
+ *
+ * Dos casos: "esta función no está en tu plan" (feature apagada → página de
+ * upgrade) y "llegaste al tope" de pedidos, productos o stock (`tipo: 'limite'`
+ * → directo a los planes, con la ayuda propia de cada tope).
  */
 export default function PlanLimiteProvider() {
   const router = useRouter();
-  const [mensaje, setMensaje] = useState<string | null>(null);
+  const [detalle, setDetalle] = useState<PlanLimiteDetail | null>(null);
 
   useEffect(() => {
     const onLimite = (e: Event) => {
-      setMensaje((e as CustomEvent<PlanLimiteDetail>).detail.mensaje);
+      setDetalle((e as CustomEvent<PlanLimiteDetail>).detail);
     };
     window.addEventListener(PLAN_LIMITE_EVENT, onLimite);
     return () => window.removeEventListener(PLAN_LIMITE_EVENT, onLimite);
   }, []);
 
   useEffect(() => {
-    if (!mensaje) return;
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMensaje(null); };
+    if (!detalle) return;
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setDetalle(null); };
     window.addEventListener('keydown', onEsc);
     return () => window.removeEventListener('keydown', onEsc);
-  }, [mensaje]);
+  }, [detalle]);
 
-  if (!mensaje) return null;
+  if (!detalle) return null;
+
+  const esTope = detalle.tipo === 'limite';
+  const ayuda = esTope && esLimitKey(detalle.limitKey) ? AYUDA_LIMITE[detalle.limitKey] : null;
 
   return (
     <div
@@ -43,12 +51,12 @@ export default function PlanLimiteProvider() {
       aria-modal="true"
       aria-labelledby="plan-limite-titulo"
     >
-      <div className="absolute inset-0 bg-brand-900/50" onClick={() => setMensaje(null)} />
+      <div className="absolute inset-0 bg-brand-900/50" onClick={() => setDetalle(null)} />
 
       <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-soft">
         <button
           type="button"
-          onClick={() => setMensaje(null)}
+          onClick={() => setDetalle(null)}
           aria-label="Cerrar"
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md text-brand-300 hover:bg-brand-50"
         >
@@ -60,21 +68,22 @@ export default function PlanLimiteProvider() {
         </div>
 
         <h2 id="plan-limite-titulo" className="font-display text-lg font-bold text-brand-800">
-          Esta función no está en tu plan
+          {esTope ? 'Llegaste al límite de tu plan' : 'Esta función no está en tu plan'}
         </h2>
-        <p className="mt-2 text-sm text-brand-300">{mensaje}</p>
+        <p className="mt-2 text-sm text-brand-300">{detalle.mensaje}</p>
+        {ayuda && <p className="mt-2 text-sm text-brand-300">{ayuda}</p>}
 
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            onClick={() => setMensaje(null)}
+            onClick={() => setDetalle(null)}
             className="min-h-[44px] rounded-lg border border-brand-200 bg-white px-5 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-50"
           >
             Seguir acá
           </button>
           <button
             type="button"
-            onClick={() => { setMensaje(null); router.push('/dashboard/upgrade-plan'); }}
+            onClick={() => { setDetalle(null); router.push(esTope ? '/dashboard/plan' : '/dashboard/upgrade-plan'); }}
             className="min-h-[44px] rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white shadow-brand transition-colors hover:bg-brand-700"
           >
             Ver planes
