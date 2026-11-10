@@ -1,6 +1,7 @@
 'use client';
 
 import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
+import PlanUsoBanner from '@/components/ui/PlanUsoBanner';
 import SinAcceso from '@/components/ui/SinAcceso';
 import { iniciarRefrescoSesion } from '@/app/lib/sesion';
 import { useAuthCheck } from '@/app/lib/useAuthCheck';
@@ -25,5 +26,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (status === 'checking' || status === 'anonymous') return <DashboardSkeleton />;
   if (status === 'denied') return <SinAcceso fallback={fallback} />;
 
-  return <>{children}</>;
+  return (
+    <>
+      <PlanUsoBanner />
+      {children}
+    </>
+  );
 }
