@@ -1,6 +1,6 @@
 'use client';
 
-import { emitPlanLimite } from '@/app/lib/planLimiteEvents';
+import { CODIGO_LIMITE_PLAN, emitPlanLimite } from '@/app/lib/planLimiteEvents';
 import { refrescarSesion } from '@/app/lib/sesion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -52,7 +52,11 @@ apiClient.interceptors.response.use(
     if (status === 403) {
       const raw = data?.error || 'Acción no permitida. No tenés permisos suficientes.';
 
-      if (typeof raw === 'string' && esErrorDePlan(raw)) {
+      if (data?.code === CODIGO_LIMITE_PLAN && typeof raw === 'string') {
+        // Tope numérico del plan (pedidos del mes, productos, stock). Antes caía
+        // en el toast genérico porque el mensaje no cumple la heurística de abajo.
+        emitPlanLimite(raw, { tipo: 'limite', limitKey: data.limitKey });
+      } else if (typeof raw === 'string' && esErrorDePlan(raw)) {
         // [4.2] Antes: toast + window.location.href a upgrade-plan después de
         // 1,5 s. El usuario perdía el formulario que estaba completando sin
         // poder hacer nada. Ahora se emite un evento y el modal decide.

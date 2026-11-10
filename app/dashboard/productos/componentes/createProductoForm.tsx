@@ -2,6 +2,7 @@
 
 import { getClienteId } from "@/app/lib/authService";
 import { createProduct } from '@/app/lib/producto.api';
+import { esErrorLimitePlan } from '@/app/lib/planLimiteEvents';
 import { getTipoProductoList } from "@/app/lib/tipoproducto.api";
 import useAuthCheck from '@/app/lib/useAuthCheck';
 import { useRouter } from 'next/navigation';
@@ -99,7 +100,8 @@ const CreateUserPage = () => {
     router.push('/dashboard/productos');
   } catch (error: any) {
     console.log(error);
-    notifyError(error.message);
+    // Tope del plan: ya se abrió el modal de upgrade, no hace falta un toast más.
+    if (!esErrorLimitePlan(error)) notifyError(error.message);
   } finally {
     setSubmitting(false);
   }

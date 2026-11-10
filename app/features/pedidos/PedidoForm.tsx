@@ -3,6 +3,7 @@
 import { logError } from '@/app/lib/logger';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { crearPedido } from '@/app/lib/operaciones.api';
+import { esErrorLimitePlan } from '@/app/lib/planLimiteEvents';
 import { useState } from 'react';
 import DatosCliente from './DatosCliente';
 import HistorialCliente from './HistorialCliente';
@@ -46,6 +47,8 @@ export default function PedidoForm({
         notifyError('Error al agregar pedido');
       }
     } catch (error) {
+      // Tope del plan: el modal ya explica qué pasó; "Reintentá" sería engañoso.
+      if (esErrorLimitePlan(error)) return;
       logError('Error al agregar pedido', error);
       notifyError('No se pudo agregar el pedido. Reintentá.');
     } finally {

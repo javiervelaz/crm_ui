@@ -1,4 +1,6 @@
 import { notifyError, notifySuccess } from './notificationService';
+import { CODIGO_LIMITE_PLAN, errorLimitePlan } from './planLimiteEvents';
+import { emitPlanUsoCambio } from './planUso';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 export const getProductoList = async (cliente: bigint | null) => {
     const token = localStorage.getItem('token');
@@ -77,6 +79,8 @@ export const getProductoList = async (cliente: bigint | null) => {
       // puede no ser JSON → lo ignoramos
     }
     if (response.status === 403) {
+        // Tope de productos del plan: modal de upgrade en vez de un toast con el texto crudo.
+        if (errorBody?.code === CODIGO_LIMITE_PLAN) throw errorLimitePlan(errorBody);
         throw new Error(errorBody?.error || 'No tiene permisos para esta operación');
     }
 
@@ -85,6 +89,7 @@ export const getProductoList = async (cliente: bigint | null) => {
       throw new Error(messageBackend ||'No se pudo crear el producto');
     }
     notifySuccess('Operación realizada correctamente');
+    emitPlanUsoCambio();
     return await response.json();
   };
 
