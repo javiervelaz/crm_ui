@@ -9,6 +9,7 @@ import { beneficiosDe, esContratable, esPagable, etiquetaPrecio } from '@/app/li
 import { useRubros } from '@/app/lib/useRubros';
 import { rubroInicial } from '@/app/lib/rubros';
 import VerificacionPendiente from '@/components/ui/VerificacionPendiente';
+import MetaPixel from '@/components/ui/MetaPixel';
 import { useSearchParams } from 'next/navigation';
 
 type StatusState = 'idle' | 'loading' | 'verificar' | 'error';
@@ -733,6 +734,7 @@ function PlanCard({
 export default function SaasLandingPageWithSuspense() {
   return (
     <Suspense fallback={null}>
+      <MetaPixel />
       <SaasLandingPage />
     </Suspense>
   );
