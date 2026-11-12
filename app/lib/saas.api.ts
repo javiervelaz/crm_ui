@@ -1,4 +1,6 @@
 // app/lib/saas.api.ts
+import { leerAtribucion, leerCookie, nuevoEventId, trackPixel } from '@/app/lib/metaPixel';
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export type PlanTier = 'FREE' | 'BASIC' | 'PREMIUM' | 'CUSTOM';
@@ -65,10 +67,11 @@ export async function registerSaasCliente(
 ): Promise<SaaSRegisterResponse> {
   if (!apiUrl) throw new SignupError('API URL no configurada (NEXT_PUBLIC_API_URL)');
 
-  // Atribución: la landing pasa ?utm_source=... y lo propagamos
-  const params = new URLSearchParams(
-    typeof window !== 'undefined' ? window.location.search : ''
-  );
+  // Atribución: la landing pasa utm_* y fbclid en la URL y los propagamos.
+  // fbp/fbc son las cookies del Pixel (match de la API de Conversiones).
+  const atribucion = leerAtribucion(typeof window !== 'undefined' ? window.location.search : '');
+  const cookies = typeof document !== 'undefined' ? document.cookie : '';
+  const metaEventId = nuevoEventId();
 
   const response = await fetch(`${apiUrl}/signup`, {
     method: 'POST',
@@ -79,8 +82,10 @@ export async function registerSaasCliente(
       adminEmail: values.adminEmail.trim().toLowerCase(),
       aceptaTerminos: String(values.aceptaTerminos),
       rubro: values.rubro?.trim() || undefined,
-      utmSource: params.get('utm_source') || undefined,
-      utmCampaign: params.get('utm_campaign') || undefined,
+      ...atribucion,
+      fbp: leerCookie(cookies, '_fbp'),
+      fbc: leerCookie(cookies, '_fbc'),
+      metaEventId,
     }),
   });
 
@@ -97,7 +102,16 @@ export async function registerSaasCliente(
     throw new SignupError(message, field, code);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Mismo event_id que el backend manda por CAPI: Meta deduplica los dos.
+  trackPixel(
+    'CompleteRegistration',
+    { content_name: 'signup', status: true, plan: data?.plan?.code ?? values.plan },
+    metaEventId
+  );
+
+  return data;
 }
 
 /**
