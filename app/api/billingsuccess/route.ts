@@ -6,6 +6,7 @@ import { estadoRetornoPago } from '@/app/lib/retornoPago';
 // tiene sesión (link a su plan) de quien recién se dio de alta y todavía no
 // verificó el mail ("Falta un paso"). Antes iba a /dashboard/plan y un alta
 // nueva caía en el login sin poder entrar.
+// redep
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const estado = estadoRetornoPago(url.searchParams);
