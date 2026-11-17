@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { getCurrentDate } from "@/app/lib/utils";
 import { diferenciaEfectivo, efectivoEsperado } from "@/app/lib/cierreCaja";
 
+import { formatMoney } from '@/app/lib/utils';
 interface DecodedToken {
   userId: number;
   sucursal: string;
@@ -329,7 +330,7 @@ const CerrarCajaForm = () => {
                 Ingresos totales
               </span>
               <span className="font-semibold text-slate-900">
-                ${ingresosTotales.toFixed(2)}
+                {formatMoney(ingresosTotales)}
               </span>
             </div>
           </div>
@@ -388,7 +389,7 @@ const CerrarCajaForm = () => {
                 Egresos totales
               </span>
               <span className="font-semibold text-slate-900">
-                ${(otrosEgresos + gastosAdministrativos).toFixed(2)}
+                {formatMoney(otrosEgresos + gastosAdministrativos)}
               </span>
             </div>
             {otrosEgresos - gastosEfectivo > 0.004 && (

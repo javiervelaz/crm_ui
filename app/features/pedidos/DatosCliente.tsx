@@ -28,7 +28,7 @@ export default function DatosCliente({
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div>
-        <label className="mb-1 block text-sm text-brand-700">Telefono cliente *</label>
+        <label className="mb-1 block text-sm text-brand-700">Teléfono cliente *</label>
         <input
           type="tel"
           inputMode="numeric"
@@ -54,7 +54,7 @@ export default function DatosCliente({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-brand-700">Direccion / Casa nro {req}</label>
+        <label className="mb-1 block text-sm text-brand-700">Dirección / Casa nro {req}</label>
         <input
           type="text"
           className={input(errors.direccion)}
@@ -78,7 +78,7 @@ export default function DatosCliente({
       </div>
 
       <div className="md:col-span-2">
-        <label className="mb-1 block text-sm text-brand-700">Observacion del pedido (opcional)</label>
+        <label className="mb-1 block text-sm text-brand-700">Observación del pedido (opcional)</label>
         <input
           type="text"
           className={input('')}

@@ -7,6 +7,7 @@ import { deletePedido, getDetallePedido, terminarPedido } from '@/app/lib/operac
 import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
 
+import { formatFechaHora } from '@/app/lib/utils';
 /**
  * Grilla de pedidos UNIFICADA.
  *
@@ -175,7 +176,7 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
                 <th className="w-10 px-2 py-3" />
                 <th className="px-4 py-3 text-sm font-medium text-brand-600">Comanda</th>
                 <th className="px-4 py-3 text-sm font-medium text-brand-600">Cliente</th>
-                <th className="px-4 py-3 text-sm font-medium text-brand-600">Telefono</th>
+                <th className="px-4 py-3 text-sm font-medium text-brand-600">Teléfono</th>
                 <th className="px-4 py-3 text-sm font-medium text-brand-600">Monto</th>
                 <th className="px-4 py-3 text-sm font-medium text-brand-600">Fecha</th>
                 {abiertos && (
@@ -206,7 +207,7 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
                     <td className="px-4 py-2">{pedido.telefono || 'N/A'}</td>
                     <td className="px-4 py-2 font-medium text-brand-800">{money(pedido.monto_total)}</td>
                     <td className="px-4 py-2 text-sm">
-                      {new Date(pedido.created_at).toLocaleString('es-AR')}
+                      {formatFechaHora(pedido.created_at)}
                     </td>
                     {abiertos && (
                       <>
@@ -277,7 +278,7 @@ export default function PedidosGrid({ pedidos, fetchPedidos, mode = 'abiertos' }
 
             <p className="text-sm text-brand-700">{pedido.nombre || 'MOSTRADOR'}</p>
             <p className="text-xs text-brand-300">
-              {(pedido.telefono || 'Sin telefono') + ' · ' + new Date(pedido.created_at).toLocaleString('es-AR')}
+              {(pedido.telefono || 'Sin teléfono') + ' · ' + formatFechaHora(pedido.created_at)}
             </p>
 
             <button

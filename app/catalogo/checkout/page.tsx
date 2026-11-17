@@ -9,6 +9,7 @@ import { crearPedidoDesdeMicrositio } from '../pedidoMicrositio.api';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { fetchMedioPagoList, MedioPago } from '../medioPagoApi';
 
+import { formatMoney } from '@/app/lib/utils';
 interface CheckoutTicket {
   name: string;
   phone: string;
@@ -161,8 +162,8 @@ export default function CheckoutPage() {
             <p>{ticket.medioPagoDescripcion ?? 'No informado'}</p>
             {ticket.pagaEfectivo > 0 && (
               <>
-                <p><span className="font-medium">Paga con: </span>${ticket.pagaEfectivo.toFixed(2)}</p>
-                <p><span className="font-medium">Vuelto estimado: </span>${ticket.vuelto.toFixed(2)}</p>
+                <p><span className="font-medium">Paga con: </span>{formatMoney(ticket.pagaEfectivo)}</p>
+                <p><span className="font-medium">Vuelto estimado: </span>{formatMoney(ticket.vuelto)}</p>
               </>
             )}
           </div>
@@ -214,7 +215,7 @@ export default function CheckoutPage() {
       pagaEfectivoNum = Number(pagaEfectivo.replace(',', '.')) || 0;
       if (pagaEfectivoNum <= 0) { notifyError('Ingresá el monto que paga el cliente.'); return; }
       if (pagaEfectivoNum < total) {
-        notifyError(`El monto pagado ($${pagaEfectivoNum.toFixed(2)}) debe ser mayor o igual al total ($${total.toFixed(2)}).`);
+        notifyError(`El monto pagado (${formatMoney(pagaEfectivoNum)}) debe ser mayor o igual al total (${formatMoney(total)}).`);
         return;
       }
       vueltoNum = pagaEfectivoNum - total;
@@ -435,7 +436,7 @@ export default function CheckoutPage() {
                 {(() => {
                   const num = Number(pagaEfectivo.replace(',', '.')) || 0;
                   const v = num - total;
-                  return v > 0 ? `$${v.toFixed(2)}` : '$0.00';
+                  return formatMoney(v > 0 ? v : 0);
                 })()}
               </p>
             )}
