@@ -3,6 +3,7 @@
 import { logError } from '@/app/lib/logger';
 import { notifyError, notifySuccess } from '@/app/lib/notificationService';
 import { crearPedido } from '@/app/lib/operaciones.api';
+import { CODIGO_CUIT_REQUERIDO } from '@/app/lib/cuit.api';
 import { esErrorLimitePlan } from '@/app/lib/planLimiteEvents';
 import { useState } from 'react';
 import DatosCliente from './DatosCliente';
@@ -49,6 +50,10 @@ export default function PedidoForm({
     } catch (error) {
       // Tope del plan: el modal ya explica qué pasó; "Reintentá" sería engañoso.
       if (esErrorLimitePlan(error)) return;
+      if ((error as { code?: string } | null)?.code === CODIGO_CUIT_REQUERIDO) {
+        notifyError('Completá el CUIT de tu comercio para tomar pedidos.');
+        return;
+      }
       logError('Error al agregar pedido', error);
       notifyError('No se pudo agregar el pedido. Reintentá.');
     } finally {
