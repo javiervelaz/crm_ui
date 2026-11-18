@@ -64,7 +64,7 @@ export default function SelectorProductos({
         ))}
         {delTipo.length === 0 && (
           <p className="col-span-full py-6 text-center text-sm text-brand-300">
-            No hay productos en esta categoria.
+            No hay productos en este tipo.
           </p>
         )}
       </div>

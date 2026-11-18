@@ -95,3 +95,23 @@ export const getCurrentDate = (timeZone: string = 'America/Argentina/Buenos_Aire
   return data;
 }
 
+
+// Moneda ARS para la UI: separador de miles, sin decimales de más ($10.000, $1.234,5).
+export const formatMoney = (n: number | string | null | undefined) =>
+  '$' + Number(n ?? 0).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+
+// Fecha y hora 24 h en horario de Argentina (17/11/2026, 14:52). El default de es-AR
+// del navegador es 12 h y en algunos entornos se ve sin a. m./p. m.
+export const formatFechaHora = (
+  value: string | number | Date,
+  timeZone: string = 'America/Argentina/Buenos_Aires'
+) =>
+  new Date(value).toLocaleString('es-AR', {
+    timeZone,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });

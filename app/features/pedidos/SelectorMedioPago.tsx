@@ -2,6 +2,7 @@
 
 import { MedioPago, PedidoState } from './types';
 
+import { formatMoney } from '@/app/lib/utils';
 interface Props {
   medioPago: MedioPago[];
   pedido: PedidoState;
@@ -64,17 +65,17 @@ export default function SelectorMedioPago({
             <div>
               <label className="mb-1 block text-sm text-brand-700">Vuelto</label>
               <output className="flex h-12 w-full items-center rounded-lg bg-green-100 px-3 text-lg font-bold text-green-800">
-                {'$' + pedido.vuelto_pago_efectivo.toFixed(2)}
+                {formatMoney(pedido.vuelto_pago_efectivo)}
               </output>
               <p className="mt-1 text-xs text-brand-300">
-                {'Total $' + pedido.monto_total.toFixed(2) + ' · Paga $' + pedido.paga_efectivo.toFixed(2)}
+                {'Total ' + formatMoney(pedido.monto_total) + ' · Paga ' + formatMoney(pedido.paga_efectivo)}
               </p>
             </div>
           </div>
 
           {pedido.paga_efectivo < pedido.monto_total && (
             <p className="mt-2 text-sm text-red-500">
-              {'Faltan $' + (pedido.monto_total - pedido.paga_efectivo).toFixed(2)}
+              {'Faltan ' + formatMoney(pedido.monto_total - pedido.paga_efectivo)}
             </p>
           )}
         </div>

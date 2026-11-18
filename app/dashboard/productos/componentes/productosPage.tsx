@@ -126,7 +126,7 @@ export default function ProductosPage() {
 
       {tipos.length === 0 && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          Creá al menos una categoría de producto para habilitar el botón &quot;Producto&quot;.
+          Creá al menos un tipo de producto para habilitar el botón &quot;Producto&quot;.
         </p>
       )}
     </div>

@@ -16,7 +16,7 @@ export const CreateTipoProductoButton = () => {
       onClick={handleCreateUsers}
       className="flex items-center rounded-md bg-brand-600 px-4 py-2 text-white"
     >
-      <Plus size={16} className="mr-2" /> Categoria
+      <Plus size={16} className="mr-2" /> Tipo
     </button>
   );
 };

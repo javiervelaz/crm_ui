@@ -3,6 +3,7 @@
 import { Minus, Plus, X } from 'lucide-react';
 import { Producto, ProductoPedido } from './types';
 
+import { formatMoney } from '@/app/lib/utils';
 interface Props {
   linea: ProductoPedido;
   index: number;
@@ -121,7 +122,7 @@ export default function LineaProducto({
         <div className="ml-auto flex flex-col">
           <label className="mb-1 text-xs text-brand-300">Subtotal</label>
           <span className="flex h-11 w-28 items-center justify-center rounded-lg bg-brand-50 text-base font-semibold text-brand-800">
-            {'$' + subtotal.toFixed(2)}
+            {formatMoney(subtotal)}
           </span>
         </div>
       </div>
