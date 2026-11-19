@@ -35,6 +35,10 @@ function Verificar() {
       return;
     }
 
+    // Un token viejo (otra cuenta, comercio borrado o vencido) no puede
+    // contaminar la activación: sus 401 borraban el token nuevo y mandaban al login.
+    localStorage.removeItem('token');
+
     verificarEmail(token)
       .then((res) => {
         if (res.token) {

@@ -35,6 +35,11 @@ apiClient.interceptors.response.use(
     const { status, data } = error.response;
 
     if (status === 401) {
+      // En /auth/* (activación, reset) no hay sesión que cerrar: borrar el
+      // token acá pisaría el que acaba de emitir la activación.
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth/')) {
+        return Promise.reject(error);
+      }
       toast.warning('Sesión expirada. Iniciá sesión nuevamente.');
       localStorage.removeItem('token');
       window.location.href = '/';
