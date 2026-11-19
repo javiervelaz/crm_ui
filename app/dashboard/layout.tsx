@@ -1,6 +1,7 @@
 'use client';
 
 import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
+import CuitRequeridoBanner from '@/components/ui/CuitRequeridoBanner';
 import PlanUsoBanner from '@/components/ui/PlanUsoBanner';
 import SinAcceso from '@/components/ui/SinAcceso';
 import { iniciarRefrescoSesion } from '@/app/lib/sesion';
@@ -28,6 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <>
+      <CuitRequeridoBanner />
       <PlanUsoBanner />
       {children}
     </>

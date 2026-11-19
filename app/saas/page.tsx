@@ -508,24 +508,29 @@ function SaasLandingPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-800">
-                  CUIT
+                  CUIT <span className="font-normal text-brand-600">(opcional por ahora)</span>
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={cuit}
                   onChange={(e) => setCuit(e.target.value)}
-                  required
                   className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm shadow-sm focus:border-brand-600 focus:outline-none"
                 />
+                <p className="mt-1 text-xs text-brand-600">
+                  Lo vas a necesitar para tomar tu primer pedido. Podés cargarlo después, desde tu panel.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-brand-800">
-                  Teléfono de contacto
+                  Celular / WhatsApp de contacto
                 </label>
                 <input
                   type="tel"
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
+                  required
+                  placeholder="3512345678"
                   className="mt-1 w-full rounded-lg border border-brand-200 px-3 py-2 text-sm shadow-sm focus:border-brand-600 focus:outline-none"
                 />
               </div>

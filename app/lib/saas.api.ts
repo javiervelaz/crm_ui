@@ -8,7 +8,8 @@ export type PlanTier = 'FREE' | 'BASIC' | 'PREMIUM' | 'CUSTOM';
 export interface SaaSRegisterFormValues {
   plan: PlanTier;
   comercioNombre: string;
-  cuit: string;
+  /** Opcional en el alta: se exige antes del primer pedido. */
+  cuit?: string;
   adminNombre: string;
   adminApellido: string;
   adminEmail: string;
@@ -78,7 +79,7 @@ export async function registerSaasCliente(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ...values,
-      cuit: values.cuit.replace(/\D/g, ''),
+      cuit: (values.cuit ?? '').replace(/\D/g, '') || undefined,
       adminEmail: values.adminEmail.trim().toLowerCase(),
       aceptaTerminos: String(values.aceptaTerminos),
       rubro: values.rubro?.trim() || undefined,

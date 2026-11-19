@@ -3,6 +3,7 @@ import { notifyError, notifySuccess } from './notificationService';
 import apiClient from "@/app/lib/apiClient";
 import { CODIGO_LIMITE_PLAN, errorLimitePlan, esErrorLimitePlan } from '@/app/lib/planLimiteEvents';
 import { emitPlanUsoCambio } from '@/app/lib/planUso';
+import { CODIGO_CUIT_REQUERIDO, emitCuitRequerido } from '@/app/lib/cuit.api';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 
@@ -81,12 +82,18 @@ export const abrirCaja = async (data: any) => {
         // Tope de pedidos del mes del plan: el backend manda el motivo en `error`
         // (no en `message`) y antes se perdía en el catch de abajo.
         if (errorData?.code === CODIGO_LIMITE_PLAN) throw errorLimitePlan(errorData);
+        // Sin CUIT no se toman pedidos: se resalta el aviso del dashboard para que lo cargue.
+        if (errorData?.code === CODIGO_CUIT_REQUERIDO) {
+          emitCuitRequerido();
+          throw Object.assign(new Error(errorData.error), { code: CODIGO_CUIT_REQUERIDO });
+        }
         throw new Error(`Error: ${errorData.message || 'Error desconocido'}`);
       }
       emitPlanUsoCambio();
       return await response.json();
     } catch (error) {
       if (esErrorLimitePlan(error)) throw error;
+      if ((error as { code?: string } | null)?.code === CODIGO_CUIT_REQUERIDO) throw error;
       throw new Error('Falló crear pedido');
     }
   }
