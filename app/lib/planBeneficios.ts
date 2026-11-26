@@ -41,7 +41,7 @@ export function beneficiosDe(features?: PlanFeatures | null): string[] {
     out.push(max ? `Hasta ${max} productos` : 'Productos sin límite');
   }
   if (features.canUseBot) out.push('Bot de Telegram para vos y tu equipo');
-  if (features.canUseWhatsappBot) out.push('Bot de WhatsApp');
+  //if (features.canUseWhatsappBot) out.push('Bot de WhatsApp');
   if (features.canUseReports) out.push('Reportes');
   if (features.canUseInventario) {
     const max = features.maxStockItems;
